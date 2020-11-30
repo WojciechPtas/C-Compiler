@@ -26,6 +26,7 @@ cmake ../llvm/llvm \
         -DLLVM_ENABLE_EH:BOOL=ON \
         -DLLVM_ENABLE_RTTI:BOOL=ON \
         -DLLVM_INCLUDE_TESTS:BOOL=OFF \
+        -DLLVM_USE_SPLIT_DWARF:BOOL=ON \
         -DLLVM_TARGETS_TO_BUILD="X86"
 
 
@@ -49,6 +50,9 @@ cmake ../llvm/llvm \
 #       e.g. dynamic_cast<>. LLVM by itself does not require this since they
 #       implement their own leight weight type information for certain classes
 #       for efficiency reasons.
+# "-DLLVM_USE_SPLIT_DWARF:BOOL=ON" improves the compile-time and on-disk memory
+#       consumption of debug builds by storing debug information separately
+#       from the binaries.
 # "-DLLVM_TARGETS_TO_BUILD="X86"" restricts the LLVM build to only create
 #       backend code for the X86 backend. As backends tend to be huge, this
 #       improves build times and memory as well as disk space consumption.
