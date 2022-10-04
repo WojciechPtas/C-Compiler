@@ -6,11 +6,14 @@ cd llvm
 
 CUR=`pwd`
 
+LLVM_VERSION=15.0.1
+LLVM_FILENAME=llvm-project-$LLVM_VERSION.src
+
 if [ ! -e  "${CUR}/llvm" ]; then
-        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/llvm-project-11.0.0.tar.xz
-        tar xf llvm-project-11.0.0.tar.xz
-        rm llvm-project-11.0.0.tar.xz
-        mv llvm-project-11.0.0 llvm
+        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVM_VERSION/$LLVM_FILENAME.tar.xz
+        tar xf $LLVM_FILENAME.tar.xz
+        rm $LLVM_FILENAME.tar.xz
+        mv $LLVM_FILENAME llvm
 
         cd ${CUR}
 fi
@@ -45,10 +48,10 @@ cmake ../llvm/llvm \
 # "-DLLVM_ENABLE_EH:BOOL=ON" enables exception handling. LLVM does not use
 #       exceptions internally, but if you want to use them in your code, you
 #       need this.
-# "-DLLVM_ENABLE_RTTI:BOOL=ON" enables run-time type information, that is
+# "-DLLVM_ENABLE_RTTI:BOOL=ON" enables run-time type information that is
 #       required for C++ constructs that refer to the dynamic type of objects,
 #       e.g. dynamic_cast<>. LLVM by itself does not require this since they
-#       implement their own leight weight type information for certain classes
+#       implement their own light-weight type information for certain classes
 #       for efficiency reasons.
 # "-DLLVM_USE_SPLIT_DWARF:BOOL=ON" improves the compile-time and on-disk memory
 #       consumption of debug builds by storing debug information separately
