@@ -6,7 +6,7 @@ cd llvm
 
 CUR=`pwd`
 
-LLVM_VERSION=15.0.1
+LLVM_VERSION=15.0.3
 LLVM_FILENAME=llvm-project-$LLVM_VERSION.src
 
 if [ ! -e  "${CUR}/llvm" ]; then
