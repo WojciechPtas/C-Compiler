@@ -17,7 +17,7 @@ The `token.h`, `token.cpp`, `tokenkinds.def`, and `keywords.def` files provide
 a structure for representing tokens. The `.def` files are used in combination
 with the C(++) preprocessor to avoid listing all token kinds at multiple
 places. The files do not contain all token kinds and keywords, you will need to
-extent them.
+extend them.
 
 ### Symbol Interning
 In the `string_internalizer.h` and `string_internalizer.cpp` files, you can
@@ -35,7 +35,7 @@ The remaining provided code expects `Symbol`s to be internalized via a
 ### Declaration Parser
 The `parser.h` and `parser.cpp` files contain parts of the implementation of a
 c4 parser. On the one hand, they contain the declarations of generally helpful
-methods that you might want to implement to use them for parsing.
+methods that you might want to implement for parsing.
 On the other hand, they contain the `parseSpecDecl()` method with helper
 methods that parse a declaration specifier followed by a declarator or an
 abstract declarator.
