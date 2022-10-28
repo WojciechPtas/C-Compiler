@@ -1,0 +1,23 @@
+// This file includes possible token kinds in a form suitable for usage via
+// preprocessor. Include this header after defining the following macro:
+//   #define KIND_ACTION(KD, STR) ...
+
+#define KEYWORD_ACTION(KND,STR) KIND_ACTION(KND, "keyword")
+
+#include "keywords.def"
+
+#undef KEYWORD_ACTION
+
+KIND_ACTION(TK_IDENTIFIER, "identifier")
+
+KIND_ACTION(TK_ASTERISK, "punctuator")  // "*"
+KIND_ACTION(TK_COMMA, "punctuator")     // ","
+KIND_ACTION(TK_SEMICOLON, "punctuator") // ";"
+KIND_ACTION(TK_LPAREN, "punctuator")    // "("
+KIND_ACTION(TK_RPAREN, "punctuator")    // ")"
+KIND_ACTION(TK_LBRACE, "punctuator")    // "{"
+KIND_ACTION(TK_RBRACE, "punctuator")    // "}"
+// TODO add remaining token kinds
+
+KIND_ACTION(TK_EOI, "end-of-input")
+

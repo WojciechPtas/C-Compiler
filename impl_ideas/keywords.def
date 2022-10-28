@@ -1,0 +1,10 @@
+// This file includes keywords in a form suitable for usage via preprocessor.
+// Include this header after defining the following macro:
+//   #define KEYWORD_ACTION(KD, STR) ...
+
+KEYWORD_ACTION(TK_CHAR, "char")
+KEYWORD_ACTION(TK_INT, "int")
+KEYWORD_ACTION(TK_STRUCT, "struct")
+KEYWORD_ACTION(TK_VOID, "void")
+
+// TODO add remaining keywords
