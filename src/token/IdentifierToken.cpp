@@ -3,14 +3,14 @@
 using namespace c4::token;
 using namespace std;
 
-IdentifierToken::IdentifierToken(string identifier) {
-    this->identifier = identifier;
+IdentifierToken::IdentifierToken(TokenPosition position, string identifier)
+    : Token(position), identifier(identifier) {
 }
 
 void IdentifierToken::accept(ITokenVisitor &visitor) {
     visitor.visit(*this);
 }
 
-string IdentifierToken::getIdentifier() {
+string &IdentifierToken::getIdentifier() {
     return this->identifier;
 }

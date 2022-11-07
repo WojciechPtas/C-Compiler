@@ -2,7 +2,8 @@
 
 using namespace c4::token;
 
-PunctuatorToken::PunctuatorToken(Punctuator punctuator) {
+PunctuatorToken::PunctuatorToken(TokenPosition position, Punctuator punctuator)
+    : Token(position) {
     this->punctuator = punctuator;
 }
 

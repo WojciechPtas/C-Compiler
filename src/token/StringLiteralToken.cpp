@@ -3,7 +3,8 @@
 using namespace c4::token;
 using namespace std;
 
-StringLiteralToken::StringLiteralToken(string value) {
+StringLiteralToken::StringLiteralToken(TokenPosition position, string value)
+    : Token(position) {
     this->value = value;
 }
 

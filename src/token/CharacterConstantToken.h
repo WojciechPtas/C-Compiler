@@ -7,12 +7,12 @@ namespace c4 {
     namespace token {
         class CharacterConstantToken : public ConstantToken {
         public:
-            CharacterConstantToken(std::string value);
+            CharacterConstantToken(TokenPosition position, std::string value);
             virtual ~CharacterConstantToken() { }
 
             void accept(ITokenVisitor &visitor) override;
 
-            std::string getValue();
+            const std::string &getValue();
 
         private:
             std::string value;

@@ -2,7 +2,8 @@
 
 using namespace c4::token;
 
-KeywordToken::KeywordToken(Keyword keyword) {
+KeywordToken::KeywordToken(TokenPosition position, Keyword keyword)
+    : Token(position) {
     this->keyword = keyword;
 }
 

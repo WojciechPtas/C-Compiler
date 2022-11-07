@@ -3,14 +3,16 @@
 using namespace c4::token;
 using namespace std;
 
-CharacterConstantToken::CharacterConstantToken(string value) {
-    this->value = value;
+CharacterConstantToken::CharacterConstantToken(
+    TokenPosition position,
+    string value
+) : ConstantToken(position), value(value) {
 }
 
 void CharacterConstantToken::accept(ITokenVisitor &visitor) {
     visitor.visit(*this);
 }
 
-string CharacterConstantToken::getValue() {
+const string &CharacterConstantToken::getValue() {
     return this->value;
 }

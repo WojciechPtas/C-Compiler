@@ -7,12 +7,12 @@ namespace c4 {
     namespace token {
         class DecimalConstantToken : public ConstantToken {
         public:
-            DecimalConstantToken(std::string value);
+            DecimalConstantToken(TokenPosition position, std::string value);
             virtual ~DecimalConstantToken() { }
 
             void accept(ITokenVisitor &visitor) override;
 
-            std::string getValue();
+            std::string &getValue();
 
         private:
             std::string value;

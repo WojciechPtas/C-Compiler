@@ -1,13 +1,13 @@
 #pragma once
 
-#include "IToken.h"
+#include "Token.h"
 #include "Keyword.h"
 
 namespace c4 {
     namespace token {
-        class KeywordToken : public IToken {
+        class KeywordToken : public Token {
         public:
-            KeywordToken(Keyword keyword);
+            KeywordToken(TokenPosition position, Keyword keyword);
             virtual ~KeywordToken() { }
 
             void accept(ITokenVisitor &visitor) override;

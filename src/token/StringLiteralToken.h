@@ -1,13 +1,13 @@
 #pragma once
 
 #include <string>
-#include "IToken.h"
+#include "Token.h"
 
 namespace c4 {
     namespace token {
-        class StringLiteralToken : IToken {
+        class StringLiteralToken : Token {
         public:
-            StringLiteralToken(std::string value);
+            StringLiteralToken(TokenPosition position, std::string value);
             virtual ~StringLiteralToken() { }
 
             void accept(ITokenVisitor &visitor) override;

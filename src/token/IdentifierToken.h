@@ -1,18 +1,18 @@
 #pragma once
 
 #include <string>
-#include "IToken.h"
+#include "Token.h"
 
 namespace c4 {
     namespace token {
-        class IdentifierToken : public IToken {
+        class IdentifierToken : public Token {
         public:
-            IdentifierToken(std::string identifier);
+            IdentifierToken(TokenPosition position, std::string identifier);
             virtual ~IdentifierToken() { }
 
             void accept(ITokenVisitor &visitor) override;
 
-            std::string getIdentifier();
+            std::string &getIdentifier();
 
         private:
             std::string identifier;
