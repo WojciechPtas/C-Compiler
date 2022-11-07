@@ -1,6 +1,6 @@
 #include "TokenPosition.h"
 
-using namespace c4::token;
+using namespace c4::model::token;
 using namespace std;
 
 TokenPosition::TokenPosition(string file, uint32_t line, uint32_t column) {

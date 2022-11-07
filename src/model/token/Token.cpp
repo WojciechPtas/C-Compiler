@@ -1,6 +1,6 @@
 #include "Token.h"
 
-using namespace c4::token;
+using namespace c4::model::token;
 
 Token::Token(TokenPosition position) : position(position) { }
 
