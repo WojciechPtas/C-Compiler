@@ -10,6 +10,8 @@ namespace c4 {
             IdentifierToken(std::string identifier);
             virtual ~IdentifierToken() { }
 
+            void accept(ITokenVisitor &visitor) override;
+
             std::string getIdentifier();
 
         private:

@@ -7,6 +7,10 @@ IdentifierToken::IdentifierToken(string identifier) {
     this->identifier = identifier;
 }
 
+void IdentifierToken::accept(ITokenVisitor &visitor) {
+    visitor.visit(*this);
+}
+
 string IdentifierToken::getIdentifier() {
     return this->identifier;
 }

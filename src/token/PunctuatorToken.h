@@ -5,10 +5,12 @@
 
 namespace c4 {
     namespace token {
-        class PunctuatorToken {
+        class PunctuatorToken : public IToken {
         public:
             PunctuatorToken(Punctuator punctuator);
             virtual ~PunctuatorToken() { }
+
+            void accept(ITokenVisitor &visitor) override;
 
             Punctuator getPunctuator();
 

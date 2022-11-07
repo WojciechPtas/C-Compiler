@@ -10,6 +10,8 @@ namespace c4 {
             KeywordToken(Keyword keyword);
             virtual ~KeywordToken() { }
 
+            void accept(ITokenVisitor &visitor) override;
+
             Keyword getKeyword();
 
         private:

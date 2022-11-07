@@ -10,6 +10,8 @@ namespace c4 {
             DecimalConstantToken(std::string value);
             virtual ~DecimalConstantToken() { }
 
+            void accept(ITokenVisitor &visitor) override;
+
             std::string getValue();
 
         private:

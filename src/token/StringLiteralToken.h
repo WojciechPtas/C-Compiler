@@ -10,6 +10,8 @@ namespace c4 {
             StringLiteralToken(std::string value);
             virtual ~StringLiteralToken() { }
 
+            void accept(ITokenVisitor &visitor) override;
+
             std::string getValue();
 
         private:

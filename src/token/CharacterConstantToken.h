@@ -10,6 +10,8 @@ namespace c4 {
             CharacterConstantToken(std::string value);
             virtual ~CharacterConstantToken() { }
 
+            void accept(ITokenVisitor &visitor) override;
+
             std::string getValue();
 
         private:
