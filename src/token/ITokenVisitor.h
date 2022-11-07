@@ -1,14 +1,14 @@
 #pragma once
 
-#include "CharacterConstantToken.h"
-#include "DecimalConstantToken.h"
-#include "IdentifierToken.h"
-#include "KeywordToken.h"
-#include "PunctuatorToken.h"
-#include "StringLiteralToken.h"
-
 namespace c4 {
     namespace token {
+        class CharacterConstantToken;
+        class DecimalConstantToken;
+        class IdentifierToken;
+        class KeywordToken;
+        class PunctuatorToken;
+        class StringLiteralToken;
+
         class ITokenVisitor {
         public:
             virtual ~ITokenVisitor() { }
