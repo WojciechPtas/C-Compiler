@@ -1,63 +1,121 @@
+#include <stdexcept>
 #include "PunctuatorUtilities.h"
 
 using namespace c4::model::token;
 using namespace c4::util::token;
+using namespace std;
 
-const std::string &stringify(Punctuator punctuator) {
+const string &c4::util::token::stringify(Punctuator punctuator) {
     switch (punctuator) {
-        case Punctuator::LeftBracket:               return "[";
-        case Punctuator::RightBracket:              return "]";
-        case Punctuator::LeftParenthesis:           return "(";
-        case Punctuator::RightParenthesis:          return ")";
-        case Punctuator::LeftBrace:                 return "{";
-        case Punctuator::RightBrace:                return "}";
-        case Punctuator::Dot:                       return ".";
-        case Punctuator::DashGreaterThan:           return "->";
-        case Punctuator::DoublePlus:                return "++";
-        case Punctuator::DoubleMinus:               return "--";
-        case Punctuator::And:                       return "&";
-        case Punctuator::Asterisk:                  return "*";
-        case Punctuator::Plus:                      return "+";
-        case Punctuator::Minus:                     return "-";
-        case Punctuator::Tilde:                     return "~";
-        case Punctuator::ExclamationMark:           return "!";
-        case Punctuator::Slash:                     return "/";
-        case Punctuator::Percent:                   return "%";
-        case Punctuator::DoubleLessThan:            return "<<";
-        case Punctuator::DoubleGreaterThan:         return ">>";
-        case Punctuator::LessThan:                  return "<";
-        case Punctuator::GreaterThan:               return ">";
-        case Punctuator::LessThanEqual:             return "<=";
-        case Punctuator::GreaterThanEqual:          return ">=";
-        case Punctuator::DoubleEqual:               return "==";
-        case Punctuator::ExclamationMarkEqual:      return "!=";
-        case Punctuator::Caret:                     return "^";
-        case Punctuator::Pipe:                      return "|";
-        case Punctuator::DoubleAnd:                 return "&&";
-        case Punctuator::DoublePipe:                return "||";
-        case Punctuator::QuestionMark:              return "?";
-        case Punctuator::Colon:                     return ":";
-        case Punctuator::Semicolon:                 return ";";
-        case Punctuator::TripleDot:                 return "...";
-        case Punctuator::Equal:                     return "=";
-        case Punctuator::AsteriskEqual:             return "*=";
-        case Punctuator::SlashEqual:                return "/=";
-        case Punctuator::PercentEqual:              return "%=";
-        case Punctuator::PlusEqual:                 return "+=";
-        case Punctuator::MinusEqual:                return "-=";
-        case Punctuator::DoubleLessThanEqual:       return "<<=";
-        case Punctuator::DoubleGreaterThanEqual:    return ">>=";
-        case Punctuator::AndEqual:                  return "&=";
-        case Punctuator::CaretEqual:                return "^=";
-        case Punctuator::PipeEqual:                 return "|=";
-        case Punctuator::Comma:                     return ",";
-        case Punctuator::Hashtag:                   return "#";
-        case Punctuator::DoubleHashtag:             return "##";
-        case Punctuator::LessThanColon:             return "<:";
-        case Punctuator::ColonGreaterThan:          return ":>";
-        case Punctuator::LessThanPercent:           return "<%";
-        case Punctuator::PercentGreaterThan:        return "%>";
-        case Punctuator::PercentColon:              return "%:";
-        case Punctuator::PercentColonPercentColon:  return "%:%:";
+        case Punctuator::LeftBracket:
+            return LEFT_BRACKET;
+        case Punctuator::RightBracket:
+            return RIGHT_BRACKET;
+        case Punctuator::LeftParenthesis:
+            return LEFT_PARENTHESIS;
+        case Punctuator::RightParenthesis:
+            return RIGHT_PARENTHESIS;
+        case Punctuator::LeftBrace:
+            return LEFT_BRACE;
+        case Punctuator::RightBrace:
+            return RIGHT_BRACE;
+        case Punctuator::Dot:
+            return DOT;
+        case Punctuator::DashGreaterThan:
+            return DASH_GREATER_THAN;
+        case Punctuator::DoublePlus:
+            return DOUBLE_PLUS;
+        case Punctuator::DoubleMinus:
+            return DOUBLE_MINUS;
+        case Punctuator::And:
+            return AND;
+        case Punctuator::Asterisk:
+            return ASTERISK;
+        case Punctuator::Plus:
+            return PLUS;
+        case Punctuator::Minus:
+            return MINUS;
+        case Punctuator::Tilde:
+            return TILDE;
+        case Punctuator::ExclamationMark:
+            return EXCLAMATION_MARK;
+        case Punctuator::Slash:
+            return SLASH;
+        case Punctuator::Percent:
+            return PERCENT;
+        case Punctuator::DoubleLessThan:
+            return DOUBLE_LESS_THAN;
+        case Punctuator::DoubleGreaterThan:
+            return DOUBLE_GREATER_THAN;
+        case Punctuator::LessThan:
+            return LESS_THAN;
+        case Punctuator::GreaterThan:
+            return GREATER_THAN;
+        case Punctuator::LessThanEqual:
+            return LESS_THAN_EQUAL;
+        case Punctuator::GreaterThanEqual:
+            return GREATHER_THAN_EQUAL;
+        case Punctuator::DoubleEqual:
+            return DOUBLE_EQUAL;
+        case Punctuator::ExclamationMarkEqual:
+            return EXCLAMATION_MARK_EQUAL;
+        case Punctuator::Caret:
+            return CARET;
+        case Punctuator::Pipe:
+            return PIPE;
+        case Punctuator::DoubleAnd:
+            return DOUBLE_AND;
+        case Punctuator::DoublePipe:
+            return DOUBLE_PIPE;
+        case Punctuator::QuestionMark:
+            return QUESTION_MARK;
+        case Punctuator::Colon:
+            return COLON;
+        case Punctuator::Semicolon:
+            return SEMICOLON;
+        case Punctuator::TripleDot:
+            return TRIPLE_DOT;
+        case Punctuator::Equal:
+            return EQUAL;
+        case Punctuator::AsteriskEqual:
+            return ASTERISK_EQUAL;
+        case Punctuator::SlashEqual:
+            return SLASH_EQUAL;
+        case Punctuator::PercentEqual:
+            return PERCENT_EQUAL;
+        case Punctuator::PlusEqual:
+            return PLUS_EQUAL;
+        case Punctuator::MinusEqual:
+            return MINUS_EQUAL;
+        case Punctuator::DoubleLessThanEqual:
+            return DOUBLE_LESS_THAN_EQUAL;
+        case Punctuator::DoubleGreaterThanEqual:
+            return DOUBLE_GREATER_THAN_EQUAL;
+        case Punctuator::AndEqual:
+            return AND_EQUAL;
+        case Punctuator::CaretEqual:
+            return CARET_EQUAL;
+        case Punctuator::PipeEqual:
+            return PIPE_EQUAL;
+        case Punctuator::Comma:
+            return COMMA;
+        case Punctuator::Hashtag:
+            return HASHTAG;
+        case Punctuator::DoubleHashtag:
+            return DOUBLE_HASHTAG;
+        case Punctuator::LessThanColon:
+            return LESS_THAN_COLON;
+        case Punctuator::ColonGreaterThan:
+            return COLON_GREATER_THAN;
+        case Punctuator::LessThanPercent:
+            return LESS_THAN_PERCENT;
+        case Punctuator::PercentGreaterThan:
+            return PERCENT_GREATER_THAN;
+        case Punctuator::PercentColon:
+            return PERCENT_COLON;
+        case Punctuator::PercentColonPercentColon:
+            return PERCENT_COLON_PERCENT_COLON;
+        default:
+            throw std::invalid_argument("punctuator");
     }
 }
