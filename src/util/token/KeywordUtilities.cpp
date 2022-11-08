@@ -52,6 +52,6 @@ const string &c4::util::token::stringify(Keyword keyword) {
         case Keyword::__Static_assert:  return __STATIC_ASSERT;
         case Keyword::__Thread_local:   return __THREAD_LOCAL;
         default:
-            throw std::invalid_argument("punctuator");
+            throw std::invalid_argument("keyword");
     }
 }
