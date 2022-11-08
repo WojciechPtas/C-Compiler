@@ -6,7 +6,7 @@
 namespace c4 {
     namespace model {
         namespace token {
-            class StringLiteralToken : Token {
+            class StringLiteralToken : public Token {
             public:
                 StringLiteralToken(TokenPosition position, std::string value);
                 virtual ~StringLiteralToken() { }

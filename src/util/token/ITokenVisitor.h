@@ -20,7 +20,7 @@ namespace c4 {
 
                 virtual void visit(
                     model::token::CharacterConstantToken &token
-                ) const = 0;
+                ) = 0;
 
                 virtual void visit(
                     model::token::DecimalConstantToken &token
