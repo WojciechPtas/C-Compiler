@@ -1,19 +1,23 @@
 #include <iostream>
-
-#include "model/token/KeywordToken.h"
-#include "util/token/PrintVisitor.h"
+#include "service/io/ISO88591InputStream.h"
 
 using namespace std;
 
-int main(int argc, const char *argv[]) {
-    c4::model::token::KeywordToken kwToken(
-        c4::model::token::TokenPosition("test.c", 1, 1),
-        c4::model::token::Keyword::While
-    );
+int main() {
+    c4::service::io::ISO88591InputStream src("Makefile");
+    char character;
 
-    c4::util::token::PrintVisitor visitor(std::cout);
+    while (src.read(&character)) {
+        src.pushMark();
+        cout << character;
 
-    kwToken.accept(visitor);
+        src.resetToMark();
+        cout << character;
+
+        src.popMark();
+    }
+
+    cout << "\n\n<EOF>\n\n";
 
     return 0;
 }
