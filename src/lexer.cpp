@@ -4,6 +4,8 @@
 #include "model/token/KeywordToken.h"
 #include "model/token/IdentifierToken.h"
 #include "model/token/DecimalConstantToken.h"
+#include "model/token/CharacterConstantToken.h"
+
 
 // #include "model/token/"
 
@@ -18,14 +20,12 @@ bool isCharOfIdentifier(const char c) {
     return (isalnum(c) || c=='_');
 }
 
-bool isNonZeroDigit(const char c) {
-    return (isdigit(c) && c!='0');
-}
-
-bool isCharOfNumberConstant(const char c, const bool isFloat, const bool exponentFound) {
-    return   isdigit(c) || 
-            (c=='.' && !isFloat) || 
-            (tolower(c)=='e' && isFloat && !exponentFound);
+bool escapeSequence(const char c) {
+    return 
+        (c=='\'') || (c=='\"') || (c=='\?') || 
+        (c=='\\') || (c=='\a') || (c=='\b') || 
+        (c=='\f') || (c=='\n') || (c=='\r') || 
+        (c=='\t') || (c=='\v');
 }
 
 namespace c4 {
@@ -56,21 +56,46 @@ bool Lexer::nextToken(const Token* token) {
 
     //Case: number constants
     if(isdigit(c)) {
-        bool possibleInteger = isNonZeroDigit(c);
-        bool validChar = true;
-        bool isFloat = false;
-        bool exponentFound = false;
-
-        while(!eof_reached && validChar) {
+        while(!eof_reached && isdigit(c)) {
             word.append(1, c); //Appends c to the word
-            eof_reached = !charStream.read(&c); 
-            validChar = isCharOfNumberConstant(c, isFloat, exponentFound);
+            eof_reached = !charStream.read(&c);
+        }
+        
+        token = new DecimalConstantToken(tp, word);
+    }
+
+    //Case: char constants
+    if(c=='\'') {
+        bool valid = charStream.read(&c);
+        //Inside the quotes
+        if (valid) { 
+            word.append(1, c);
+            if (c == '\\') { //Potential escape sequence!
+                //We've read a '\'. If we reached EOF or there's an invalid escape sequence we reject.
+                valid = !charStream.read(&c) || escapeSequence(c);
+                word.append(1, c);
+            }
+
+            else if(c=='\'' || c=='\n')
+                valid = false;
+            //Every other character is ok 
         }
 
-        token = new DecimalConstantToken(tp, word);
-        if(!possibleInteger && !isFloat) {
-            //WE NEED TO RETURN 2 TOKENS: 0 CONSTANT AND INTEGER CONSTANT!
+        //It must now terminate with quotes
+        if(valid) {
+            valid = charStream.read(&c) && c=='\'';
         }
+
+        //Time to get the token. Sadly i cannot avoid all these if(valid) because i need to preserve the position in the stream 
+        if (valid) {
+            token = new CharacterConstantToken(tp, word);
+        }
+        else {
+            tp = TokenPosition(charStream.getFilePath(), charStream.getPosLine(), charStream.getPosColumn());
+            //token = new ErrorToken(tp, word)
+        }
+        
+        
     }
 
     
