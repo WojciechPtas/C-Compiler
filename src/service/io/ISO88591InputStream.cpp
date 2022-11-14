@@ -9,7 +9,7 @@ using namespace std;
 
 #define INITIAL_BUFFER_SIZE 64
 
-ISO88591InputStream::ISO88591InputStream(string filePath) : stream(filePath) {
+ISO88591InputStream::ISO88591InputStream(string filePath) : stream(filePath), filePath(filePath) {
     if (stream.fail()) {
         throw std::invalid_argument("filePath");
     }
