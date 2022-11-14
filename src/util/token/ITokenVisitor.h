@@ -5,6 +5,7 @@ namespace c4 {
         namespace token {
             class CharacterConstantToken;
             class DecimalConstantToken;
+            class ErrorToken;
             class IdentifierToken;
             class KeywordToken;
             class PunctuatorToken;
@@ -26,6 +27,7 @@ namespace c4 {
                     model::token::DecimalConstantToken &token
                 ) = 0;
 
+                virtual void visit(model::token::ErrorToken &token) = 0;
                 virtual void visit(model::token::IdentifierToken &token) = 0;
                 virtual void visit(model::token::KeywordToken &token) = 0;
                 virtual void visit(model::token::PunctuatorToken &token) = 0;

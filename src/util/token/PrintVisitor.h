@@ -19,6 +19,7 @@ namespace c4 {
                     model::token::DecimalConstantToken &token
                 ) override;
 
+                void visit(model::token::ErrorToken &token) override;
                 void visit(model::token::IdentifierToken &token) override;
                 void visit(model::token::KeywordToken &token) override;
                 void visit(model::token::PunctuatorToken &token) override;

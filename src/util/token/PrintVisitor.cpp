@@ -1,5 +1,6 @@
 #include "../../model/token/CharacterConstantToken.h"
 #include "../../model/token/DecimalConstantToken.h"
+#include "../../model/token/ErrorToken.h"
 #include "../../model/token/IdentifierToken.h"
 #include "../../model/token/KeywordToken.h"
 #include "../../model/token/PunctuatorToken.h"
@@ -30,6 +31,14 @@ void PrintVisitor::visit(DecimalConstantToken &token) {
 
     this->outputStream << "constant ";
     this->outputStream << token.getValue();
+    this->outputStream << "\n";
+}
+
+void PrintVisitor::visit(ErrorToken &token) {
+    this->printPosition(token);
+
+    this->outputStream << "error: ";
+    this->outputStream << token.getMessage();
     this->outputStream << "\n";
 }
 
