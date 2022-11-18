@@ -1,0 +1,21 @@
+@startuml
+
+"External Code" -> Lexer : nextToken
+Lexer -> IInputStream : pushMark
+Lexer <-- IInputStream
+
+Lexer -> IInputStream : read
+Lexer <-- IInputStream
+
+Lexer -> Lexer : readKeywordOrIdentifier
+
+Lexer -> IInputStream : resetMark
+Lexer <-- IInputStream
+
+Lexer -> Automaton : walk
+Lexer <-- Automaton : Node
+
+Lexer -> IInputStream : read
+Lexer <-- IInputStream
+
+@enduml

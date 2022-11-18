@@ -129,4 +129,30 @@ class PrintVisitor implements ITokenVisitor {
 	- printPosition(token: Token&)
 }
 
+class Lexer {
+	- charStream: shared_ptr<IInputStream<char>>
+	- punctuatorAutomaton: shared_ptr<IAutomaton>
+	- keywordAutomaton: shared_ptr<IAutomaton>
+	- digraphAutomaton: shared_ptr<IAutomaton>
+	
+	+ Lexer(charStream: shared_ptr<IInputStream<char>>, punctuatorAutomaton: shared_ptr<IAutomaton>, keywordAutomaton: shared_ptr<IAutomaton>, digraphAutomaton: shared_ptr<IAutomaton>)
+	+ nextToken(): shared_ptr<Token>
+}
+
+interface IAutomaton<TEdge, TPayload> {
+	+ walk(src: IInputStream<TEdge>): shared_ptr<Node<TEdge, TPayload>>
+}
+
+class Automaton implements IAutomaton {
+    + Automaton(tree: Tree)
+}
+
+class Node<TEdge, TPayload> {
+	- transitions: unordered_map<TEdge, shared_ptr<Node>>
+	- payload: shared_ptr<TPayload>
+
+	+ Node()
+	+ getPayload(): shared_ptr<TPayload>
+}
+
 @enduml
