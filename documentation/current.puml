@@ -1,0 +1,132 @@
+@startuml
+
+abstract class Token {
+	- position: TokenPosition
+
+	+ accept(visitor: ITokenVisitor&): void
+	+ getPosition(): const TokenPosition&
+	# Token(position: TokenPosition)
+}
+
+abstract class ConstantToken extends Token {
+}
+
+class CharacterConstantToken extends ConstantToken {
+	- value: string
+
+	+ CharacterConstantToken(position: TokenPosition, value: string)
+	+ accept(visitor: ITokenVisitor&): void
+	+ getValue(): const string&
+}
+
+class DecimalConstantToken extends ConstantToken {
+	- value: string
+
+	+ DecimalConstantToken(position: TokenPosition, value: string)
+	+ accept(visitor: ITokenVisitor&): void
+	+ getValue(): const string&
+}
+
+class ErrorToken extends Token {
+	- message: string
+
+	+ ErrorToken(position: TokenPosition, message: string)
+	+ accept(visitor: ITokenVisitor&): void
+	+ getMessage(): const string&
+}
+
+class IdentifierToken extends Token {
+	- identifier: string
+
+	+ IdentifierToken(position: TokenPosition, identifier: string)
+	+ accept(visitor: ITokenVisitor&): void
+	+ getIdentifier(): const string&
+}
+
+enum Keyword {}
+
+class KeywordToken extends Token {
+	- keyword: Keyword
+
+	+ KeywordToken(position: TokenPosition, keyword: Keyword)
+	+ accept(visitor: ITokenVisitor&): void
+	+ getKeyword(): Keyword
+}
+
+enum Punctuator {}
+
+class PunctuatorToken extends Token {
+	- punctuator: Punctuator
+
+	+ PunctuatorToken(position: TokenPosition, punctuator: Punctuator)
+	+ accept(visitor: ITokenVisitor&): void
+	+ getPunctuator(): Punctuator
+}
+
+class StringLiteralToken extends Token {
+	- value: string
+
+	+ IdentifierToken(position: TokenPosition, value: string)
+	+ accept(visitor: ITokenVisitor&): void
+	+ getValue(): const string&
+}
+
+class TokenPosition {
+	- file: string
+	- line: uint32_t
+	- column: uint32_t
+
+	+ TokenPosition(file: string, line: uint32_t, column: uint32_t)
+	+ getFile(): string
+	+ getLine(): uint32_t
+	+ getColumn(): uint32_t
+}
+
+interface IInputStream<TElement> {
+	+ popMark(): void
+	+ pushMark(): void
+	+ read(TElement *dst): bool
+	+ resetToMark(): void
+}
+
+class ISO88591InputStream implements IInputStream {
+	- stream: ifstream
+	- buffer: char*
+	- bufferOffset: size_t
+	- bufferLimit: size_t
+	- bufferCapacity: size_t
+	- markStack: vector<size_t>
+
+	+ ISO88591InputStream(filePath: string)	
+	+ popMark(): void
+	+ pushMark(): void
+	+ read(char *dst): bool
+	+ resetToMark(): void
+}
+
+interface ITokenVisitor {
+	+ visit(token: CharacterConstantToken): void
+	+ visit(token: DecimalConstantToken): void
+	+ visit(token: ErrorToken): void
+	+ visit(token: IdentifierToken): void
+	+ visit(token: KeywordToken): void
+	+ visit(token: PunctuatorToken): void
+	+ visit(token: StringLiteralToken): void
+}
+
+class PrintVisitor implements ITokenVisitor {
+	- outputStream: ostream
+
+	+ PrintVisitor(outputStream: ostream)
+	+ visit(token: CharacterConstantToken): void
+	+ visit(token: DecimalConstantToken): void
+	+ visit(token: ErrorToken): void
+	+ visit(token: IdentifierToken): void
+	+ visit(token: KeywordToken): void
+	+ visit(token: PunctuatorToken): void
+	+ visit(token: StringLiteralToken): void
+	
+	- printPosition(token: Token&)
+}
+
+@enduml
