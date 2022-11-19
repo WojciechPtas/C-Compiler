@@ -1,19 +1,26 @@
 #pragma once
 #include <unordered_map>
 #include <memory>
+#include <vector>
+//#include "model\token\Token.h"
+
 
 namespace c4 {
     namespace service {
         namespace Node {
+            template <class key, class Value>
             class Node{
                     private:
-                        std::unordered_map<char, std::shared_ptr<Node>> transitions;
-                        bool is_finite;
+                        std::unordered_map<key, std::shared_ptr<Node>> transitions;
+                        std::shared_ptr<Value> result;
                     public:
                         Node();
-                        bool isFinite(){return is_finite;}
-            };
+                        Node(std::vector<key>& word, const std::shared_ptr<Value> Token);
+                        bool addChildNode(key c, std::shared_ptr<Node> child);
+                        std::shared_ptr<Node<class key, class Value>> getChildNode(key c); // auto next=ournoude->getChildNode(c) if(next)
+                        void merge(const std::shared_ptr<Node> ptr);
+                    };
 
-
-
-        }}}
+            }
+        }
+}
