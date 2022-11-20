@@ -1,13 +1,7 @@
 #include "lexer.h"
-#include <string>
-#include "model/token/TokenPosition.h"
-#include "model/token/KeywordToken.h"
-#include "model/token/IdentifierToken.h"
-#include "model/token/DecimalConstantToken.h"
-#include "model/token/CharacterConstantToken.h"
 
 using namespace c4::model::token;
-using namespace c4::service::io; //I hope this is fine
+using namespace c4::service; //I hope this is fine
 
 bool isStartOfIdentifier(const char c) {
     return (isalpha(c) || c=='_');
@@ -27,67 +21,138 @@ bool escapeSequence(const char c) {
 
 namespace c4 {
 
-bool Lexer::nextToken(const Token* token) {
-    TokenPosition tp(charStream.getFilePath(), charStream.getPosLine(), charStream.getPosColumn());
+bool Lexer::nextToken(std::shared_ptr<const Token> token) {
+    token = nullptr;
+    TokenPosition tp(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
     std::string word;
     char c;
-    charStream.pushMark();
-    bool eof_reached = !charStream.read(&c);
-    if(eof_reached) return false;
-    
-//Start of lexing process
+    bool eof_reached, validEndOfFile=false;
 
+    charStream->pushMark();
+    while(!(eof_reached = !charStream->read(&c)) && isspace(c))  {
+        validEndOfFile = (c== '\n' || c=='\r'); //File must end in a newline!
+    } //Wastes all whitespaces, newlines, etc.
+    if(eof_reached) {
+        if(!validEndOfFile) {
+            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+            token = std::make_shared<ErrorToken>(tp, "Unexpected end of file");
+        }
+        return false;
+    }
+//We continue only if we didn't reach EOF
+
+//Start of lexing process
     //Case: keyword or identifier
     if(isStartOfIdentifier(c)) {
-        // while(!eof_reached && isCharOfIdentifier(c)) {
-        //     word.append(1, c); //Appends c to the word
-        //     eof_reached = !charStream.read(&c); //if it reads last char, we still expect eof_reached to be false
-        // }
-        charStream.resetToMark();
-        //AUTOMATON TIME!
         
-        //IS word IDENTIFIER OR KEYWORD??
+        charStream->resetToMark();
+        // token = keywords->walk(*charStream); //After this, only accepted part of the stream has been used up
+        eof_reached = !charStream->read(&c);
+        if(token == nullptr || (!eof_reached && isCharOfIdentifier(c)) ) { //No keyword found OR keyword found but other letters are following
+            charStream->resetToMark();
+            while(charStream->read(&c) && isCharOfIdentifier(c)) {
+                word.append(1, c); //Appends c to the word
+            }
+        }        
     }
 
     //Case: number constants
     else if (c == '0') {
-        // 0 constant
+        token = std::make_shared<DecimalConstantToken>(tp, "0");
     }
 
     else if(isdigit(c)) { //Nonzero decimal constant
         while(!eof_reached && isdigit(c)) {
             word.append(1, c); //Appends c to the word
-            eof_reached = !charStream.read(&c);
+            eof_reached = !charStream->read(&c);
         }
-        token = new DecimalConstantToken(tp, word);
+        token = std::make_shared<DecimalConstantToken>(tp, word);
     }
 
     //Case: char constants
-    if(c=='\'') {
-        bool valid = charStream.read(&c);
-        // if (!valid) return errortoken;
-        
+    else if(c=='\'') {
+        eof_reached = !charStream->read(&c);
+        if (eof_reached) {
+            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+            token = std::make_shared<ErrorToken>(tp, "EOF in the middle of a character constant");
+            return false;
+        }
+
         //Inside the quotes
+        bool valid=true;
         if (c == '\\') { //Potential escape sequence!
             //We've read a '\'. If we reached EOF or there's an invalid escape sequence we reject.
-            valid = !charStream.read(&c) || escapeSequence(c);
             word.append(1, '\\');
+            bool invalidEscapeSequence = !charStream->read(&c) || !escapeSequence(c);
+            if (invalidEscapeSequence) {
+                tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+                token = std::make_shared<ErrorToken>(tp, "Invalid escape sequence");
+                valid = false;
+            }
         }
 
-        else if(c=='\'' || c=='\n')
-            //return errortoken;
-        
-        word.append(1, c);
-
-        if (charStream.read(&c) && c=='\'') {
-            //return chartoken;
+        else if(c=='\'' || c=='\n') {
+            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+            // std::string errorMsg = "Disallowed character ";
+            // errorMsg.append(1, c); errorMsg.append(" in character constant")
+            token = std::make_shared<ErrorToken>(tp, "Disallowed character in character constant");
+            valid = false;
         }
-        else {
-            // return errortoken;
+        word.append(1, c); //append last character read before continuing
+        if (valid && charStream->read(&c) && c=='\'') {
+            token = std::make_shared<CharacterConstantToken>(tp, word);
+        }
+        else if (/*it WAS*/ valid) { //we don't wanna overwrite error messages
+            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+            token = std::make_shared<ErrorToken>(tp, "Expected ' to terminate the character constant");
+        }
+        //else i already have the errortoken ready
+    }
+
+    //Case: string
+    else if (c=='\"') {
+        bool stringTerminated = false, valid = true;
+        while(charStream->read(&c) && valid && !stringTerminated) {
+            if (c== '\"') { //String terminated correctly
+                token = std::make_shared<StringLiteralToken>(tp, word);
+                stringTerminated = true;
+            }
+            else if (c == '\\') { //Potential escape sequence!
+                //We've read a '\'. If we reached EOF or there's an invalid escape sequence we reject.
+                word.append(1, '\\');
+                bool invalidEscapeSequence = !charStream->read(&c) || !escapeSequence(c);
+                if (invalidEscapeSequence) {
+                    tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+                    token = std::make_shared<ErrorToken>(tp, "Invalid escape sequence");
+                    valid = false;
+                }
+            }
+            else if (c== '\n') {
+                valid = false;
+                tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+                token = std::make_shared<ErrorToken>(tp, "Newlines in string literals are not allowed");
+            }
+
+            if(!stringTerminated) word.append(1, c);
+        }
+        if (stringTerminated) {
+            token = std::make_shared<StringLiteralToken>(tp, word);
         }
     }
+
+    else {
+        charStream->resetToMark();
+        token = punctuators->walk(*charStream);
+        if (token == nullptr) {
+            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+            token = std::make_shared<ErrorToken>(tp, "Unrecoginzed symbol");
+        }
+        //else punctuator token is ready by the automaton
+    }
         
-        
+    charStream->popMark();
+    return true; //even if we reached eof, we want to say it in the next iteration of nextToken() so we can report EOF without a previous \n
+
 }
 
 }

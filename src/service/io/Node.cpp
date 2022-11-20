@@ -5,7 +5,7 @@ using namespace c4::service::Node;
 
 
 template<class key, class Value>
-Node<class key, class Value>::Node(std::vector<key>& word, std::shared_ptr<Value> Token){
+Node<key, Value>::Node(std::vector<key>& word, std::shared_ptr<Value> Token){
     if(word.size()==0) {
         this->result=Token;
     }
@@ -18,7 +18,7 @@ Node<class key, class Value>::Node(std::vector<key>& word, std::shared_ptr<Value
 }
 
 template<class key, class Value>
-bool Node<class key, class Value>::addChildNode(key c, std::shared_ptr<Node> child){
+bool Node<key, Value>::addChildNode(key c, std::shared_ptr<Node> child){
     if(this->transitions.find(c)==this->transitions.end()){
         this->transitions[c]=child;
         return true;
@@ -28,7 +28,7 @@ bool Node<class key, class Value>::addChildNode(key c, std::shared_ptr<Node> chi
     }
 }
 template<class key, class Value>
-std::shared_ptr<Node<class key, class Value>> Node<class key, class Value>::getChildNode(key c){
+std::shared_ptr<Node<key, Value>> Node<key, Value>::getChildNode(key c){
     if(this->transitions.find(c)==this->transitions.end()){
         return nullptr;
     }
@@ -38,7 +38,7 @@ std::shared_ptr<Node<class key, class Value>> Node<class key, class Value>::getC
 }
 
 template<class key, class Value>
-void Node<class key, class Value>::merge(const std::shared_ptr<Node> ptr){
+void Node<key, Value>::merge(const std::shared_ptr<Node> ptr){
     this->result=ptr->result;
     for(auto it = ptr->transitions.begin(); it!=ptr->transitions.end(); ++it){
         if(this->transitions.find(it->first)==this->transitions.end()){

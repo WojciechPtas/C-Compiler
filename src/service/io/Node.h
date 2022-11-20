@@ -17,7 +17,7 @@ namespace c4 {
                         Node();
                         Node(std::vector<key>& word, const std::shared_ptr<Value> Token);
                         bool addChildNode(key c, std::shared_ptr<Node> child);
-                        std::shared_ptr<Node<class key, class Value>> getChildNode(key c); // auto next=ournoude->getChildNode(c) if(next)
+                        std::shared_ptr<Node<key, Value>> getChildNode(key c); // auto next=ournoude->getChildNode(c) if(next)
                         void merge(const std::shared_ptr<Node> ptr);
                     };
 

@@ -1,6 +1,3 @@
-#include <cstdlib>
-#include <cstring>
-#include <stdexcept>
 
 #include "ISO88591InputStream.h"
 
