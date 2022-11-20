@@ -1,5 +1,6 @@
 #include <iostream>
 #include "service/io/ISO88591InputStream.h"
+#include "lexer.h"
 
 using namespace std;
 
@@ -18,6 +19,7 @@ int main() {
     }
 
     cout << "\n\n<EOF>\n\n";
+    c4::Lexer l("a");
 
     return 0;
 }
