@@ -6,9 +6,6 @@
 #include "model/token/DecimalConstantToken.h"
 #include "model/token/CharacterConstantToken.h"
 
-
-// #include "model/token/"
-
 using namespace c4::model::token;
 using namespace c4::service::io; //I hope this is fine
 
@@ -23,9 +20,9 @@ bool isCharOfIdentifier(const char c) {
 bool escapeSequence(const char c) {
     return 
         (c=='\'') || (c=='\"') || (c=='\?') || 
-        (c=='\\') || (c=='\a') || (c=='\b') || 
-        (c=='\f') || (c=='\n') || (c=='\r') || 
-        (c=='\t') || (c=='\v');
+        (c=='\\') || (c=='a') || (c=='b') || 
+        (c=='f') || (c=='n') || (c=='r') || 
+        (c=='t') || (c=='v');
 }
 
 namespace c4 {
@@ -34,6 +31,7 @@ bool Lexer::nextToken(const Token* token) {
     TokenPosition tp(charStream.getFilePath(), charStream.getPosLine(), charStream.getPosColumn());
     std::string word;
     char c;
+    charStream.pushMark();
     bool eof_reached = !charStream.read(&c);
     if(eof_reached) return false;
     
@@ -41,66 +39,55 @@ bool Lexer::nextToken(const Token* token) {
 
     //Case: keyword or identifier
     if(isStartOfIdentifier(c)) {
-        while(!eof_reached && isCharOfIdentifier(c)) {
-            word.append(1, c); //Appends c to the word
-            eof_reached = !charStream.read(&c); //if it reads last char, we still expect eof_reached to be false
-        }
+        // while(!eof_reached && isCharOfIdentifier(c)) {
+        //     word.append(1, c); //Appends c to the word
+        //     eof_reached = !charStream.read(&c); //if it reads last char, we still expect eof_reached to be false
+        // }
+        charStream.resetToMark();
+        //AUTOMATON TIME!
         
         //IS word IDENTIFIER OR KEYWORD??
-        //TREE STRUCTURE SHOULD RETURN CORRECT TOKEN OR NOTHING
-        if (token == NULL) {
-            token = new IdentifierToken(tp, word);
-        }
-
     }
 
     //Case: number constants
-    if(isdigit(c)) {
+    else if (c == '0') {
+        // 0 constant
+    }
+
+    else if(isdigit(c)) { //Nonzero decimal constant
         while(!eof_reached && isdigit(c)) {
             word.append(1, c); //Appends c to the word
             eof_reached = !charStream.read(&c);
         }
-        
         token = new DecimalConstantToken(tp, word);
     }
 
     //Case: char constants
     if(c=='\'') {
         bool valid = charStream.read(&c);
+        // if (!valid) return errortoken;
+        
         //Inside the quotes
-        if (valid) { 
-            word.append(1, c);
-            if (c == '\\') { //Potential escape sequence!
-                //We've read a '\'. If we reached EOF or there's an invalid escape sequence we reject.
-                valid = !charStream.read(&c) || escapeSequence(c);
-                word.append(1, c);
-            }
-
-            else if(c=='\'' || c=='\n')
-                valid = false;
-            //Every other character is ok 
+        if (c == '\\') { //Potential escape sequence!
+            //We've read a '\'. If we reached EOF or there's an invalid escape sequence we reject.
+            valid = !charStream.read(&c) || escapeSequence(c);
+            word.append(1, '\\');
         }
 
-        //It must now terminate with quotes
-        if(valid) {
-            valid = charStream.read(&c) && c=='\'';
-        }
+        else if(c=='\'' || c=='\n')
+            //return errortoken;
+        
+        word.append(1, c);
 
-        //Time to get the token. Sadly i cannot avoid all these if(valid) because i need to preserve the position in the stream 
-        if (valid) {
-            token = new CharacterConstantToken(tp, word);
+        if (charStream.read(&c) && c=='\'') {
+            //return chartoken;
         }
         else {
-            tp = TokenPosition(charStream.getFilePath(), charStream.getPosLine(), charStream.getPosColumn());
-            //token = new ErrorToken(tp, word)
+            // return errortoken;
         }
-        
-        
     }
-
-    
-    
-    return eof_reached;
+        
+        
 }
 
 }
