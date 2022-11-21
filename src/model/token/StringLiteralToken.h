@@ -11,12 +11,14 @@ namespace c4 {
                 StringLiteralToken(TokenPosition position, std::string value);
                 virtual ~StringLiteralToken() { }
 
-                void accept(util::token::ITokenVisitor &visitor) override;
+                void accept(
+                    util::token::ITokenVisitor &visitor
+                ) const override;
 
-                std::string getValue();
+                const std::string getValue() const;
 
             private:
-                std::string value;
+                const std::string value;
             };
         }
     }

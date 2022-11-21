@@ -5,14 +5,12 @@ using namespace c4::util::token;
 using namespace std;
 
 StringLiteralToken::StringLiteralToken(TokenPosition position, string value)
-    : Token(position) {
-    this->value = value;
-}
+    : Token(position), value(value) { }
 
-void StringLiteralToken::accept(ITokenVisitor &visitor) {
+void StringLiteralToken::accept(ITokenVisitor &visitor) const {
     visitor.visit(*this);
 }
 
-string StringLiteralToken::getValue() {
+const string StringLiteralToken::getValue() const {
     return this->value;
 }

@@ -15,12 +15,14 @@ namespace c4 {
 
                 virtual ~ErrorToken() { }
 
-                void accept(util::token::ITokenVisitor &visitor) override;
+                void accept(
+                    util::token::ITokenVisitor &visitor
+                ) const override;
 
-                const std::string &getMessage();
+                const std::string &getMessage() const;
 
             private:
-                std::string message;
+                const std::string message;
             };
         }
     }

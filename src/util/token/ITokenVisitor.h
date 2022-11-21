@@ -20,19 +20,28 @@ namespace c4 {
                 virtual ~ITokenVisitor() { }
 
                 virtual void visit(
-                    model::token::CharacterConstantToken &token
+                    const model::token::CharacterConstantToken &token
                 ) = 0;
 
                 virtual void visit(
-                    model::token::DecimalConstantToken &token
+                    const model::token::DecimalConstantToken &token
                 ) = 0;
 
-                virtual void visit(model::token::ErrorToken &token) = 0;
-                virtual void visit(model::token::IdentifierToken &token) = 0;
-                virtual void visit(model::token::KeywordToken &token) = 0;
-                virtual void visit(model::token::PunctuatorToken &token) = 0;
+                virtual void visit(const model::token::ErrorToken &token) = 0;
                 virtual void visit(
-                    model::token::StringLiteralToken &token
+                    const model::token::IdentifierToken &token
+                ) = 0;
+
+                virtual void visit(
+                    const model::token::KeywordToken &token
+                ) = 0;
+
+                virtual void visit(
+                    const model::token::PunctuatorToken &token
+                ) = 0;
+                
+                virtual void visit(
+                    const model::token::StringLiteralToken &token
                 ) = 0;
             };
         }

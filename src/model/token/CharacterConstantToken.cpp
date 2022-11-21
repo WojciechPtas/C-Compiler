@@ -7,13 +7,12 @@ using namespace std;
 CharacterConstantToken::CharacterConstantToken(
     TokenPosition position,
     string value
-) : ConstantToken(position), value(value) {
-}
+) : ConstantToken(position), value(value) { }
 
-void CharacterConstantToken::accept(ITokenVisitor &visitor) {
+void CharacterConstantToken::accept(ITokenVisitor &visitor) const {
     visitor.visit(*this);
 }
 
-const string &CharacterConstantToken::getValue() {
+const string &CharacterConstantToken::getValue() const {
     return this->value;
 }

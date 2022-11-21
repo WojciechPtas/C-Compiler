@@ -4,7 +4,8 @@
 #include "lexer.h"
 
 using namespace c4::model::token;
-using namespace c4::service;
+using namespace c4::service::io;
+using namespace std;
 
 bool isStartOfIdentifier(const char c) {
     return (isalpha(c) || c=='_');
@@ -28,7 +29,7 @@ bool escapeSequence(const char c) {
 
 namespace c4 {
 
-bool Lexer::readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (char)) {
+bool Lexer::readMaximumMunchWhile(string& wordToAppendTo, bool (*filter) (char)) {
     char c;
     bool eof_NOT_reached;
     charStream->pushMark();
@@ -42,7 +43,7 @@ bool Lexer::readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (c
     return eof_NOT_reached;
 }
 
-bool Lexer::nextToken(std::shared_ptr<Token> &token) {
+bool Lexer::nextToken(shared_ptr<const Token> &token) {
     token = nullptr;
     TokenPosition tp(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
     std::string word;
@@ -174,7 +175,7 @@ bool Lexer::nextToken(std::shared_ptr<Token> &token) {
     }
 
     else {
-        std::cout << "Read a " << c << "!\n";
+        cout << "Read a " << c << "!\n";
         // charStream->resetToMark();
         // token = punctuators->walk(*charStream);
         if (token == nullptr) {

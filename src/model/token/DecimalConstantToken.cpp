@@ -7,13 +7,12 @@ using namespace std;
 DecimalConstantToken::DecimalConstantToken(
     TokenPosition position,
     string value
-) : ConstantToken(position), value(value) {
-}
+) : ConstantToken(position), value(value) { }
 
-void DecimalConstantToken::accept(ITokenVisitor &visitor) {
+void DecimalConstantToken::accept(ITokenVisitor &visitor) const {
     visitor.visit(*this);
 }
 
-string &DecimalConstantToken::getValue() {
+const string &DecimalConstantToken::getValue() const {
     return this->value;
 }

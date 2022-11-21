@@ -11,9 +11,11 @@ namespace c4 {
                 PunctuatorToken(TokenPosition position, Punctuator punctuator);
                 virtual ~PunctuatorToken() { }
 
-                void accept(util::token::ITokenVisitor &visitor) override;
+                void accept(
+                    util::token::ITokenVisitor &visitor
+                ) const override;
 
-                Punctuator getPunctuator();
+                Punctuator getPunctuator() const;
 
             private:
                 Punctuator punctuator;

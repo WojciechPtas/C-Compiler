@@ -11,9 +11,11 @@ namespace c4 {
                 KeywordToken(TokenPosition position, Keyword keyword);
                 virtual ~KeywordToken() { }
 
-                void accept(util::token::ITokenVisitor &visitor) override;
+                void accept(
+                    util::token::ITokenVisitor &visitor
+                ) const override;
 
-                Keyword getKeyword();
+                Keyword getKeyword() const;
 
             private:
                 Keyword keyword;

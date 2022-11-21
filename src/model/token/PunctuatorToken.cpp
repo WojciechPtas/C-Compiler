@@ -8,10 +8,10 @@ PunctuatorToken::PunctuatorToken(TokenPosition position, Punctuator punctuator)
     this->punctuator = punctuator;
 }
 
-void PunctuatorToken::accept(ITokenVisitor &visitor) {
+void PunctuatorToken::accept(ITokenVisitor &visitor) const {
     visitor.visit(*this);
 }
 
-Punctuator PunctuatorToken::getPunctuator() {
+Punctuator PunctuatorToken::getPunctuator() const {
     return this->punctuator;
 }

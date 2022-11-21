@@ -8,10 +8,10 @@ KeywordToken::KeywordToken(TokenPosition position, Keyword keyword)
     this->keyword = keyword;
 }
 
-void KeywordToken::accept(ITokenVisitor &visitor) {
+void KeywordToken::accept(ITokenVisitor &visitor) const {
     visitor.visit(*this);
 }
 
-Keyword KeywordToken::getKeyword() {
+Keyword KeywordToken::getKeyword() const {
     return this->keyword;
 }

@@ -10,15 +10,17 @@ namespace c4 {
             public:
                 virtual ~Token() { }
 
-                virtual void accept(util::token::ITokenVisitor &visitor) = 0;
+                virtual void accept(
+                    util::token::ITokenVisitor &visitor
+                ) const = 0;
 
-                const TokenPosition &getPosition();
+                const TokenPosition &getPosition() const;
 
             protected:
                 Token(TokenPosition position);
 
             private:
-                TokenPosition position;
+                const TokenPosition position;
             };
         }
     }

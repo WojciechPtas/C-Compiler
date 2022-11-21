@@ -17,7 +17,7 @@ PrintVisitor::PrintVisitor(ostream &outputStream)
     : outputStream(outputStream) {
 }
 
-void PrintVisitor::visit(CharacterConstantToken &token) {
+void PrintVisitor::visit(const CharacterConstantToken &token) {
     this->printPosition(token);
 
     this->outputStream << "constant ";
@@ -26,7 +26,7 @@ void PrintVisitor::visit(CharacterConstantToken &token) {
 }
 
 
-void PrintVisitor::visit(DecimalConstantToken &token) {
+void PrintVisitor::visit(const DecimalConstantToken &token) {
     this->printPosition(token);
 
     this->outputStream << "constant ";
@@ -34,7 +34,7 @@ void PrintVisitor::visit(DecimalConstantToken &token) {
     this->outputStream << "\n";
 }
 
-void PrintVisitor::visit(ErrorToken &token) {
+void PrintVisitor::visit(const ErrorToken &token) {
     this->printPosition(token);
 
     this->outputStream << "error: ";
@@ -42,7 +42,7 @@ void PrintVisitor::visit(ErrorToken &token) {
     this->outputStream << "\n";
 }
 
-void PrintVisitor::visit(IdentifierToken &token) {
+void PrintVisitor::visit(const IdentifierToken &token) {
     this->printPosition(token);
 
     this->outputStream << "identifier ";
@@ -50,7 +50,7 @@ void PrintVisitor::visit(IdentifierToken &token) {
     this->outputStream << "\n";
 }
 
-void PrintVisitor::visit(KeywordToken &token) {
+void PrintVisitor::visit(const KeywordToken &token) {
     this->printPosition(token);
 
     this->outputStream << "keyword ";
@@ -58,7 +58,7 @@ void PrintVisitor::visit(KeywordToken &token) {
     this->outputStream << "\n";
 }
 
-void PrintVisitor::visit(PunctuatorToken &token) {
+void PrintVisitor::visit(const PunctuatorToken &token) {
     this->printPosition(token);
 
     this->outputStream << "punctuator ";
@@ -66,7 +66,7 @@ void PrintVisitor::visit(PunctuatorToken &token) {
     this->outputStream << "\n";
 }
 
-void PrintVisitor::visit(StringLiteralToken &token) {
+void PrintVisitor::visit(const StringLiteralToken &token) {
     this->printPosition(token);
 
     this->outputStream << "string-literal \"";
@@ -74,7 +74,7 @@ void PrintVisitor::visit(StringLiteralToken &token) {
     this->outputStream << "\"\n";
 }
 
-void PrintVisitor::printPosition(Token &token) {
+void PrintVisitor::printPosition(const Token &token) {
     auto pos = token.getPosition();
 
     this->outputStream << pos.getFile();

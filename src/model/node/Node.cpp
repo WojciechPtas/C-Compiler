@@ -1,8 +1,6 @@
 #include "Node.h"
 
-
-using namespace c4::service::Node;
-
+using namespace c4::model::node;
 
 template<class key, class Value>
 Node<key, Value>::Node(std::vector<key>& word, std::shared_ptr<Value> Token){

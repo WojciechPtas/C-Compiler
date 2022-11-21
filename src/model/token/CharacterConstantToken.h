@@ -15,12 +15,14 @@ namespace c4 {
 
                 virtual ~CharacterConstantToken() { }
 
-                void accept(util::token::ITokenVisitor &visitor) override;
+                void accept(
+                    util::token::ITokenVisitor &visitor
+                ) const override;
 
-                const std::string &getValue();
+                const std::string &getValue() const;
 
             private:
-                std::string value;
+                const std::string value;
             };
         }
     }

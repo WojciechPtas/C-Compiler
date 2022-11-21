@@ -12,23 +12,31 @@ namespace c4 {
                 virtual ~PrintVisitor() { }
 
                 void visit(
-                    model::token::CharacterConstantToken &token
+                    const model::token::CharacterConstantToken &token
                 ) override;
 
                 void visit(
-                    model::token::DecimalConstantToken &token
+                    const model::token::DecimalConstantToken &token
                 ) override;
 
-                void visit(model::token::ErrorToken &token) override;
-                void visit(model::token::IdentifierToken &token) override;
-                void visit(model::token::KeywordToken &token) override;
-                void visit(model::token::PunctuatorToken &token) override;
-                void visit(model::token::StringLiteralToken &token) override;
+                void visit(const model::token::ErrorToken &token) override;
+                void visit(
+                    const model::token::IdentifierToken &token
+                ) override;
+
+                void visit(const model::token::KeywordToken &token) override;
+                void visit(
+                    const model::token::PunctuatorToken &token
+                ) override;
+
+                void visit(
+                    const model::token::StringLiteralToken &token
+                ) override;
 
             private:
                 std::ostream &outputStream;
 
-                void printPosition(model::token::Token &token);
+                void printPosition(const model::token::Token &token);
             };
         }
     }

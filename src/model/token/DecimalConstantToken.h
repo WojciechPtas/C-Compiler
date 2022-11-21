@@ -11,12 +11,14 @@ namespace c4 {
                 DecimalConstantToken(TokenPosition position, std::string value);
                 virtual ~DecimalConstantToken() { }
 
-                void accept(util::token::ITokenVisitor &visitor) override;
+                void accept(
+                    util::token::ITokenVisitor &visitor
+                ) const override;
 
-                std::string &getValue();
+                const std::string &getValue() const;
 
             private:
-                std::string value;
+                const std::string value;
             };
         }
     }

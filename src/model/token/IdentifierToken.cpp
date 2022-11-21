@@ -5,13 +5,12 @@ using namespace c4::util::token;
 using namespace std;
 
 IdentifierToken::IdentifierToken(TokenPosition position, string identifier)
-    : Token(position), identifier(identifier) {
-}
+    : Token(position), identifier(identifier) { }
 
-void IdentifierToken::accept(ITokenVisitor &visitor) {
+void IdentifierToken::accept(ITokenVisitor &visitor) const {
     visitor.visit(*this);
 }
 
-string &IdentifierToken::getIdentifier() {
+const string &IdentifierToken::getIdentifier() const {
     return this->identifier;
 }

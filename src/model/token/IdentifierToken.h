@@ -15,12 +15,14 @@ namespace c4 {
 
                 virtual ~IdentifierToken() { }
 
-                void accept(util::token::ITokenVisitor &visitor) override;
+                void accept(
+                    util::token::ITokenVisitor &visitor
+                ) const override;
 
-                std::string &getIdentifier();
+                const std::string &getIdentifier() const;
 
             private:
-                std::string identifier;
+                const std::string identifier;
             };
         }
     }
