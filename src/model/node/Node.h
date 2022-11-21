@@ -1,13 +1,12 @@
 #pragma once
-#include <unordered_map>
-#include <memory>
-#include <vector>
-//#include "model\token\Token.h"
 
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
 namespace c4 {
-    namespace service {
-        namespace Node {
+    namespace model {
+        namespace node {
             template <class key, class Value>
             class Node{
                     private:
