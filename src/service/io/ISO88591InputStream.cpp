@@ -1,4 +1,6 @@
 #include <iostream>
+
+#include "../../debug.h"
 #include "ISO88591InputStream.h"
 
 using namespace c4::service::io;
@@ -35,7 +37,6 @@ void ISO88591InputStream::popMark() {
     // is no mark left.
 
     if (this->markStack.empty() && this->bufferOffset > 0) {
-
         size_t remainingChars = this->bufferLimit - this->bufferOffset;
 
         memmove(
@@ -55,14 +56,17 @@ void ISO88591InputStream::popMark() {
         this->bufferLimit = remainingChars;
         this->bufferOffset = 0;
 
-        
+        DBGOUT_E(
+            "stream",
+            "Shrinked down buffer (capacity = %d, limit = %d)",
+            this->bufferCapacity,
+            this->bufferLimit
+        );
     }
-    std::cerr << "--- Marks present: " << markStack.size() << "\n";
 }
 
 void ISO88591InputStream::pushMark() {
     this->markStack.push_back(this->bufferOffset);
-    std::cerr << "--- Marks present: " << markStack.size() << "\n";
 }
 
 bool ISO88591InputStream::read(char *dst) {
@@ -81,6 +85,8 @@ bool ISO88591InputStream::read(char *dst) {
         this->bufferCapacity = 0;
         this->bufferLimit = 0;
         this->bufferOffset = 0;
+
+        DBGOUT("stream", "Released buffer");
     }
 
     // If there is no buffer and there is no mark, we can directly read from
@@ -105,6 +111,12 @@ bool ISO88591InputStream::read(char *dst) {
         }
 
         this->bufferCapacity = INITIAL_BUFFER_SIZE;
+
+        DBGOUT_E(
+            "stream",
+            "Allocated buffer (capacity = %d)",
+            this->bufferCapacity
+        );
     }
 
     // If we reach this point, there is a buffer that we need to consider when
@@ -125,6 +137,12 @@ bool ISO88591InputStream::read(char *dst) {
 
             this->buffer = (char *) newBuffer;
             this->bufferCapacity *= 2;
+
+            DBGOUT_E(
+                "stream",
+                "Enlarged buffer (capacity = %d)",
+                this->bufferCapacity
+            );
         }
 
         this->stream.read(this->buffer, this->bufferCapacity - this->bufferLimit);
