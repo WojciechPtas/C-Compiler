@@ -9,7 +9,13 @@ using namespace c4::service::io;
 using namespace c4::util::token;
 using namespace std;
 
-int main() {
+int main(int argc, char** argv) {
+    string input="";
+    for(int i=0; i<argc;i++){
+        if(argv[i]=="--tokenize"){
+        string input = argv[i+1];
+        }
+    }
     TokenPosition tp("", 0, 0);
     std::string word;
 
