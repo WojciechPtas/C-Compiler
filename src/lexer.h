@@ -29,7 +29,7 @@ public:
         std::shared_ptr<automata::IAutomaton<char, Token>> keywords) : 
     charStream(charStream), punctuators(punctuators), keywords(keywords) {}
     
-    bool nextToken(std::shared_ptr<const Token>);
+    bool nextToken(std::shared_ptr<const Token>&);
 };
 
 }
