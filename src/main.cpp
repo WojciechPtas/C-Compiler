@@ -7,13 +7,15 @@ using namespace std;
 using namespace c4::service;
 using c4::util::token::PrintVisitor;
 
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
     string input="";
     for(int i=0; i<argc;i++){
-        if(argv[i]=="--tokenize"){
-        string input = argv[i+1];
+        string in=argv[i];
+        if(in == "--tokenize"){
+            input = argv[i+1];
         }
     }
+    cout<<input<<endl;
     TokenPosition tp("", 0, 0);
     std::string word;
 
