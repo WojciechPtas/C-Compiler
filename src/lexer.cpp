@@ -12,6 +12,10 @@ bool isCharOfIdentifier(const char c) {
     return (isalnum(c) || c=='_');
 }
 
+bool isDigit(char c) {
+    return isdigit(c);
+}
+
 bool escapeSequence(const char c) {
     return 
         (c=='\'') || (c=='\"') || (c=='\?') || 
@@ -22,7 +26,21 @@ bool escapeSequence(const char c) {
 
 namespace c4 {
 
-bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
+bool Lexer::readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (char)) {
+    char c;
+    bool eof_NOT_reached;
+    charStream->pushMark();
+    while( (eof_NOT_reached = charStream->read(&c)) && filter(c)) {
+        charStream->popMark();
+        charStream->pushMark();
+        wordToAppendTo.append(1, c); //Appends c to the word
+    }
+    charStream->resetToMark(); //makes sure stream is now after the last valid char was read
+    charStream->popMark();
+    return eof_NOT_reached;
+}
+
+bool Lexer::nextToken(std::shared_ptr<Token> &token) {
     token = nullptr;
     TokenPosition tp(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
     std::string word;
@@ -30,36 +48,34 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     bool eof_reached, validEndOfFile=false;
 
     charStream->pushMark();
-    while(!(eof_reached = !(charStream->read(&c))) && isspace(c))  {
-        validEndOfFile = (c== '\n' || c=='\r'); //File must end in a newline!
+    while(!(eof_reached = !(charStream->read(&c))) && isspace(c))  {        
+        //We don't want to come back to what we wasted
+        charStream->popMark();
+        charStream->pushMark();
     } //Wastes all whitespaces, newlines, etc.
-    std::cout << "Last char read was " << c << "\n";
+    validEndOfFile = (c== '\n' || c=='\r'); //File must end in a newline!
+    
+
     if(eof_reached) {
         if(!validEndOfFile) {
             tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
             token = std::make_shared<ErrorToken>(tp, "Unexpected end of file");
         }
+        charStream->popMark();
         return false;
     }
+
 //We continue only if we didn't reach EOF
 
 //Start of lexing process
     //Case: keyword or identifier
     if(isStartOfIdentifier(c)) {
-        std::cout << "Consider identifier\n";
         charStream->resetToMark();
         // token = keywords->walk(*charStream); //After this, only accepted part of the stream has been used up
         eof_reached = !charStream->read(&c);
-        std::cout << "Read a " << c << "second\n";
         if(token == nullptr || (!eof_reached && isCharOfIdentifier(c)) ) { //No keyword found OR keyword found but other letters are following
             charStream->resetToMark();
-            while(charStream->read(&c) && isCharOfIdentifier(c)) {
-                std::cout << "another character! " << c << '\n';
-                charStream->popMark();
-                charStream->pushMark();
-                word.append(1, c); //Appends c to the word
-            }
-            charStream->resetToMark(); //makes sure stream is now after the last valid char was read
+            readMaximumMunchWhile(word, isCharOfIdentifier);
             token = std::make_shared<IdentifierToken>(tp, word);
         }
     }
@@ -70,10 +86,8 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     }
 
     else if(isdigit(c)) { //Nonzero decimal constant
-        while(!eof_reached && isdigit(c)) {
-            word.append(1, c); //Appends c to the word
-            eof_reached = !charStream->read(&c);
-        }
+        word.append(1,c);
+        readMaximumMunchWhile(word, isDigit);
         token = std::make_shared<DecimalConstantToken>(tp, word);
     }
 
@@ -83,6 +97,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         if (eof_reached) {
             tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
             token = std::make_shared<ErrorToken>(tp, "EOF in the middle of a character constant");
+            charStream->popMark();
             return false;
         }
 
@@ -98,7 +113,8 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
                 valid = false;
             }
         }
-
+        
+        //Disallowed characters
         else if(c=='\'' || c=='\n') {
             tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
             // std::string errorMsg = "Disallowed character ";
@@ -106,7 +122,9 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
             token = std::make_shared<ErrorToken>(tp, "Disallowed character in character constant");
             valid = false;
         }
-        word.append(1, c); //append last character read before continuing
+
+        //Everything else is fine
+        word.append(1, c); //append last character read before continuing, even in case of error, y not
         if (valid && charStream->read(&c) && c=='\'') {
             token = std::make_shared<CharacterConstantToken>(tp, word);
         }
@@ -120,7 +138,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     //Case: string
     else if (c=='\"') {
         bool stringTerminated = false, valid = true;
-        while(charStream->read(&c) && valid && !stringTerminated) {
+        while(!stringTerminated && charStream->read(&c) && valid) {
             if (c== '\"') { //String terminated correctly
                 token = std::make_shared<StringLiteralToken>(tp, word);
                 stringTerminated = true;
@@ -149,9 +167,9 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     }
 
     else {
-        std::cout << "Nothing found\n";
-        charStream->resetToMark();
-        token = punctuators->walk(*charStream);
+        std::cout << "Read a " << c << "!\n";
+        // charStream->resetToMark();
+        // token = punctuators->walk(*charStream);
         if (token == nullptr) {
             tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
             token = std::make_shared<ErrorToken>(tp, "Unrecognized symbol");

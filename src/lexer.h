@@ -23,13 +23,15 @@ private:
     std::shared_ptr<const automata::IAutomaton<char, Token>> punctuators;
     std::shared_ptr<const automata::IAutomaton<char, Token>> keywords;
 
+    bool readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (char)); //Takes a function which returns bool on characters, reads from the stream while possible, consumes only valid chars
+
 public:
     Lexer(const std::shared_ptr<io::IInputStream<char>> charStream, 
         std::shared_ptr<automata::IAutomaton<char, Token>> punctuators,
         std::shared_ptr<automata::IAutomaton<char, Token>> keywords) : 
     charStream(charStream), punctuators(punctuators), keywords(keywords) {}
     
-    bool nextToken(std::shared_ptr<const Token>&);
+    bool nextToken(std::shared_ptr<Token>&);
 };
 
 }

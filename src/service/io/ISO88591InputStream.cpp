@@ -1,4 +1,4 @@
-
+#include <iostream>
 #include "ISO88591InputStream.h"
 
 using namespace c4::service::io;
@@ -35,6 +35,7 @@ void ISO88591InputStream::popMark() {
     // is no mark left.
 
     if (this->markStack.empty() && this->bufferOffset > 0) {
+
         size_t remainingChars = this->bufferLimit - this->bufferOffset;
 
         memmove(
@@ -45,7 +46,7 @@ void ISO88591InputStream::popMark() {
 
         void *newBuffer = realloc(this->buffer, remainingChars);
 
-        if (newBuffer == NULL) {
+        if (remainingChars > 0 && newBuffer == NULL) {
             throw bad_alloc();
         }
 
@@ -53,11 +54,15 @@ void ISO88591InputStream::popMark() {
         this->bufferCapacity -= this->bufferOffset;
         this->bufferLimit = remainingChars;
         this->bufferOffset = 0;
+
+        
     }
+    std::cerr << "--- Marks present: " << markStack.size() << "\n";
 }
 
 void ISO88591InputStream::pushMark() {
     this->markStack.push_back(this->bufferOffset);
+    std::cerr << "--- Marks present: " << markStack.size() << "\n";
 }
 
 bool ISO88591InputStream::read(char *dst) {
