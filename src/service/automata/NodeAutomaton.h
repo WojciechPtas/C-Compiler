@@ -8,17 +8,17 @@ namespace c4 {
             class NodeAutomaton : public IAutomaton<TEdge, TPayload> {
             public:
                 NodeAutomaton(
-                    const model::node::Node<TEdge, TPayload> &rootNode
+                    std::shared_ptr<model::node::Node<TEdge, TPayload>> rootNode
                 );
 
                 virtual ~NodeAutomaton() { }
 
-                std::shared_ptr<TPayload> walk(
+                std::shared_ptr<model::node::Node<TEdge, TPayload>> walk(
                     io::IInputStream<TEdge>& src
                 ) const = 0;
 
             private:
-                const model::node::Node<TEdge, TPayload> &rootNode;
+                const std::shared_ptr<model::node::Node<TEdge, TPayload>> rootNode;
             };
         }
     }
