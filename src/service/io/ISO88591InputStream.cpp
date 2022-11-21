@@ -145,7 +145,7 @@ bool ISO88591InputStream::read(char *dst) {
             );
         }
 
-        this->stream.read(this->buffer, this->bufferCapacity - this->bufferLimit);
+        this->stream.read(this->buffer + this->bufferOffset, this->bufferCapacity - this->bufferLimit);
         this->bufferLimit += this->stream.gcount();
 
         // If the limit did not change, we hit EOF.

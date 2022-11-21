@@ -14,7 +14,7 @@ using namespace std;
 void c4::dbgout(string category, string file, string message, ...) {
     va_list args;
 
-    if (category != "all" && category != DEBUG) {
+    if (string(DEBUG) != "all" && DEBUG != category) {
         return;
     }
 

@@ -1,5 +1,7 @@
-#include "lexer.h"
 #include <iostream>
+
+#include "debug.h"
+#include "lexer.h"
 
 using namespace c4::model::token;
 using namespace c4::service;
@@ -137,6 +139,8 @@ bool Lexer::nextToken(std::shared_ptr<Token> &token) {
 
     //Case: string
     else if (c=='\"') {
+        DBGOUT("lexer", "Encountered string start");
+
         bool stringTerminated = false, valid = true;
         while(!stringTerminated && charStream->read(&c) && valid) {
             if (c== '\"') { //String terminated correctly
@@ -161,6 +165,9 @@ bool Lexer::nextToken(std::shared_ptr<Token> &token) {
 
             if(!stringTerminated) word.append(1, c);
         }
+
+        DBGOUT_E("lexer", "String terminated (string = %s)", word.c_str());
+
         if (stringTerminated) {
             token = std::make_shared<StringLiteralToken>(tp, word);
         }
