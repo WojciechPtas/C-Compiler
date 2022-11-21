@@ -14,24 +14,21 @@
 #include "service/automata/IAutomaton.h"
 #include "service/io/IInputStream.h"
 
-using namespace c4::model::token;
-using namespace c4::service;
-
 namespace c4 {
 
 class Lexer {
 private:
-    std::shared_ptr<io::IInputStream<char>> charStream;
-    std::shared_ptr<const automata::IAutomaton<char, Token>> punctuators;
-    std::shared_ptr<const automata::IAutomaton<char, Token>> keywords;
+    std::shared_ptr<c4::service::io::IInputStream<char>> charStream;
+    std::shared_ptr<const c4::service::automata::IAutomaton<char, c4::model::token::Token>> punctuators;
+    std::shared_ptr<const c4::service::automata::IAutomaton<char, c4::model::token::Token>> keywords;
 
 public:
-    Lexer(const std::shared_ptr<io::IInputStream<char>> charStream, 
-        std::shared_ptr<automata::IAutomaton<char, Token>> punctuators,
-        std::shared_ptr<automata::IAutomaton<char, Token>> keywords) : 
+    Lexer(const std::shared_ptr<c4::service::io::IInputStream<char>> charStream, 
+        std::shared_ptr<c4::service::automata::IAutomaton<char, c4::model::token::Token>> punctuators,
+        std::shared_ptr<c4::service::automata::IAutomaton<char, c4::model::token::Token>> keywords) : 
     charStream(charStream), punctuators(punctuators), keywords(keywords) {}
     
-    bool nextToken(std::shared_ptr<const Token>&);
+    bool nextToken(std::shared_ptr<const c4::model::token::Token>&);
 };
 
 }

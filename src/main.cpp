@@ -3,8 +3,9 @@
 #include "lexer.h"
 #include "util/token/PrintVisitor.h"
 
+using namespace c4::model::token;
+using namespace c4::service::io;
 using namespace std;
-using namespace c4::service;
 
 int main() {
     TokenPosition tp("", 0, 0);
@@ -12,7 +13,7 @@ int main() {
     shared_ptr<Token> tk = std::make_shared<DecimalConstantToken>(tp, word);
     tk = std::make_shared<DecimalConstantToken>(tp, word);
 
-    shared_ptr<io::ISO88591InputStream> src = std::make_shared<io::ISO88591InputStream>("input.txt");
+    shared_ptr<ISO88591InputStream> src = std::make_shared<ISO88591InputStream>("input.txt");
     // shared_ptr<automata::IAutomaton<char, Token>> keywords = make_shared<automata::IAutomaton<char, Token>>();
     // shared_ptr<automata::IAutomaton<char, Token>> punctuators = make_shared<automata::IAutomaton<char, Token>>();
     c4::Lexer l(src, nullptr, nullptr);

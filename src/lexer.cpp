@@ -2,7 +2,7 @@
 #include <iostream>
 
 using namespace c4::model::token;
-using namespace c4::service;
+using namespace c4::service::io;
 
 bool isStartOfIdentifier(const char c) {
     return (isalpha(c) || c=='_');
