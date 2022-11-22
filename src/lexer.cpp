@@ -1,5 +1,10 @@
 #include <iostream>
 
+#include "model/token/CharacterConstantToken.h"
+#include "model/token/DecimalConstantToken.h"
+#include "model/token/ErrorToken.h"
+#include "model/token/IdentifierToken.h"
+#include "model/token/StringLiteralToken.h"
 #include "debug.h"
 #include "lexer.h"
 

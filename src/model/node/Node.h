@@ -27,12 +27,12 @@ namespace c4 {
                         return false;
                     }
 
-                    std::shared_ptr<Node<key, Value>> getChildNode(key c) {
+                    std::shared_ptr<const Node<key, Value>> getChildNode(key c) const {
                         if(this->transitions.find(c)==this->transitions.end()){
                             return nullptr;
                         }
                         
-                        return this->transitions[c];
+                        return this->transitions.at(c);
                     }
 
                     void merge(const std::shared_ptr<Node> ptr) {
