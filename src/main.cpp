@@ -14,17 +14,19 @@ using namespace c4::service::io;
 using namespace c4::util::token;
 using namespace std;
 
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
     string input="";
     for(int i=0; i<argc;i++){
-        if(argv[i]=="--tokenize"){
-        string input = argv[i+1];
+        string in=argv[i];
+        if(in == "--tokenize"){
+            input = argv[i+1];
         }
     }
+    //cout<<input<<endl;
     TokenPosition tp("", 0, 0);
     std::string word;
 
-    shared_ptr<ISO88591InputStream> src = std::make_shared<ISO88591InputStream>("input.txt");
+    shared_ptr<ISO88591InputStream> src = std::make_shared<ISO88591InputStream>(input);
     c4::Lexer l(
         src,
         make_shared<NodeAutomaton<char, Punctuator>>(PUNCTUATOR_TREE),
