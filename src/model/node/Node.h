@@ -35,6 +35,10 @@ namespace c4 {
                         return this->transitions.at(c);
                     }
 
+                    std::shared_ptr<const Value> getResult() const {
+                        return this->result;
+                    }
+
                     void merge(const std::shared_ptr<Node> ptr) {
                         this->result = ptr->result;
                         for(auto it = ptr->transitions.begin(); it!=ptr->transitions.end(); ++it){

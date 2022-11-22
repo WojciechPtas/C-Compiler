@@ -4,6 +4,8 @@
 #include "model/token/DecimalConstantToken.h"
 #include "model/token/ErrorToken.h"
 #include "model/token/IdentifierToken.h"
+#include "model/token/KeywordToken.h"
+#include "model/token/PunctuatorToken.h"
 #include "model/token/StringLiteralToken.h"
 #include "debug.h"
 #include "lexer.h"
@@ -79,6 +81,13 @@ bool Lexer::nextToken(shared_ptr<const Token> &token) {
     //Case: keyword or identifier
     if(isStartOfIdentifier(c)) {
         charStream->resetToMark();
+
+        auto keyword = keywords->walk(*charStream)->getResult();
+
+        if (keyword != nullptr) {
+            token = std::make_shared<KeywordToken>(tp, *keyword);
+        }
+
         // token = keywords->walk(*charStream); //After this, only accepted part of the stream has been used up
         eof_reached = !charStream->read(&c);
         if(token == nullptr || (!eof_reached && isCharOfIdentifier(c)) ) { //No keyword found OR keyword found but other letters are following
@@ -180,10 +189,14 @@ bool Lexer::nextToken(shared_ptr<const Token> &token) {
     }
 
     else {
-        cout << "Read a " << c << "!\n";
-        // charStream->resetToMark();
-        // token = punctuators->walk(*charStream);
-        if (token == nullptr) {
+        charStream->resetToMark();
+
+        auto punctutator = this->punctuators->walk(*charStream)->getResult();
+
+        if (punctutator != nullptr) {
+            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+            token = std::make_shared<PunctuatorToken>(tp, *punctutator);
+        } else if (token == nullptr) {
             tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
             token = std::make_shared<ErrorToken>(tp, "Unrecognized symbol");
         }

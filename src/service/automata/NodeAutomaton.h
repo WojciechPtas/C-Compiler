@@ -1,3 +1,4 @@
+#include "../../debug.h"
 #include "IAutomaton.h"
 
 namespace c4 {
@@ -15,6 +16,8 @@ namespace c4 {
                 std::shared_ptr<const model::node::Node<TEdge, TPayload>> walk(
                     io::IInputStream<TEdge>& src
                 ) const {
+                    DBGOUT("automata", "Entering walk");
+
                     auto curState = this->rootNode;
                     TEdge curElement;
                     
@@ -30,9 +33,11 @@ namespace c4 {
                         
                         curState = newState;
                         src.popMark();
+                        src.pushMark();
                     }
                     
                     src.popMark();
+                    DBGOUT("automata", "Leaving walk");
                     return curState;
                 }
 
