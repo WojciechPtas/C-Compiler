@@ -15,10 +15,10 @@ using namespace c4::util::token;
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    string input="";
+    string input="input.txt";
     for(int i=0; i<argc;i++){
         string in=argv[i];
-        if(in == "--tokenize"){
+        if(in == "--tokenize" && i<argc-1){
             input = argv[i+1];
         }
     }
@@ -34,11 +34,7 @@ int main(int argc, char* argv[]) {
     );
     shared_ptr<const Token> token;
     int i=0;
-    char c;
-    // for(i=0; i<20; i++) {
-    //     std::cout << c << "\n";
-    //     src->read(&c);
-    // }
+    
     PrintVisitor pt(cout);
     while(l.nextToken(token)) {
         i++;
@@ -48,18 +44,6 @@ int main(int argc, char* argv[]) {
         token->accept(pt);
     }
     cout << i << "\n";
-    // char c;
-    // src->read(&c); std::cout << c;
-    // src->read(&c);std::cout << c;
-    // src->pushMark();
-    // src->read(&c);std::cout << c;
-    // src->read(&c);std::cout << c;
-    // src->resetToMark();
-    // src->read(&c);std::cout << c;
-    // src->read(&c);std::cout << c;
-    // src->popMark();
-    // src->read(&c);std::cout << c;
-    // src->read(&c);std::cout << c;
 
     return 0;
 }

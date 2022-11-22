@@ -1,18 +1,10 @@
 #include <iostream>
 
-#include "model/token/CharacterConstantToken.h"
-#include "model/token/DecimalConstantToken.h"
-#include "model/token/ErrorToken.h"
-#include "model/token/IdentifierToken.h"
-#include "model/token/KeywordToken.h"
-#include "model/token/PunctuatorToken.h"
-#include "model/token/StringLiteralToken.h"
 #include "debug.h"
 #include "lexer.h"
 
 using namespace c4::model::token;
-using namespace c4::service::io;
-using namespace std;
+using namespace c4::service;
 
 bool isStartOfIdentifier(const char c) {
     return (isalpha(c) || c=='_');
@@ -36,7 +28,7 @@ bool escapeSequence(const char c) {
 
 namespace c4 {
 
-bool Lexer::readMaximumMunchWhile(string& wordToAppendTo, bool (*filter) (char)) {
+bool Lexer::readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (char)) {
     char c;
     bool eof_NOT_reached;
     charStream->pushMark();
@@ -50,7 +42,24 @@ bool Lexer::readMaximumMunchWhile(string& wordToAppendTo, bool (*filter) (char))
     return eof_NOT_reached;
 }
 
-bool Lexer::nextToken(shared_ptr<const Token> &token) {
+bool Lexer::readMaximumMunchUntil(std::string& wordToAppendTo, const std::string& terminator) {
+    char c;
+    size_t foundCount=0;
+    while( foundCount<terminator.size() && charStream->read(&c) ) {
+        if (terminator[foundCount] == c) {
+            foundCount++;
+        }
+        else { //Whatever i thought was the beginning of a terminator, i need to flush into the wordToAppendTo
+            wordToAppendTo.append(terminator.substr(0, foundCount));
+            foundCount=0;
+
+            wordToAppendTo.append(1, c); //Appends c to the word
+        }
+    }
+    return (foundCount == terminator.size());
+}
+
+bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     token = nullptr;
     TokenPosition tp(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
     std::string word;
@@ -81,13 +90,11 @@ bool Lexer::nextToken(shared_ptr<const Token> &token) {
     //Case: keyword or identifier
     if(isStartOfIdentifier(c)) {
         charStream->resetToMark();
-
         auto keyword = keywords->walk(*charStream)->getResult();
 
         if (keyword != nullptr) {
             token = std::make_shared<KeywordToken>(tp, *keyword);
         }
-
         // token = keywords->walk(*charStream); //After this, only accepted part of the stream has been used up
         eof_reached = !charStream->read(&c);
         if(token == nullptr || (!eof_reached && isCharOfIdentifier(c)) ) { //No keyword found OR keyword found but other letters are following
@@ -189,18 +196,42 @@ bool Lexer::nextToken(shared_ptr<const Token> &token) {
     }
 
     else {
-        charStream->resetToMark();
-
-        auto punctutator = this->punctuators->walk(*charStream)->getResult();
-
-        if (punctutator != nullptr) {
-            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
-            token = std::make_shared<PunctuatorToken>(tp, *punctutator);
-        } else if (token == nullptr) {
-            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
-            token = std::make_shared<ErrorToken>(tp, "Unrecognized symbol");
+        if(c == '/') {
+        eof_reached = !charStream->read(&c);
+            if (!eof_reached) {
+                if(c == '/') { //Single-line comment
+                    eof_reached = !readMaximumMunchUntil(word, "\n");
+                }
+                else if( c== '*') { //Multiline comment
+                    eof_reached = !readMaximumMunchUntil(word, "*/");
+                }
+                
+                if(eof_reached) {
+                    tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+                    token = std::make_shared<ErrorToken>(tp, "Unterminated comment :(");
+                }
+                else {
+                    return nextToken(token); //We don't report any comment token. We keep going
+                }
+            }
         }
-        //else punctuator token is ready by the automaton
+        else { //last chance: Punctuator
+            charStream->resetToMark();
+            // token = punctuators->walk(*charStream);
+            auto punctutator = this->punctuators->walk(*charStream)->getResult();
+
+            if (punctutator != nullptr) {
+                tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+                token = std::make_shared<PunctuatorToken>(tp, *punctutator);
+            } 
+            else {
+                if (token == nullptr) {
+                    charStream->read(&c); //Wastes the unrecognized char!
+                    tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+                    token = std::make_shared<ErrorToken>(tp, "Unrecognized symbol");
+                }
+            }
+        } 
     }
         
     charStream->popMark();
