@@ -1,9 +1,73 @@
 #include <stdexcept>
+
+#include "../node/NodeUtilities.h"
 #include "PunctuatorUtilities.h"
 
+using namespace c4::model::node;
 using namespace c4::model::token;
+using namespace c4::util::node;
 using namespace c4::util::token;
 using namespace std;
+
+const shared_ptr<const Node<char, Punctuator>> c4::util::token::PUNCTUATOR_TREE =
+    buildTree(
+        {
+            makeBranch(LEFT_BRACKET, Punctuator::LeftBracket),
+            makeBranch(RIGHT_BRACKET, Punctuator::RightBracket),
+            makeBranch(LEFT_PARENTHESIS, Punctuator::LeftParenthesis),
+            makeBranch(RIGHT_PARENTHESIS, Punctuator::RightParenthesis),
+            makeBranch(LEFT_BRACE, Punctuator::LeftBrace),
+            makeBranch(RIGHT_BRACE, Punctuator::RightBrace),
+            makeBranch(DOT, Punctuator::Dot),
+            makeBranch(DASH_GREATER_THAN, Punctuator::DashGreaterThan),
+            makeBranch(DOUBLE_PLUS, Punctuator::DoublePlus),
+            makeBranch(DOUBLE_MINUS, Punctuator::DoubleMinus),
+            makeBranch(AND, Punctuator::And),
+            makeBranch(ASTERISK, Punctuator::Asterisk),
+            makeBranch(PLUS, Punctuator::Plus),
+            makeBranch(MINUS, Punctuator::Minus),
+            makeBranch(TILDE, Punctuator::Tilde),
+            makeBranch(EXCLAMATION_MARK, Punctuator::ExclamationMark),
+            makeBranch(SLASH, Punctuator::Slash),
+            makeBranch(PERCENT, Punctuator::Percent),
+            makeBranch(DOUBLE_LESS_THAN, Punctuator::DoubleLessThan),
+            makeBranch(DOUBLE_GREATER_THAN, Punctuator::DoubleGreaterThan),
+            makeBranch(LESS_THAN, Punctuator::LessThan),
+            makeBranch(GREATER_THAN, Punctuator::GreaterThan),
+            makeBranch(LESS_THAN_EQUAL, Punctuator::LessThanEqual),
+            makeBranch(GREATHER_THAN_EQUAL, Punctuator::GreaterThanEqual),
+            makeBranch(DOUBLE_EQUAL, Punctuator::DoubleEqual),
+            makeBranch(EXCLAMATION_MARK_EQUAL, Punctuator::ExclamationMarkEqual),
+            makeBranch(CARET, Punctuator::Caret),
+            makeBranch(PIPE, Punctuator::Pipe),
+            makeBranch(DOUBLE_AND, Punctuator::DoubleAnd),
+            makeBranch(DOUBLE_PIPE, Punctuator::DoublePipe),
+            makeBranch(QUESTION_MARK, Punctuator::QuestionMark),
+            makeBranch(COLON, Punctuator::Colon),
+            makeBranch(SEMICOLON, Punctuator::Semicolon),
+            makeBranch(TRIPLE_DOT, Punctuator::TripleDot),
+            makeBranch(EQUAL, Punctuator::Equal),
+            makeBranch(ASTERISK_EQUAL, Punctuator::AsteriskEqual),
+            makeBranch(SLASH_EQUAL, Punctuator::SlashEqual),
+            makeBranch(PERCENT_EQUAL, Punctuator::PercentEqual),
+            makeBranch(PLUS_EQUAL, Punctuator::PlusEqual),
+            makeBranch(MINUS_EQUAL, Punctuator::MinusEqual),
+            makeBranch(DOUBLE_LESS_THAN_EQUAL, Punctuator::DoubleLessThanEqual),
+            makeBranch(DOUBLE_GREATER_THAN_EQUAL, Punctuator::DoubleGreaterThanEqual),
+            makeBranch(AND_EQUAL, Punctuator::AndEqual),
+            makeBranch(CARET_EQUAL, Punctuator::CaretEqual),
+            makeBranch(PIPE_EQUAL, Punctuator::PipeEqual),
+            makeBranch(COMMA, Punctuator::Comma),
+            makeBranch(HASHTAG, Punctuator::Hashtag),
+            makeBranch(DOUBLE_HASHTAG, Punctuator::DoubleHashtag),
+            makeBranch(LESS_THAN_COLON, Punctuator::LessThanColon),
+            makeBranch(COLON_GREATER_THAN, Punctuator::ColonGreaterThan),
+            makeBranch(LESS_THAN_PERCENT, Punctuator::LessThanPercent),
+            makeBranch(PERCENT_GREATER_THAN, Punctuator::PercentGreaterThan),
+            makeBranch(PERCENT_COLON, Punctuator::PercentColon),
+            makeBranch(PERCENT_COLON_PERCENT_COLON, Punctuator::PercentColonPercentColon)
+        }
+    );
 
 const string &c4::util::token::stringify(Punctuator punctuator) {
     switch (punctuator) {

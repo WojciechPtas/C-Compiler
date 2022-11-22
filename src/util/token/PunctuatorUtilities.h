@@ -1,6 +1,9 @@
 #pragma once
 
+#include <memory>
 #include <string>
+
+#include "../../model/node/Node.h"
 #include "../../model/token/Punctuator.h"
 
 namespace c4 {
@@ -60,6 +63,8 @@ namespace c4 {
             const std::string PERCENT_GREATER_THAN          = "%>";
             const std::string PERCENT_COLON                 = "%:";
             const std::string PERCENT_COLON_PERCENT_COLON   = "%:%:";
+
+            extern const std::shared_ptr<const model::node::Node<char, model::token::Punctuator>> PUNCTUATOR_TREE;
 
             const std::string &stringify(model::token::Punctuator punctuator);
         }

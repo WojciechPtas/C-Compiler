@@ -1,9 +1,63 @@
 #include <stdexcept>
+
+#include "../node/NodeUtilities.h"
 #include "KeywordUtilities.h"
 
+using namespace c4::model::node;
 using namespace c4::model::token;
+using namespace c4::util::node;
 using namespace c4::util::token;
 using namespace std;
+
+const shared_ptr<const Node<char, Keyword>> c4::util::token::KEYWORD_TREE =
+    buildTree(
+        {
+            makeBranch(AUTO, Keyword::Auto),
+            makeBranch(BREAK, Keyword::Break),
+            makeBranch(CASE, Keyword::Case),
+            makeBranch(CHAR, Keyword::Char),
+            makeBranch(CONST, Keyword::Const),
+            makeBranch(CONTINUE, Keyword::Continue),
+            makeBranch(DEFAULT, Keyword::Default),
+            makeBranch(DO, Keyword::Do),
+            makeBranch(DOUBLE, Keyword::Double),
+            makeBranch(ELSE, Keyword::Else),
+            makeBranch(ENUM, Keyword::Enum),
+            makeBranch(EXTERN, Keyword::Extern),
+            makeBranch(FLOAT, Keyword::Float),
+            makeBranch(FOR, Keyword::For),
+            makeBranch(GOTO, Keyword::Goto),
+            makeBranch(IF, Keyword::If),
+            makeBranch(INLINE, Keyword::Inline),
+            makeBranch(INT, Keyword::Int),
+            makeBranch(LONG, Keyword::Long),
+            makeBranch(REGISTER, Keyword::Register),
+            makeBranch(RESTRICT, Keyword::Restrict),
+            makeBranch(RETURN, Keyword::Return),
+            makeBranch(SHORT, Keyword::Short),
+            makeBranch(SIGNED, Keyword::Signed),
+            makeBranch(SIZEOF, Keyword::Sizeof),
+            makeBranch(STATIC, Keyword::Static),
+            makeBranch(STRUCT, Keyword::Struct),
+            makeBranch(SWITCH, Keyword::Switch),
+            makeBranch(TYPEDEF, Keyword::Typedef),
+            makeBranch(UNION, Keyword::Union),
+            makeBranch(UNSIGNED, Keyword::Unsigned),
+            makeBranch(VOID, Keyword::Void),
+            makeBranch(VOLATILE, Keyword::Volatile),
+            makeBranch(WHILE, Keyword::While),
+            makeBranch(__ALIGNAS, Keyword::__Alignas),
+            makeBranch(__ALIGNOF, Keyword::__Alignof),
+            makeBranch(__ATOMIC, Keyword::__Atomic),
+            makeBranch(__BOOL, Keyword::__Bool),
+            makeBranch(__COMPLEX, Keyword::__Complex),
+            makeBranch(__GENERIC, Keyword::__Generic),
+            makeBranch(__IMAGINARY, Keyword::__Imaginary),
+            makeBranch(__NORETURN, Keyword::__Noreturn),
+            makeBranch(__STATIC_ASSERT, Keyword::__Static_assert),
+            makeBranch(__THREAD_LOCAL, Keyword::__Thread_local)
+        }
+    );
 
 const string &c4::util::token::stringify(Keyword keyword) {
     switch (keyword) {

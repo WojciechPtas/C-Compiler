@@ -1,6 +1,9 @@
 #pragma once
 
+#include <memory>
 #include <string>
+
+#include "../../model/node/Node.h"
 #include "../../model/token/Keyword.h"
 
 namespace c4 {
@@ -50,6 +53,8 @@ namespace c4 {
             const std::string __NORETURN        = "_Noreturn";
             const std::string __STATIC_ASSERT   = "_Static_assert";
             const std::string __THREAD_LOCAL    = "_Thread_local";
+
+            extern const std::shared_ptr<const model::node::Node<char, model::token::Keyword>> KEYWORD_TREE;
 
             const std::string &stringify(model::token::Keyword keyword);
         }

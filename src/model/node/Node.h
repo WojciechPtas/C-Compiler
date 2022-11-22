@@ -11,12 +11,12 @@ namespace c4 {
             class Node {
                 private:
                     std::unordered_map<key, std::shared_ptr<Node>> transitions;
-                    std::shared_ptr<const Value> result;
+                    std::shared_ptr<Value> result;
 
                 public:
-                    Node(std::shared_ptr<const Value> token) {
-                        this->result = token;
-                    }
+                    Node() : result(nullptr) { }
+
+                    Node(Value result) : result(std::make_shared<Value>(result)) { }
 
                     bool addChildNode(key c, std::shared_ptr<Node> child) {
                         if(this->transitions.find(c)==this->transitions.end()){
@@ -36,7 +36,7 @@ namespace c4 {
                     }
 
                     void merge(const std::shared_ptr<Node> ptr) {
-                        this->result=ptr->result;
+                        this->result = ptr->result;
                         for(auto it = ptr->transitions.begin(); it!=ptr->transitions.end(); ++it){
                             if(this->transitions.find(it->first)==this->transitions.end()){
                                 this->transitions[it->first]=it->second;
