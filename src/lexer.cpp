@@ -143,6 +143,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
             if (!validToken) {
                 tp = makeTokenPosition(charStream);
                 token = std::make_shared<ErrorToken>(*tp, "Invalid escape sequence");
+                validToken = false;
             }
         }
         
@@ -163,6 +164,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         else if (/*it WAS a*/ validToken) { //we don't wanna overwrite error messages
             tp = makeTokenPosition(charStream);
             token = std::make_shared<ErrorToken>(*tp, "Expected ' to terminate the character constant");
+            validToken = false;
         }
         //else i already have the errortoken ready
     }
@@ -191,6 +193,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
                 validToken = false;
                 tp = makeTokenPosition(charStream);
                 token = std::make_shared<ErrorToken>(*tp, "Newlines in string literals are not allowed");
+                validToken = false;
             }
 
             if(!stringTerminated) word.append(1, c);
@@ -217,6 +220,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
                 if(eof_reached) {
                     tp = makeTokenPosition(charStream);
                     token = std::make_shared<ErrorToken>(*tp, "Unterminated comment :(");
+                    validToken = false;
                 }
                 else {
                     return nextToken(token); //We don't report any comment token. We keep going
@@ -232,18 +236,17 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
                 token = std::make_shared<PunctuatorToken>(*tp, *punctutator);
             } 
             else {
-                if (token == nullptr) {
-                    charStream->read(&c); //Wastes the unrecognized char!
-                    tp = makeTokenPosition(charStream);
-                    token = std::make_shared<ErrorToken>(*tp, "Unrecognized symbol");
-                }
+                charStream->read(&c); //Wastes the unrecognized char!
+                tp = makeTokenPosition(charStream);
+                token = std::make_shared<ErrorToken>(*tp, "Unrecognized symbol");
+                validToken = false;
             }
-        } 
+        }
     }
         
     charStream->popMark();
     return validToken; //even if we reached eof, we want to say "true" so we can return the token for now. In the next iteration we'll terminate correctly or report source file not terminated by \n, which is not allowed.
-
+    //if you substitute true to validToken it will return false only in case of EOF
 }
 
 }
