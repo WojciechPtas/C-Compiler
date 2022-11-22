@@ -71,20 +71,20 @@ bool Lexer::readMaximumMunchUntil(std::string& wordToAppendTo, const std::string
 
 bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     token = nullptr;
-    auto tp = makeTokenPosition(charStream);
     std::string word;
     char c;
     bool eof_reached, validEndOfFile=false;
-
+    auto tp = makeTokenPosition(charStream);
+    
     charStream->pushMark();
     while(!(eof_reached = !(charStream->read(&c))) && isspace(c))  {        
         //We don't want to come back to what we wasted
         charStream->popMark();
         charStream->pushMark();
+        tp = makeTokenPosition(charStream);
     } //Wastes all whitespaces, newlines, etc.
     validEndOfFile = (c== '\n' || c=='\r'); //File must end in a newline!
     
-
     if(eof_reached) {
         if(!validEndOfFile) {
             tp = makeTokenPosition(charStream);
