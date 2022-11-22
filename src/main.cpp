@@ -17,11 +17,11 @@ int main(int argc, char* argv[]) {
             input = argv[i+1];
         }
     }
-    cout<<input<<endl;
+    //cout<<input<<endl;
     TokenPosition tp("", 0, 0);
     std::string word;
 
-    shared_ptr<ISO88591InputStream> src = std::make_shared<ISO88591InputStream>("input.txt");
+    shared_ptr<ISO88591InputStream> src = std::make_shared<ISO88591InputStream>(input);
     // shared_ptr<automata::IAutomaton<char, Token>> keywords = make_shared<automata::IAutomaton<char, Token>>();
     // shared_ptr<automata::IAutomaton<char, Token>> punctuators = make_shared<automata::IAutomaton<char, Token>>();
     c4::Lexer l(src, nullptr, nullptr);
