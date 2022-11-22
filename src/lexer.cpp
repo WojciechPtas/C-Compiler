@@ -26,6 +26,16 @@ bool escapeSequence(const char c) {
         (c=='t') || (c=='v');
 }
 
+std::shared_ptr<TokenPosition> makeTokenPosition(
+    std::shared_ptr<c4::service::io::IFileInputStream<char>> stream
+) {
+    return std::make_shared<TokenPosition>(
+        stream->getFilePath(),
+        stream->getCurrentLine(),
+        stream->getCurrentColumn()
+    );
+}
+
 namespace c4 {
 
 bool Lexer::readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (char)) {
@@ -61,7 +71,7 @@ bool Lexer::readMaximumMunchUntil(std::string& wordToAppendTo, const std::string
 
 bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     token = nullptr;
-    TokenPosition tp(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+    auto tp = makeTokenPosition(charStream);
     std::string word;
     char c;
     bool eof_reached, validEndOfFile=false;
@@ -77,8 +87,8 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
 
     if(eof_reached) {
         if(!validEndOfFile) {
-            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
-            token = std::make_shared<ErrorToken>(tp, "Unexpected end of file");
+            tp = makeTokenPosition(charStream);
+            token = std::make_shared<ErrorToken>(*tp, "Unexpected end of file");
         }
         charStream->popMark();
         return false;
@@ -94,34 +104,34 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         auto keyword = keywords->walk(*charStream)->getResult();
 
         if (keyword != nullptr) {
-            token = std::make_shared<KeywordToken>(tp, *keyword);
+            token = std::make_shared<KeywordToken>(*tp, *keyword);
         }
         // token = keywords->walk(*charStream); //After this, only accepted part of the stream has been used up
         eof_reached = !charStream->read(&c);
         if(token == nullptr || (!eof_reached && isCharOfIdentifier(c)) ) { //No keyword found OR keyword found but other letters are following
             charStream->resetToMark();
             readMaximumMunchWhile(word, isCharOfIdentifier);
-            token = std::make_shared<IdentifierToken>(tp, word);
+            token = std::make_shared<IdentifierToken>(*tp, word);
         }
     }
 
     //Case: number constants
     else if (c == '0') {
-        token = std::make_shared<DecimalConstantToken>(tp, "0");
+        token = std::make_shared<DecimalConstantToken>(*tp, "0");
     }
 
     else if(isdigit(c)) { //Nonzero decimal constant
         word.append(1,c);
         readMaximumMunchWhile(word, isDigit);
-        token = std::make_shared<DecimalConstantToken>(tp, word);
+        token = std::make_shared<DecimalConstantToken>(*tp, word);
     }
 
     //Case: char constants
     else if(c=='\'') {
         eof_reached = !charStream->read(&c);
         if (eof_reached) {
-            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
-            token = std::make_shared<ErrorToken>(tp, "EOF in the middle of a character constant");
+            tp = makeTokenPosition(charStream);
+            token = std::make_shared<ErrorToken>(*tp, "EOF in the middle of a character constant");
             validToken = false;
         }
 
@@ -131,28 +141,28 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
             word.append(1, '\\');
             validToken = charStream->read(&c) && escapeSequence(c);
             if (!validToken) {
-                tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
-                token = std::make_shared<ErrorToken>(tp, "Invalid escape sequence");
+                tp = makeTokenPosition(charStream);
+                token = std::make_shared<ErrorToken>(*tp, "Invalid escape sequence");
             }
         }
         
         //Disallowed characters
         else if(validToken && (c=='\'' || c=='\n')) {
-            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
+            tp = makeTokenPosition(charStream);
             // std::string errorMsg = "Disallowed character ";
             // errorMsg.append(1, c); errorMsg.append(" in character constant")
-            token = std::make_shared<ErrorToken>(tp, "Disallowed character in character constant");
+            token = std::make_shared<ErrorToken>(*tp, "Disallowed character in character constant");
             validToken = false;
         }
         //Everything else is fine
 
         word.append(1, c); //append last character read before continuing, even in case of error, y not
         if (validToken && charStream->read(&c) && c=='\'') {
-            token = std::make_shared<CharacterConstantToken>(tp, word);
+            token = std::make_shared<CharacterConstantToken>(*tp, word);
         }
         else if (/*it WAS a*/ validToken) { //we don't wanna overwrite error messages
-            tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
-            token = std::make_shared<ErrorToken>(tp, "Expected ' to terminate the character constant");
+            tp = makeTokenPosition(charStream);
+            token = std::make_shared<ErrorToken>(*tp, "Expected ' to terminate the character constant");
         }
         //else i already have the errortoken ready
     }
@@ -164,7 +174,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         bool stringTerminated = false;
         while(!stringTerminated && charStream->read(&c) && validToken) {
             if (c== '\"') { //String terminated correctly
-                token = std::make_shared<StringLiteralToken>(tp, word);
+                token = std::make_shared<StringLiteralToken>(*tp, word);
                 stringTerminated = true;
             }
             else if (c == '\\') { //Potential escape sequence!
@@ -172,15 +182,15 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
                 word.append(1, '\\');
                 bool invalidEscapeSequence = !charStream->read(&c) || !escapeSequence(c);
                 if (invalidEscapeSequence) {
-                    tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
-                    token = std::make_shared<ErrorToken>(tp, "Invalid escape sequence");
+                    tp = makeTokenPosition(charStream);
+                    token = std::make_shared<ErrorToken>(*tp, "Invalid escape sequence");
                     validToken = false;
                 }
             }
             else if (c== '\n') {
                 validToken = false;
-                tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
-                token = std::make_shared<ErrorToken>(tp, "Newlines in string literals are not allowed");
+                tp = makeTokenPosition(charStream);
+                token = std::make_shared<ErrorToken>(*tp, "Newlines in string literals are not allowed");
             }
 
             if(!stringTerminated) word.append(1, c);
@@ -189,7 +199,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         DBGOUT_E("lexer", "String terminated (string = %s)", word.c_str());
 
         if (stringTerminated) {
-            token = std::make_shared<StringLiteralToken>(tp, word);
+            token = std::make_shared<StringLiteralToken>(*tp, word);
         }
     }
 
@@ -205,8 +215,8 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
                 }
                 
                 if(eof_reached) {
-                    tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
-                    token = std::make_shared<ErrorToken>(tp, "Unterminated comment :(");
+                    tp = makeTokenPosition(charStream);
+                    token = std::make_shared<ErrorToken>(*tp, "Unterminated comment :(");
                 }
                 else {
                     return nextToken(token); //We don't report any comment token. We keep going
@@ -218,14 +228,14 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
             auto punctutator = this->punctuators->walk(*charStream)->getResult();
 
             if (punctutator != nullptr) {
-                tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
-                token = std::make_shared<PunctuatorToken>(tp, *punctutator);
+                tp = makeTokenPosition(charStream);
+                token = std::make_shared<PunctuatorToken>(*tp, *punctutator);
             } 
             else {
                 if (token == nullptr) {
                     charStream->read(&c); //Wastes the unrecognized char!
-                    tp = TokenPosition(charStream->getSourceName(), charStream->getPosLine(), charStream->getPosColumn());
-                    token = std::make_shared<ErrorToken>(tp, "Unrecognized symbol");
+                    tp = makeTokenPosition(charStream);
+                    token = std::make_shared<ErrorToken>(*tp, "Unrecognized symbol");
                 }
             }
         } 

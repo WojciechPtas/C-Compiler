@@ -1,3 +1,4 @@
+#include <cstring>
 #include <iostream>
 
 #include "../../debug.h"
@@ -8,7 +9,8 @@ using namespace std;
 
 #define INITIAL_BUFFER_SIZE 64
 
-ISO88591InputStream::ISO88591InputStream(string filePath) : stream(filePath), filePath(filePath) {
+ISO88591InputStream::ISO88591InputStream(string filePath)
+    : filePath(filePath), stream(filePath) {
     if (stream.fail()) {
         throw std::invalid_argument("filePath");
     }
@@ -17,6 +19,15 @@ ISO88591InputStream::ISO88591InputStream(string filePath) : stream(filePath), fi
     this->bufferCapacity = 0;
     this->bufferLimit = 0;
     this->bufferOffset = 0;
+
+    // Metric
+
+    this->currentLine = 1;
+    this->currentColumn = 1;
+
+    // New-line recognition
+
+    this->lastCharWasCR = false;
 }
 
 ISO88591InputStream::~ISO88591InputStream() {
@@ -24,6 +35,18 @@ ISO88591InputStream::~ISO88591InputStream() {
         free(this->buffer);
         this->buffer = NULL;
     }
+}
+
+uint32_t ISO88591InputStream::getCurrentColumn() const {
+    return this->currentColumn;
+}
+
+uint32_t ISO88591InputStream::getCurrentLine() const {
+    return this->currentLine;
+}
+
+const string &ISO88591InputStream::getFilePath() const {
+    return this->filePath;
 }
 
 void ISO88591InputStream::popMark() {
@@ -66,7 +89,14 @@ void ISO88591InputStream::popMark() {
 }
 
 void ISO88591InputStream::pushMark() {
-    this->markStack.push_back(this->bufferOffset);
+    auto mark = make_shared<ISO88591InputStreamMark>();
+
+    mark->bufferOffset = this->bufferOffset;
+    mark->currentColumn = this->currentColumn;
+    mark->currentLine = this->currentLine;
+    mark->lastCharWasCR = this->lastCharWasCR;
+
+    this->markStack.push_back(mark);
 }
 
 bool ISO88591InputStream::read(char *dst) {
@@ -95,7 +125,13 @@ bool ISO88591InputStream::read(char *dst) {
 
     if (this->buffer == NULL && this->markStack.empty()) {
         this->stream.read(dst, 1);
-        return !this->stream.eof();
+        auto success = !this->stream.eof();
+
+        if (success) {
+            this->updateMetrics(*dst);
+        }
+
+        return success;
     }
 
     // If the markStack is not empty, but there is no buffer, we have the
@@ -160,6 +196,8 @@ bool ISO88591InputStream::read(char *dst) {
 
     *dst = this->buffer[this->bufferOffset];
     this->bufferOffset++;
+    this->updateMetrics(*dst);
+
     return true;
 }
 
@@ -168,5 +206,24 @@ void ISO88591InputStream::resetToMark() {
         throw logic_error("No mark is left.");
     }
 
-    this->bufferOffset = this->markStack.back();
+    auto mark = this->markStack.back();
+
+    this->bufferOffset = mark->bufferOffset;
+    this->currentColumn = mark->currentColumn;
+    this->currentLine = mark->currentLine;
+    this->lastCharWasCR = mark->lastCharWasCR;
+}
+
+void ISO88591InputStream::updateMetrics(char readCharacter) {
+    if (
+        readCharacter == '\r' ||
+        (readCharacter == '\n' && !this->lastCharWasCR)
+    ) {
+        this->currentColumn = 1;
+        this->currentLine++;
+    } else if (readCharacter != '\n') {
+        this->currentColumn++;
+    }
+    
+    this->lastCharWasCR = (readCharacter == '\r');
 }
