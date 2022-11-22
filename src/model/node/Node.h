@@ -40,7 +40,10 @@ namespace c4 {
                     }
 
                     void merge(const std::shared_ptr<Node> ptr) {
-                        this->result = ptr->result;
+                        if (this->result == nullptr) {
+                            this->result = ptr->result;
+                        }
+
                         for(auto it = ptr->transitions.begin(); it!=ptr->transitions.end(); ++it){
                             if(this->transitions.find(it->first)==this->transitions.end()){
                                 this->transitions[it->first]=it->second;
