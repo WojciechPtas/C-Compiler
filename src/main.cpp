@@ -14,7 +14,12 @@ using namespace c4::service::io;
 using namespace c4::util::token;
 using namespace std;
 
+enum RetCode {
+    OK=0, ERR=1
+};
+
 int main(int argc, char* argv[]) {
+    RetCode retval=OK;
     string input="input.txt";
     for(int i=0; i<argc;i++){
         string in=argv[i];
@@ -23,7 +28,6 @@ int main(int argc, char* argv[]) {
         }
     }
     //cout<<input<<endl;
-    TokenPosition tp("", 0, 0);
     std::string word;
 
     shared_ptr<ISO88591InputStream> src = std::make_shared<ISO88591InputStream>(input);
@@ -36,14 +40,16 @@ int main(int argc, char* argv[]) {
     int i=0;
     
     PrintVisitor pt(cout);
+    PrintVisitor pe(cerr);
     while(l.nextToken(token)) {
         i++;
         token->accept(pt);
     }
     if(token != nullptr){
-        token->accept(pt);
+        token->accept(pe);
+        retval = ERR;
     }
     cout << i << "\n";
 
-    return 0;
+    return retval;
 }
