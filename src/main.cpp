@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
         token->accept(pe);
         retval = ERR;
     }
-    cout << i << "\n";
+    //cout << i << "\n";
 
     return retval;
 }
