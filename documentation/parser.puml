@@ -1,0 +1,25 @@
+@startuml ParserUML
+
+class Parser{
+    - Lexer : Lexer 
+    - LLParser
+    - LRParser
+    + parse(textfile: str) : bool
+}
+
+class LLParser{
+    - parsetable
+    + parseStatement() : bool
+}
+class LRParser{
+    + parseExpr() : bool
+}
+
+
+class IfStatement {
+    - ifCondition: Expression 
+    - ifBlock: Statement
+    - elseBlock: Statement  /''/
+}
+
+@enduml
