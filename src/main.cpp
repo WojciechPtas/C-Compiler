@@ -26,6 +26,10 @@ int main(int argc, char* argv[]) {
         if(in == "--tokenize" && i<argc-1){
             input = argv[i+1];
         }
+        else if(in =="--parse" && i < argc-1){
+            input= argv[i+1];
+            return 0;
+        }
     }
     //cout<<input<<endl;
     std::string word;
