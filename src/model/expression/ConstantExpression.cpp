@@ -1,3 +1,4 @@
+#include <string>
 #include "ConstantExpression.h"
 
 using namespace c4::model::expression;

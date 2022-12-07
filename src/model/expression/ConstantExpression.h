@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include "IExpression.h"
 
 namespace c4 {
@@ -17,12 +16,6 @@ namespace c4 {
             private:
                 const TValue value;
             };
-
-            using CharacterConstantExpression =
-                ConstantExpression<std::string>;
-
-            using DecimalConstantExpression = ConstantExpression<std::string>;
-            using StringLiteralExpression = ConstantExpression<std::string>;
         }
     }
 }
