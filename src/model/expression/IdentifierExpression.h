@@ -6,7 +6,7 @@
 namespace c4 {
     namespace model {
         namespace expression {
-            class IdentifierExpression {
+            class IdentifierExpression : public IExpression {
             public:
                 IdentifierExpression(const std::string &identifier);
                 virtual ~IdentifierExpression() { }
