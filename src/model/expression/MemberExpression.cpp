@@ -1,18 +1,19 @@
 #include "MemberExpression.h"
 
 using namespace c4::model::expression;
+using namespace std;
 
 MemberExpression::MemberExpression(
     MemberExpressionType type,
-    const IExpression &container,
-    const IdentifierExpression &member
+    const shared_ptr<const IExpression> container,
+    const shared_ptr<const IdentifierExpression> member
 ) : container(container), member(member), type(type) { }
 
-const IExpression &MemberExpression::getContainer() const {
+shared_ptr<const IExpression> MemberExpression::getContainer() const {
     return this->container;
 }
 
-const IdentifierExpression &MemberExpression::getMember() const {
+shared_ptr<const IdentifierExpression> MemberExpression::getMember() const {
     return this->member;
 }
 
