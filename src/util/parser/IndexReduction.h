@@ -5,10 +5,10 @@
 namespace c4 {
     namespace util {
         namespace parser {
-            class ParenthesesReduction : public model::parser::PureReduction {
+            class IndexReduction : public model::parser::PureReduction {
             public:
-                ParenthesesReduction();
-                virtual ~ParenthesesReduction() { }
+                IndexReduction();
+                virtual ~IndexReduction() { }
 
                 std::shared_ptr<const model::expression::IExpression> reduce(
                     const std::vector<std::shared_ptr<const model::expression::IExpression>> &consumedExpressions

@@ -14,7 +14,7 @@ namespace c4 {
                 virtual ~PureReduction() { }
 
                 virtual std::shared_ptr<const expression::IExpression> reduce(
-                    std::shared_ptr<std::vector<std::shared_ptr<const expression::IExpression>>> consumedExpressions
+                    const std::vector<std::shared_ptr<const expression::IExpression>> &consumedExpressions
                 ) const = 0;
 
             protected:

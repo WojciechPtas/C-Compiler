@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "IExpression.h"
 
 namespace c4 {
@@ -8,18 +10,18 @@ namespace c4 {
             class IndexExpression : public IExpression {
             public:
                 IndexExpression(
-                    const IExpression &container,
-                    const IExpression &index
+                    std::shared_ptr<const IExpression> container,
+                    std::shared_ptr<const IExpression> index
                 );
 
                 virtual ~IndexExpression() { }
 
-                const IExpression &getContainer() const;
-                const IExpression &getIndex() const;
+                std::shared_ptr<const IExpression> getContainer() const;
+                std::shared_ptr<const IExpression> getIndex() const;
 
             private:
-                const IExpression container;
-                const IExpression index;
+                const std::shared_ptr<const IExpression> container;
+                const std::shared_ptr<const IExpression> index;
             };
         }
     }

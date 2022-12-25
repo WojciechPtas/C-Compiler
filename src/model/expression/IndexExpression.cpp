@@ -1,16 +1,17 @@
 #include "IndexExpression.h"
 
 using namespace c4::model::expression;
+using namespace std;
 
 IndexExpression::IndexExpression(
-    const IExpression &container,
-    const IExpression &index
+    shared_ptr<const IExpression> container,
+    shared_ptr<const IExpression> index
 ) : container(container), index(index) { }
 
-const IExpression &IndexExpression::getContainer() const {
+shared_ptr<const IExpression> IndexExpression::getContainer() const {
     return this->container;
 }
 
-const IExpression &IndexExpression::getIndex() const {
+shared_ptr<const IExpression> IndexExpression::getIndex() const {
     return this->index;
 }
