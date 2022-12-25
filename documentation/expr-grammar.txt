@@ -26,11 +26,12 @@ mulplicative-expression	::= unary-expression
 			  | mulplicative-expression '*' unary-expression
 
 unary-expression	::= postfix-expression
-			  | unary-operator unary-expression
+			  | '&' unary-expression
+			  | '*' unary-expression
+			  | '-' unary-expression
+			  | '!' unary-expression
 			  | 'sizeof' unary-expression
 			  | 'sizeof' '(' type-name ')'
-
-unary-operator		::= '&' | '*' | '-' | '!'
 
 postfix-expression	::= primary-expression
 			  | postfix-expression '[' assignment-expression ']'

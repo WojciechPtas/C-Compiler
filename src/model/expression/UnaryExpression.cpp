@@ -1,16 +1,17 @@
 #include "UnaryExpression.h"
 
 using namespace c4::model::expression;
+using namespace std;
 
 UnaryExpression::UnaryExpression(
     UnaryExpressionType type,
-    const IExpression &expression
+    const shared_ptr<const IExpression> expression
 ) : expression(expression), type(type) { }
 
-const IExpression &UnaryExpression::getExpression() const {
+shared_ptr<const IExpression> UnaryExpression::getExpression() const {
     return this->expression;
 }
 
-const UnaryExpressionType UnaryExpression::getType() const {
+UnaryExpressionType UnaryExpression::getType() const {
     return this->type;
 }
