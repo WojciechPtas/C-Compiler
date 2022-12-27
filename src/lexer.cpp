@@ -240,12 +240,11 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
             auto punctutator = this->punctuators->walk(*charStream)->getResult();
 
             if (punctutator != nullptr) {
-                tp = makeTokenPosition(charStream);
                 token = std::make_shared<PunctuatorToken>(*tp, *punctutator);
             } 
             else {
                 charStream->read(&c); //Wastes the unrecognized char!
-                tp = makeTokenPosition(charStream);
+                tp = positionOfLastChar(charStream);
                 token = std::make_shared<ErrorToken>(*tp, "Unrecognized symbol");
                 validToken = false;
             }
