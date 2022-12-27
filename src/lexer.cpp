@@ -36,6 +36,16 @@ std::shared_ptr<TokenPosition> makeTokenPosition(
     );
 }
 
+std::shared_ptr<TokenPosition> positionOfLastChar(
+    std::shared_ptr<c4::service::io::IFileInputStream<char>> stream
+) {
+    return std::make_shared<TokenPosition>(
+        stream->getFilePath(),
+        stream->getLastReadLine(),
+        stream->getLastReadColumn()
+    );
+}
+
 namespace c4 {
 
 bool Lexer::readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (char)) {
@@ -74,20 +84,18 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     std::string word;
     char c;
     bool eof_reached, validEndOfFile=false;
-    auto tp = makeTokenPosition(charStream);
-    
+
     charStream->pushMark();
     while(!(eof_reached = !(charStream->read(&c))) && isspace(c))  {        
         //We don't want to come back to what we wasted
         charStream->popMark();
         charStream->pushMark();
-        tp = makeTokenPosition(charStream);
     } //Wastes all whitespaces, newlines, etc.
     validEndOfFile = (c== '\n' || c=='\r'); //File must end in a newline!
+    auto tp = positionOfLastChar(charStream); //Position for working tokens
     
     if(eof_reached) {
         if(!validEndOfFile) {
-            tp = makeTokenPosition(charStream);
             token = std::make_shared<ErrorToken>(*tp, "Unexpected end of file");
         }
         charStream->popMark();
@@ -130,7 +138,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     else if(c=='\'') {
         eof_reached = !charStream->read(&c);
         if (eof_reached) {
-            tp = makeTokenPosition(charStream);
+            tp = positionOfLastChar(charStream);
             token = std::make_shared<ErrorToken>(*tp, "EOF in the middle of a character constant");
             validToken = false;
         }
@@ -141,7 +149,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
             word.append(1, '\\');
             validToken = charStream->read(&c) && escapeSequence(c);
             if (!validToken) {
-                tp = makeTokenPosition(charStream);
+                tp = positionOfLastChar(charStream);
                 token = std::make_shared<ErrorToken>(*tp, "Invalid escape sequence");
                 validToken = false;
             }
@@ -149,7 +157,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         
         //Disallowed characters
         else if(validToken && (c=='\'' || c=='\n')) {
-            tp = makeTokenPosition(charStream);
+            tp = positionOfLastChar(charStream);
             // std::string errorMsg = "Disallowed character ";
             // errorMsg.append(1, c); errorMsg.append(" in character constant")
             token = std::make_shared<ErrorToken>(*tp, "Disallowed character in character constant");
@@ -162,7 +170,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
             token = std::make_shared<CharacterConstantToken>(*tp, word);
         }
         else if (/*it WAS a*/ validToken) { //we don't wanna overwrite error messages
-            tp = makeTokenPosition(charStream);
+            tp = positionOfLastChar(charStream);
             token = std::make_shared<ErrorToken>(*tp, "Expected ' to terminate the character constant");
             validToken = false;
         }
@@ -184,14 +192,14 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
                 word.append(1, '\\');
                 bool invalidEscapeSequence = !charStream->read(&c) || !escapeSequence(c);
                 if (invalidEscapeSequence) {
-                    tp = makeTokenPosition(charStream);
+                    tp = positionOfLastChar(charStream);
                     token = std::make_shared<ErrorToken>(*tp, "Invalid escape sequence");
                     validToken = false;
                 }
             }
             else if (c== '\n') {
                 validToken = false;
-                tp = makeTokenPosition(charStream);
+                tp = positionOfLastChar(charStream);
                 token = std::make_shared<ErrorToken>(*tp, "Newlines in string literals are not allowed");
                 validToken = false;
             }
@@ -218,7 +226,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
                 }
                 
                 if(eof_reached) {
-                    tp = makeTokenPosition(charStream);
+                    tp = positionOfLastChar(charStream);
                     token = std::make_shared<ErrorToken>(*tp, "Unterminated comment :(");
                     validToken = false;
                 }

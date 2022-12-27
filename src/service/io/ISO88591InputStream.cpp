@@ -24,6 +24,8 @@ ISO88591InputStream::ISO88591InputStream(string filePath)
 
     this->currentLine = 1;
     this->currentColumn = 1;
+    this->lastCharLine = 1;
+    this->lastCharColumn = 1;
 
     // New-line recognition
 
@@ -43,6 +45,14 @@ uint32_t ISO88591InputStream::getCurrentColumn() const {
 
 uint32_t ISO88591InputStream::getCurrentLine() const {
     return this->currentLine;
+}
+
+uint32_t ISO88591InputStream::getLastReadColumn() const {
+    return this->lastCharColumn;
+}
+
+uint32_t ISO88591InputStream::getLastReadLine() const {
+    return this->lastCharLine;
 }
 
 const string &ISO88591InputStream::getFilePath() const {
@@ -95,6 +105,8 @@ void ISO88591InputStream::pushMark() {
     mark->currentColumn = this->currentColumn;
     mark->currentLine = this->currentLine;
     mark->lastCharWasCR = this->lastCharWasCR;
+    mark->lastCharLine = this->lastCharLine;
+    mark->lastCharColumn = this->lastCharColumn;
 
     this->markStack.push_back(mark);
 }
@@ -212,9 +224,14 @@ void ISO88591InputStream::resetToMark() {
     this->currentColumn = mark->currentColumn;
     this->currentLine = mark->currentLine;
     this->lastCharWasCR = mark->lastCharWasCR;
+    this->lastCharLine = mark->lastCharLine;
+    this->lastCharColumn = mark->lastCharColumn;
 }
 
 void ISO88591InputStream::updateMetrics(char readCharacter) {
+    lastCharColumn = currentColumn;
+    lastCharLine = currentLine;
+
     if (
         readCharacter == '\r' ||
         (readCharacter == '\n' && !this->lastCharWasCR)

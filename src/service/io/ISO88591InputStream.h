@@ -20,8 +20,11 @@ namespace c4 {
                 std::uint32_t currentColumn;
 
                 // Line recognition snapshot
-
                 bool lastCharWasCR;
+
+                // To get position of last char read. Because of pesky newlines, I have to keep track of lastCharLine at minimum
+                std::uint32_t lastCharLine;
+                std::uint32_t lastCharColumn;
             };
 
             class ISO88591InputStream : public IFileInputStream<char> {
@@ -31,6 +34,8 @@ namespace c4 {
 
                 std::uint32_t getCurrentColumn() const;
                 std::uint32_t getCurrentLine() const;
+                uint32_t getLastReadColumn() const;
+                uint32_t getLastReadLine() const;
                 const std::string &getFilePath() const;
 
                 void popMark() override;
@@ -56,6 +61,10 @@ namespace c4 {
                 // New-line recognition
 
                 bool lastCharWasCR;
+
+                // To get position of last char read. Because of pesky newlines, I have to keep track of lastCharLine at minimum
+                std::uint32_t lastCharLine;
+                std::uint32_t lastCharColumn;
 
                 void updateMetrics(char readCharacter);
             };
