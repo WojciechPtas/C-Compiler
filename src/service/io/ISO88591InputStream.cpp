@@ -115,6 +115,8 @@ bool ISO88591InputStream::read(char *dst) {
     // First, we clean up any allocated buffer that is not required anymore.
     // This is the case when there is no mark, buffer is not null, but
     // bufferOffset is equal to bufferLimit.
+    lastCharColumn = currentColumn;
+    lastCharLine = currentLine;
 
     if (
         this->markStack.empty() &&
@@ -229,9 +231,6 @@ void ISO88591InputStream::resetToMark() {
 }
 
 void ISO88591InputStream::updateMetrics(char readCharacter) {
-    lastCharColumn = currentColumn;
-    lastCharLine = currentLine;
-
     if (
         readCharacter == '\r' ||
         (readCharacter == '\n' && !this->lastCharWasCR)

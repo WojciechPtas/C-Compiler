@@ -212,6 +212,11 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         if (stringTerminated) {
             token = std::make_shared<StringLiteralToken>(*tp, word);
         }
+        else if(/*it WAS a*/ validToken) {
+            validToken = false;
+            tp = positionOfLastChar(charStream);
+            token = std::make_shared<ErrorToken>(*tp, "Unterminated string");
+        }
     }
 
     else {
