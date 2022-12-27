@@ -11,22 +11,17 @@ namespace c4 {
         namespace expression {
             class MemberExpression : public IExpression {
             public:
+                const std::shared_ptr<const IExpression> container;
+                const std::shared_ptr<const IdentifierExpression> member;
+                const MemberExpressionType type;
+
                 MemberExpression(
                     MemberExpressionType type,
                     const std::shared_ptr<const IExpression> container,
                     const std::shared_ptr<const IdentifierExpression> member
-                );
+                ) : type(type), container(container), member(member) { }
 
-                virtual ~MemberExpression() { }
-
-                std::shared_ptr<const IExpression> getContainer() const;
-                std::shared_ptr<const IdentifierExpression> getMember() const;
-                MemberExpressionType getType() const;
-
-            private:
-                const std::shared_ptr<const IExpression> container;
-                const std::shared_ptr<const IdentifierExpression> member;
-                const MemberExpressionType type;
+                ~MemberExpression() { }
             };
         }
     }

@@ -3,6 +3,7 @@
 #include "debug.h"
 #include "lexer.h"
 
+using namespace c4::model;
 using namespace c4::model::token;
 using namespace c4::service;
 

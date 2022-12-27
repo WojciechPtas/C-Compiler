@@ -8,22 +8,19 @@ namespace c4 {
         namespace expression {
             class ConditionalExpression : public IExpression {
             public:
+                const std::shared_ptr<const IExpression> condition;
+                const std::shared_ptr<const IExpression> elseCase;
+                const std::shared_ptr<const IExpression> thenCase;
+
                 ConditionalExpression(
                     const std::shared_ptr<const IExpression> condition,
                     const std::shared_ptr<const IExpression> thenCase,
                     const std::shared_ptr<const IExpression> elseCase
-                );
+                ) : condition(condition),
+                    elseCase(elseCase),
+                    thenCase(thenCase) { }
 
                 virtual ~ConditionalExpression() { }
-
-                std::shared_ptr<const IExpression> getCondition() const;
-                std::shared_ptr<const IExpression> getElseCase() const;
-                std::shared_ptr<const IExpression> getThenCase() const;
-
-            private:
-                const std::shared_ptr<const IExpression> condition;
-                const std::shared_ptr<const IExpression> elseCase;
-                const std::shared_ptr<const IExpression> thenCase;
             };
         }
     }

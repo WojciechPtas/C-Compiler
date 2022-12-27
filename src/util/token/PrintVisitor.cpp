@@ -9,6 +9,7 @@
 #include "PrintVisitor.h"
 #include "PunctuatorUtilities.h"
 
+using namespace c4::model;
 using namespace c4::model::token;
 using namespace c4::util::token;
 using namespace std;

@@ -10,19 +10,15 @@ namespace c4 {
         namespace expression {
             class UnaryExpression : public IExpression {
             public:
+                const std::shared_ptr<const IExpression> expression;
+                const UnaryExpressionType type;
+
                 UnaryExpression(
                     UnaryExpressionType type,
                     const std::shared_ptr<const IExpression> expression
-                );
+                ) : expression(expression), type(type) { }
 
-                virtual ~UnaryExpression() { }
-
-                std::shared_ptr<const IExpression> getExpression() const;
-                UnaryExpressionType getType() const;
-
-            private:
-                const std::shared_ptr<const IExpression> expression;
-                const UnaryExpressionType type;
+                ~UnaryExpression() { }
             };
         }
     }

@@ -1,20 +1,23 @@
 #pragma once
 
+#include <string>
+
+#include "../ConstantType.h"
 #include "IExpression.h"
 
 namespace c4 {
     namespace model {
         namespace expression {
-            template <class TValue>
             class ConstantExpression : public IExpression {
             public:
-                ConstantExpression(const TValue &value);
-                virtual ~ConstantExpression() { }
+                const ConstantType type;
+                const std::string value;
 
-                const TValue &getValue() const;
+                ConstantExpression(ConstantType type, const std::string &value) :
+                    type(type),
+                    value(value) { }
 
-            private:
-                const TValue value;
+                ~ConstantExpression() { }
             };
         }
     }

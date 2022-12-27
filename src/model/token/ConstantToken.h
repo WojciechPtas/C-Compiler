@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "ConstantType.h"
+#include "../ConstantType.h"
 #include "Token.h"
 
 namespace c4 {
