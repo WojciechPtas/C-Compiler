@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+
+#include "ConstantType.h"
 #include "Token.h"
 
 namespace c4 {
@@ -7,10 +10,20 @@ namespace c4 {
         namespace token {
             class ConstantToken : public Token {
             public:
-                virtual ~ConstantToken() { }
+                const ConstantType type;
+                const std::string value;
 
-            protected:
-                ConstantToken(TokenPosition position) : Token(position) { }
+                ConstantToken(
+                    TokenPosition position,
+                    ConstantType type,
+                    std::string value
+                ) : Token(position), type(type), value(value) { }
+
+                ~ConstantToken() { }
+
+                void accept(ITokenVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

@@ -8,21 +8,18 @@ namespace c4 {
         namespace token {
             class IdentifierToken : public Token {
             public:
+                const std::string identifier;
+
                 IdentifierToken(
                     TokenPosition position,
                     std::string identifier
-                );
+                ) : Token(position), identifier(identifier) { }
 
-                virtual ~IdentifierToken() { }
+                ~IdentifierToken() { }
 
-                void accept(
-                    util::token::ITokenVisitor &visitor
-                ) const override;
-
-                const std::string &getIdentifier() const;
-
-            private:
-                const std::string identifier;
+                void accept(ITokenVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

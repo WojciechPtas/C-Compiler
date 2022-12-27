@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../util/token/ITokenVisitor.h"
+#include "ITokenVisitor.h"
 #include "TokenPosition.h"
 
 namespace c4 {
@@ -8,19 +8,13 @@ namespace c4 {
         namespace token {
             class Token {
             public:
+                const TokenPosition position;
+
                 virtual ~Token() { }
-
-                virtual void accept(
-                    util::token::ITokenVisitor &visitor
-                ) const = 0;
-
-                const TokenPosition &getPosition() const;
+                virtual void accept(ITokenVisitor &visitor) const = 0;
 
             protected:
-                Token(TokenPosition position);
-
-            private:
-                const TokenPosition position;
+                Token(TokenPosition position) : position(position) { }
             };
         }
     }

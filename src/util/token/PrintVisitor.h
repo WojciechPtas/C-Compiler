@@ -1,24 +1,19 @@
 #pragma once
 
 #include <ostream>
-#include "ITokenVisitor.h"
+
+#include "../../model/token/ITokenVisitor.h"
+#include "../../model/token/Token.h"
 
 namespace c4 {
     namespace util {
         namespace token {
-            class PrintVisitor : public ITokenVisitor {
+            class PrintVisitor : public model::token::ITokenVisitor {
             public:
                 PrintVisitor(std::ostream &outputStream);
                 virtual ~PrintVisitor() { }
 
-                void visit(
-                    const model::token::CharacterConstantToken &token
-                ) override;
-
-                void visit(
-                    const model::token::DecimalConstantToken &token
-                ) override;
-
+                void visit(const model::token::ConstantToken &token) override;
                 void visit(const model::token::ErrorToken &token) override;
                 void visit(
                     const model::token::IdentifierToken &token
@@ -27,10 +22,6 @@ namespace c4 {
                 void visit(const model::token::KeywordToken &token) override;
                 void visit(
                     const model::token::PunctuatorToken &token
-                ) override;
-
-                void visit(
-                    const model::token::StringLiteralToken &token
                 ) override;
 
             private:

@@ -8,17 +8,18 @@ namespace c4 {
         namespace token {
             class KeywordToken : public Token {
             public:
-                KeywordToken(TokenPosition position, Keyword keyword);
-                virtual ~KeywordToken() { }
+                const Keyword keyword;
 
-                void accept(
-                    util::token::ITokenVisitor &visitor
-                ) const override;
+                KeywordToken(
+                    TokenPosition position,
+                    Keyword keyword
+                ) : Token(position), keyword(keyword) { }
 
-                Keyword getKeyword() const;
+                ~KeywordToken() { }
 
-            private:
-                Keyword keyword;
+                void accept(ITokenVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }
