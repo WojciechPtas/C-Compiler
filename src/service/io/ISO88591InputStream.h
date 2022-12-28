@@ -42,6 +42,8 @@ namespace c4 {
                 void pushMark() override;
                 bool read(char *dst) override;
                 void resetToMark() override;
+                bool lookahead1(char *dst);
+                bool lookahead(std::string& str, uint32_t amount);
 
             private:
                 const std::string filePath;

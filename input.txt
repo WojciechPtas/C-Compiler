@@ -1,3 +1,3 @@
-tokekiss emploleon latios '
-//questo dovrebbe essere un commento che viene ignorato non importa che caratteri ci metta dentro / sdasdoa/ /I(*sdaksns /*e oefaekfae)
-/*dofihasdfoisnfasd*/identifier
+'a' 'b' '\a' '\b'
+"asdkajbsd\
+sdoaisd" dasisdihsd 398 453 .:>"\\ >" ^^<<>>>>

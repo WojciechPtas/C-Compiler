@@ -18,6 +18,7 @@ namespace c4 {
                 virtual std::uint32_t getLastReadColumn() const = 0;
                 virtual std::uint32_t getLastReadLine() const = 0;
                 virtual const std::string &getFilePath() const = 0;
+                virtual bool lookahead(std::string& str, uint32_t amount) = 0;
             };
         }
     }

@@ -111,12 +111,33 @@ void ISO88591InputStream::pushMark() {
     this->markStack.push_back(mark);
 }
 
+bool ISO88591InputStream::lookahead1(char *dst) {
+    pushMark();
+    bool notEOF = read(dst);
+    resetToMark();
+    popMark();
+    return notEOF;
+}
+
+bool ISO88591InputStream::lookahead(std::string& str, uint32_t amount) { //appends to the string the required amount of lookahead. str.size() < amount in case EOF was reached (in which case return value is false)
+    char c;
+    bool notEOF;
+    pushMark();
+    for(uint32_t i=0; (notEOF = read(&c)) && i<amount; i++ ) {
+        str.append(1,c);
+    }
+    resetToMark();
+    popMark();
+    return notEOF;
+}
+
 bool ISO88591InputStream::read(char *dst) {
+    lastCharColumn = currentColumn;
+    lastCharLine = currentLine;
+
     // First, we clean up any allocated buffer that is not required anymore.
     // This is the case when there is no mark, buffer is not null, but
     // bufferOffset is equal to bufferLimit.
-    lastCharColumn = currentColumn;
-    lastCharLine = currentLine;
 
     if (
         this->markStack.empty() &&
