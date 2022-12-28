@@ -87,7 +87,7 @@ bool Lexer::readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (c
     char c;
     bool eof_NOT_reached;
     charStream->pushMark();
-    while( (eof_NOT_reached = charStream->read(&c)) && filter(c)) {
+    while( (eof_NOT_reached = readEliding(&c)) && filter(c)) {
         charStream->popMark();
         charStream->pushMark();
         wordToAppendTo.append(1, c); //Appends c to the word
@@ -100,7 +100,7 @@ bool Lexer::readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (c
 bool Lexer::readMaximumMunchUntil(std::string& wordToAppendTo, const std::string& terminator) {
     char c;
     size_t foundCount=0;
-    while( foundCount<terminator.size() && charStream->read(&c) ) {
+    while( foundCount<terminator.size() && readEliding(&c) ) {
         if (terminator[foundCount] == c) {
             foundCount++;
         }
@@ -118,7 +118,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     token = nullptr;
     std::string word;
     char c;
-    bool eof_reached, validEndOfFile=false;
+    bool eof_reached=false, validEndOfFile=false;
 
     //Empty C source file is valid!
     if(emptyFile && !charStream->lookahead1(&c)) {
@@ -262,27 +262,39 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     }
 
     else {
+        bool commentFound = false;
         if(c == '/') {
         eof_reached = !readEliding(&c);
             if (!eof_reached) {
                 if(c == '/') { //Single-line comment
-                    eof_reached = !readMaximumMunchUntil(word, "\n");
+                    // eof_reached = !readMaximumMunchUntil(word, "\n");
+                    commentFound = true;
+                    charStream->pushMark();
+                    while( !(eof_reached = !readEliding(&c)) && c!='\n' && c!='\r') {
+                        charStream->popMark();
+                        charStream->pushMark();
+                    }
+                    charStream->resetToMark();
+                    charStream->popMark();
                 }
                 else if( c== '*') { //Multiline comment
+                    commentFound = true;
                     eof_reached = !readMaximumMunchUntil(word, "*/");
                 }
 
-                if(eof_reached) {
-                    tp = positionOfLastChar(charStream);
-                    token = std::make_shared<ErrorToken>(*tp, "Unterminated comment :(");
-                    validToken = false;
-                }
-                else {
-                    return nextToken(token); //We don't report any comment token. We keep going
+                if(commentFound) {
+                    if(eof_reached) {
+                        tp = positionOfLastChar(charStream);
+                        token = std::make_shared<ErrorToken>(*tp, "Unterminated comment :(");
+                        validToken = false;
+                    }
+                    else {
+                        return nextToken(token); //We don't report any comment token. We keep going. This is tail recursion
+                    }
                 }
             }
         }
-        else { //last chance: Punctuator
+        if(!commentFound) { //last chance: Punctuator
             charStream->resetToMark();
             auto punctutator = this->punctuators->walk(*charStream)->getResult();
 
