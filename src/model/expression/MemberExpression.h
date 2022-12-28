@@ -19,7 +19,7 @@ namespace c4 {
                     MemberExpressionType type,
                     const std::shared_ptr<const IExpression> container,
                     const std::shared_ptr<const IdentifierExpression> member
-                ) : type(type), container(container), member(member) { }
+                ) : container(container), member(member), type(type) { }
 
                 ~MemberExpression() { }
             };
