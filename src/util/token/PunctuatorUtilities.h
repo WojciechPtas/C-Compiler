@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <set>
 #include <string>
 
 #include "../../model/node/Node.h"
@@ -65,6 +66,10 @@ namespace c4 {
             const std::string PERCENT_COLON_PERCENT_COLON   = "%:%:";
 
             extern const std::shared_ptr<const model::node::Node<char, model::token::Punctuator>> PUNCTUATOR_TREE;
+
+            std::unique_ptr<std::set<model::token::Punctuator>> decompose(
+                model::token::Punctuator keyword
+            );
 
             const std::string &stringify(model::token::Punctuator punctuator);
         }

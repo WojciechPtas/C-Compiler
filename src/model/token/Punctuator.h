@@ -62,6 +62,13 @@ namespace c4 {
                 PercentColonPercentColon    = 0x0200000000000000L
             };
 
+            inline Punctuator operator& (Punctuator l, Punctuator r) {
+                return Punctuator(
+                    std::underlying_type<Punctuator>::type(l) &
+                    std::underlying_type<Punctuator>::type(r)
+                );
+            }
+
             inline Punctuator operator| (Punctuator l, Punctuator r) {
                 return Punctuator(
                     std::underlying_type<Punctuator>::type(l) |

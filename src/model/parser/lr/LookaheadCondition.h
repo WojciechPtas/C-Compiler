@@ -24,6 +24,13 @@ namespace c4 {
                     token::Punctuator punctuatorMask;
                 };
 
+                inline TokenType operator& (TokenType l, TokenType r) {
+                    return TokenType(
+                        std::underlying_type<TokenType>::type(l) &
+                        std::underlying_type<TokenType>::type(r)
+                    );
+                }
+
                 inline TokenType operator| (TokenType l, TokenType r) {
                     return TokenType(
                         std::underlying_type<TokenType>::type(l) |

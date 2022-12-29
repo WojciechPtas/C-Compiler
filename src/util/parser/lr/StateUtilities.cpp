@@ -22,53 +22,56 @@ using namespace c4::util::parser::lr;
 using namespace std;
 using namespace std::placeholders;
 
+#define MAKE_STATE(name) \
+    static const shared_ptr<State> name = make_shared<State>()
+
 static shared_ptr<const State> _initialize();
 
-static const shared_ptr<State> _additionReductionState;
-static const shared_ptr<State> _additionState;
-static const shared_ptr<State> _assignmentReductionState;
-static const shared_ptr<State> _assignmentState;
-static const shared_ptr<State> _bracketReductionState;
-static const shared_ptr<State> _compareEqualReductionState;
-static const shared_ptr<State> _compareEqualState;
-static const shared_ptr<State> _compareUnequalReductionState;
-static const shared_ptr<State> _compareUnequalState;
-static const shared_ptr<State> _conditionalAlternativeState;
-static const shared_ptr<State> _conditionalState;
-static const shared_ptr<State> _constantReducedState;
-static const shared_ptr<State> _directMemberAccessState;
-static const shared_ptr<State> _directMemberAccessReductionState;
-static const shared_ptr<State> _identifierReducedState;
-static const shared_ptr<State> _leftBracketState;
-static const shared_ptr<State> _leftParenthesisState;
-static const shared_ptr<State> _lessThanState;
-static const shared_ptr<State> _lessThanReductionState;
-static const shared_ptr<State> _logicalAndState;
-static const shared_ptr<State> _logicalOrState;
-static const shared_ptr<State> _multiplicationState;
-static const shared_ptr<State> _multiplicationReductionState;
-static const shared_ptr<State> _operatorOrColonState;
-static const shared_ptr<State> _operatorOrConditionalReduction;
-static const shared_ptr<State> _operatorOrLogicalAndReduction;
-static const shared_ptr<State> _operatorOrLogicalOrReduction;
-static const shared_ptr<State> _operatorOrRightParenthesisState;
-static const shared_ptr<State> _operatorOrRightBracketState;
-static const shared_ptr<State> _operatorState;
-static const shared_ptr<State> _parenthesesReductionState;
-static const shared_ptr<State> _pointerMemberAccessState;
-static const shared_ptr<State> _pointerMemberAccessReductionState;
-static const shared_ptr<State> _subtractionReductionState;
-static const shared_ptr<State> _subtractionState;
-static const shared_ptr<State> _unaryAddressOfReductionState;
-static const shared_ptr<State> _unaryAddressOfState;
-static const shared_ptr<State> _unaryArithmeticNegationReductionState;
-static const shared_ptr<State> _unaryArithmeticNegationState;
-static const shared_ptr<State> _unaryDereferenceReductionState;
-static const shared_ptr<State> _unaryDereferenceState;
-static const shared_ptr<State> _unaryLogicNegationReductionState;
-static const shared_ptr<State> _unaryLogicNegationState;
-static const shared_ptr<State> _unarySizeOfReductionState;
-static const shared_ptr<State> _unarySizeOfState;
+MAKE_STATE(_additionReductionState);
+MAKE_STATE(_additionState);
+MAKE_STATE(_assignmentReductionState);
+MAKE_STATE(_assignmentState);
+MAKE_STATE(_bracketReductionState);
+MAKE_STATE(_compareEqualReductionState);
+MAKE_STATE(_compareEqualState);
+MAKE_STATE(_compareUnequalReductionState);
+MAKE_STATE(_compareUnequalState);
+MAKE_STATE(_conditionalAlternativeState);
+MAKE_STATE(_conditionalState);
+MAKE_STATE(_constantReducedState);
+MAKE_STATE(_directMemberAccessState);
+MAKE_STATE(_directMemberAccessReductionState);
+MAKE_STATE(_identifierReducedState);
+MAKE_STATE(_leftBracketState);
+MAKE_STATE(_leftParenthesisState);
+MAKE_STATE(_lessThanReductionState);
+MAKE_STATE(_lessThanState);
+MAKE_STATE(_logicalAndState);
+MAKE_STATE(_logicalOrState);
+MAKE_STATE(_multiplicationState);
+MAKE_STATE(_multiplicationReductionState);
+MAKE_STATE(_operatorOrColonState);
+MAKE_STATE(_operatorOrConditionalReduction);
+MAKE_STATE(_operatorOrLogicalAndReduction);
+MAKE_STATE(_operatorOrLogicalOrReduction);
+MAKE_STATE(_operatorOrRightParenthesisState);
+MAKE_STATE(_operatorOrRightBracketState);
+MAKE_STATE(_operatorState);
+MAKE_STATE(_parenthesesReductionState);
+MAKE_STATE(_pointerMemberAccessState);
+MAKE_STATE(_pointerMemberAccessReductionState);
+MAKE_STATE(_subtractionReductionState);
+MAKE_STATE(_subtractionState);
+MAKE_STATE(_unaryAddressOfReductionState);
+MAKE_STATE(_unaryAddressOfState);
+MAKE_STATE(_unaryArithmeticNegationReductionState);
+MAKE_STATE(_unaryArithmeticNegationState);
+MAKE_STATE(_unaryDereferenceReductionState);
+MAKE_STATE(_unaryDereferenceState);
+MAKE_STATE(_unaryLogicNegationReductionState);
+MAKE_STATE(_unaryLogicNegationState);
+MAKE_STATE(_unarySizeOfReductionState);
+MAKE_STATE(_unarySizeOfState);
 
 static const shared_ptr<const State> _initialState = _initialize();
 const State &c4::util::parser::lr::INITIAL_STATE = *_initialState;
@@ -631,7 +634,7 @@ static inline void _addAssignmentShift(State &state) {
     _addConditionalShift(state);
 
     state.addShift(
-        PUNCTUATOR_TOKEN(Punctuator::DoubleEqual),
+        PUNCTUATOR_TOKEN(Punctuator::Equal),
         _assignmentState
     );
 }
