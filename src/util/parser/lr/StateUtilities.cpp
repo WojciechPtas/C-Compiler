@@ -226,10 +226,6 @@ static shared_ptr<const State> _initialize() {
 
     _constantReducedState->addReduction(ANY_TOKEN, 1);
 
-    // State: _constantReducedState
-
-    _constantReducedState->addReduction(ANY_TOKEN, 1);
-
     // State: _directMemberAccessReductionState
 
     _directMemberAccessReductionState->addReduction(

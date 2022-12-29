@@ -8,56 +8,17 @@
 
 #include "../../expression/IExpression.h"
 #include "../../token/Token.h"
+
 #include "ExpressionCondition.h"
 #include "LookaheadCondition.h"
+#include "StateHandler.h"
 
 namespace c4 {
     namespace model {
         namespace parser {
             namespace lr {
-                class State;
-
                 typedef std::function<std::shared_ptr<const expression::IExpression>(std::vector<std::shared_ptr<const expression::IExpression>>)> Reduction;
                 typedef std::function<std::unique_ptr<const expression::IExpression>(const token::Token&)> TokenReduction;
-
-                enum class EncounterHandlerType : unsigned char {
-                    None        = 0x00,
-                    Reduction   = 0x01,
-                    Shift       = 0x02
-                };
-
-                inline EncounterHandlerType operator| (
-                    EncounterHandlerType l,
-                    EncounterHandlerType r
-                ) {
-                    return EncounterHandlerType(
-                        std::underlying_type<EncounterHandlerType>::type(l) |
-                        std::underlying_type<EncounterHandlerType>::type(r)
-                    );
-                }
-
-                struct EncounterHandler {
-                    EncounterHandlerType type;
-
-                    union _reduction {
-                        struct {
-                            std::uint32_t consumedStates;
-                            std::uint32_t consumedExpressions;
-                            Reduction executor;
-                        } expressionReduction;
-
-                        TokenReduction tokenReduction;
-
-                        _reduction() { }
-                        ~_reduction() { }
-                    } reduction;
-
-                    std::weak_ptr<const State> nextState;
-
-                    EncounterHandler() {
-                        this->type = EncounterHandlerType::None;
-                    }
-                };
 
                 class State {
                 public:
@@ -93,17 +54,16 @@ namespace c4 {
                     );
 
                 private:
-                    EncounterHandler encounterConstant;
-                    EncounterHandler encounterEnd;
-                    EncounterHandler encounterError;
-                    EncounterHandler encounterIdentifier;
-                    std::map<token::Keyword, EncounterHandler> encounterKeyword;
-                    std::map<token::Punctuator, EncounterHandler> encounterPunctuator;
+                    std::unique_ptr<StateHandler> encounterConstant;
+                    std::unique_ptr<StateHandler> encounterEnd;
+                    std::unique_ptr<StateHandler> encounterError;
+                    std::unique_ptr<StateHandler> encounterIdentifier;
+                    std::map<token::Keyword, std::unique_ptr<StateHandler>> encounterKeyword;
+                    std::map<token::Punctuator, std::unique_ptr<StateHandler>> encounterPunctuator;
 
-                    template<typename InstallFn>
-                    void decomposeCondition(
+                    void installHandler(
                         LookaheadCondition condition,
-                        InstallFn installFn
+                        std::unique_ptr<StateHandler> handler
                     );
                 };
             }

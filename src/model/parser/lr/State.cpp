@@ -1,10 +1,12 @@
 #include <algorithm>
 #include <stdexcept>
-#include <cstdio>
 
 #include "../../../debug.h"
 #include "../../../util/token/KeywordUtilities.h"
 #include "../../../util/token/PunctuatorUtilities.h"
+
+#include "ReducingStateHandler.h"
+#include "ShiftingStateHandler.h"
 #include "State.h"
 
 using namespace c4::model::parser::lr;
@@ -35,30 +37,10 @@ void State::addReduction(
         condition.punctuatorMask
     );
 
-    this->decomposeCondition(
+    this->installHandler(
         condition,
-        [&](EncounterHandler &dst) {
-            if (dst.type != EncounterHandlerType::None) {
-                throw logic_error("Handler installed already");
-            }
-
-            dst.reduction.expressionReduction.consumedExpressions = 0;
-            dst.reduction.expressionReduction.consumedStates = consumedStates;
-            dst.type = EncounterHandlerType::Reduction;
-        }
+        make_unique<ReducingStateHandler>(consumedStates)
     );
-}
-
-static shared_ptr<const c4::model::expression::IExpression> __test__(
-    vector<shared_ptr<const c4::model::expression::IExpression>> consumed
-) {
-    return nullptr;
-}
-
-static unique_ptr<const c4::model::expression::IExpression> __test2__(
-    const c4::model::token::Token &token
-) {
-    return nullptr;
 }
 
 void State::addReduction(
@@ -76,19 +58,13 @@ void State::addReduction(
         condition.punctuatorMask
     );
 
-    this->decomposeCondition(
+    this->installHandler(
         condition,
-        [&](EncounterHandler &dst) {
-            if (dst.type != EncounterHandlerType::None) {
-                throw logic_error("Handler installed already");
-            }
-
-            dst.reduction.expressionReduction.consumedExpressions =
-                consumedExpressions;
-
-            dst.reduction.expressionReduction.consumedStates = consumedStates;
-            dst.type = EncounterHandlerType::Reduction;
-        }
+        make_unique<ReducingStateHandler>(
+            consumedStates,
+            consumedExpressions,
+            reduction
+        )
     );
 }
 
@@ -105,16 +81,9 @@ void State::addShift(
         condition.punctuatorMask
     );
 
-    this->decomposeCondition(
+    this->installHandler(
         condition,
-        [&](EncounterHandler &dst) {
-            if (dst.type != EncounterHandlerType::None) {
-                throw logic_error("Handler installed already");
-            }
-            
-            dst.nextState = nextState;
-            dst.type = EncounterHandlerType::Shift;
-        }
+        make_unique<ShiftingStateHandler>(nextState)
     );
 }
 
@@ -133,49 +102,59 @@ void State::addShift(
         condition.punctuatorMask
     );
 
-    this->decomposeCondition(
+    this->installHandler(
         condition,
-        [&](EncounterHandler &dst) {
-            if (dst.type != EncounterHandlerType::None) {
-                throw logic_error("Handler installed already");
-            }
-            
-            dst.nextState = nextState;
-            dst.reduction.tokenReduction = reduction;
-            dst.type =
-                EncounterHandlerType::Reduction | EncounterHandlerType::Shift;
-        }
+        make_unique<ShiftingStateHandler>(nextState, reduction)
     );
 }
 
-template<typename InstallFn>
-void State::decomposeCondition(
+void State::installHandler(
     LookaheadCondition condition,
-    InstallFn installFn
+    std::unique_ptr<StateHandler> handler
 ) {
     auto typeMask = condition.typeMask;
 
     if ((typeMask & TokenType::Constant) == TokenType::Constant) {
-        installFn(this->encounterConstant);
+        if (this->encounterConstant != nullptr) {
+            throw logic_error("Handler installed already");
+        }
+        
+        this->encounterConstant = move(handler);
     }
 
     if ((typeMask & TokenType::End) == TokenType::End) {
-        installFn(this->encounterEnd);
+        if (this->encounterEnd != nullptr) {
+            throw logic_error("Handler installed already");
+        }
+        
+        this->encounterEnd = move(handler);
     }
 
     if ((typeMask & TokenType::Error) == TokenType::Error) {
-        installFn(this->encounterError);
+        if (this->encounterError != nullptr) {
+            throw logic_error("Handler installed already");
+        }
+        
+        this->encounterError = move(handler);
     }
 
     if ((typeMask & TokenType::Identifier) == TokenType::Identifier) {
-        installFn(this->encounterIdentifier);
+        if (this->encounterIdentifier != nullptr) {
+            throw logic_error("Handler installed already");
+        }
+        
+        this->encounterIdentifier = move(handler);
     }
 
     if ((typeMask & TokenType::Keyword) == TokenType::Keyword) {
         auto keywords = decompose(condition.keywordMask);
 
         for (auto keyword : *keywords) {
-            installFn(this->encounterKeyword[keyword]);
+            if (this->encounterKeyword[keyword] != nullptr) {
+                throw logic_error("Handler installed already");
+            }
+
+            this->encounterKeyword[keyword] = move(handler);
         }
     }
 
@@ -183,7 +162,11 @@ void State::decomposeCondition(
         auto punctuators = decompose(condition.punctuatorMask);
 
         for (auto punctuator : *punctuators) {
-            installFn(this->encounterPunctuator[punctuator]);
+            if (this->encounterPunctuator[punctuator] != nullptr) {
+                throw logic_error("Handler installed already");
+            }
+
+            this->encounterPunctuator[punctuator] = move(handler);
         }
     }
 }
