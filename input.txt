@@ -1,3 +1,114 @@
-tokekiss emploleon latios '
-//questo dovrebbe essere un commento che viene ignorato non importa che caratteri ci metta dentro / sdasdoa/ /I(*sdaksns /*e oefaekfae)
-/*dofihasdfoisnfasd*/identifier
+[
+]
+(
+)
+{
+}
+.
+->
+++
+--
+&
+*
++
+-
+~
+!
+/
+%
+<<
+>>
+<
+>
+<=
+>=
+==
+!=
+^
+|
+&&
+||
+?
+:
+;
+...
+=
+*=
+/=
+%=
++=
+-=
+<<=
+>>=
+&=
+^=
+|=
+,
+#
+##
+<:
+:>
+<%
+%>
+%:
+%:%:
+
+auto
+break
+case
+char
+const
+continue
+default
+do
+double
+else
+enum
+extern
+float
+for
+goto
+if
+inline
+int
+long
+register
+restrict
+return
+short
+signed
+sizeof
+static
+struct
+switch
+typedef
+union
+unsigned
+void
+volatile
+while
+_Alignas
+_Alignof
+_Atomic
+_Bool
+_Complex
+_Generic
+_Imaginary
+_Noreturn
+_Static_assert
+_Thread_local
+
+'A''B''C''D''A''\
+\a'"adoisjdoaisjdasjd''\\sdfsdfsdfsdf \a\bsadaidas\
+"
+"a//b" // four-character string literal
+#include "//e" // undefined behavior
+// */ // comment, not syntax error
+f = g/**//h; // equivalent to f = g / h;
+//\
+i(); // part of a two-line comment
+/\
+/ j(); // part of a two-line comment
+/*//*/ l(); // equivalent to l();
+m = n//**/o
++ p; // equivalent to m = n + p;

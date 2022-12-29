@@ -1,7 +1,9 @@
 #include <iostream>
-
 #include "debug.h"
 #include "lexer.h"
+
+#define CASE_ERRORTOKEN_RETURNS_TRUE false
+//if set to true, nextToken() will return false only in case of EOF
 
 using namespace c4::model;
 using namespace c4::model::token;
@@ -37,13 +39,55 @@ std::shared_ptr<TokenPosition> makeTokenPosition(
     );
 }
 
+std::shared_ptr<TokenPosition> positionOfLastChar(
+    std::shared_ptr<c4::service::io::IFileInputStream<char>> stream
+) {
+    return std::make_shared<TokenPosition>(
+        stream->getFilePath(),
+        stream->getLastReadLine(),
+        stream->getLastReadColumn()
+    );
+}
+
 namespace c4 {
+
+bool Lexer::readEliding(char *c) { //Read wrapper that implements backslash+newline eliding
+    bool backSlashNewLine = true;
+    bool notEOF;
+    charStream->pushMark();
+    while(backSlashNewLine && (notEOF = charStream->read(c))) {
+        backSlashNewLine = false;
+        charStream->popMark();
+        charStream->pushMark(); //want to retreat if it wasn't the case of backslash+newline
+        if(*c == '\\') {
+            char c2;
+            bool notEOF2; //separate EOF boolean. If we encounter EOF in the next steps we simply backtrack and return the char
+            if( (notEOF2 = charStream->read(&c2)) ) {
+                if(c2 == '\r') {
+                    charStream->popMark();
+                    charStream->pushMark(); //i accept up to here, and update the mark accordingly
+                    notEOF2 = charStream->read(&c2);
+                    backSlashNewLine = true;
+                }
+                if(notEOF2 && c2 == '\n') {
+                    //also takes into account CRLF, not only CR or LF, in a maximal munch strategy
+                    charStream->popMark();
+                    charStream->pushMark(); //i accept up to here, and update the mark accordingly
+                    backSlashNewLine = true;
+                }
+            }
+        }
+    }
+    charStream->resetToMark();
+    charStream->popMark();
+    return notEOF;
+}
 
 bool Lexer::readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (char)) {
     char c;
     bool eof_NOT_reached;
     charStream->pushMark();
-    while( (eof_NOT_reached = charStream->read(&c)) && filter(c)) {
+    while( (eof_NOT_reached = readEliding(&c)) && filter(c)) {
         charStream->popMark();
         charStream->pushMark();
         wordToAppendTo.append(1, c); //Appends c to the word
@@ -56,7 +100,7 @@ bool Lexer::readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (c
 bool Lexer::readMaximumMunchUntil(std::string& wordToAppendTo, const std::string& terminator) {
     char c;
     size_t foundCount=0;
-    while( foundCount<terminator.size() && charStream->read(&c) ) {
+    while( foundCount<terminator.size() && readEliding(&c) ) {
         if (terminator[foundCount] == c) {
             foundCount++;
         }
@@ -74,25 +118,30 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     token = nullptr;
     std::string word;
     char c;
-    bool eof_reached, validEndOfFile=false;
-    auto tp = makeTokenPosition(charStream);
-    
+    bool eof_reached=false, validEndOfFile=false;
+
+    //Empty C source file is valid!
+    if(emptyFile && !charStream->lookahead1(&c)) {
+        return false;
+    }
+    emptyFile = false;
+
     charStream->pushMark();
-    while(!(eof_reached = !(charStream->read(&c))) && isspace(c))  {        
+    while(!(eof_reached = !(readEliding(&c))) && isspace(c))  {        
         //We don't want to come back to what we wasted
         charStream->popMark();
         charStream->pushMark();
-        tp = makeTokenPosition(charStream);
     } //Wastes all whitespaces, newlines, etc.
     validEndOfFile = (c== '\n' || c=='\r'); //File must end in a newline!
+    auto tp = positionOfLastChar(charStream); //Position for working tokens
     
     if(eof_reached) {
         if(!validEndOfFile) {
-            tp = makeTokenPosition(charStream);
             token = std::make_shared<ErrorToken>(*tp, "Unexpected end of file");
         }
         charStream->popMark();
         return false;
+        //Except in this case, even if we reached EOF, we want to say "true" so we can return the token for now. In the next iteration we'll terminate correctly or report source file not terminated by \n by this very block.
     }
 
 //We continue only if we didn't reach EOF
@@ -108,8 +157,8 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
             token = std::make_shared<KeywordToken>(*tp, *keyword);
         }
         // token = keywords->walk(*charStream); //After this, only accepted part of the stream has been used up
-        eof_reached = !charStream->read(&c);
-        if(token == nullptr || (!eof_reached && isCharOfIdentifier(c)) ) { //No keyword found OR keyword found but other letters are following
+        bool leftovers = charStream->lookahead1(&c);
+        if(token == nullptr || (leftovers && isCharOfIdentifier(c)) ) { //No keyword found OR keyword found but other letters are following
             charStream->resetToMark();
             readMaximumMunchWhile(word, isCharOfIdentifier);
             token = std::make_shared<IdentifierToken>(*tp, word);
@@ -118,20 +167,28 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
 
     //Case: number constants
     else if (c == '0') {
-        token = std::make_shared<ConstantToken>(*tp, ConstantType::Decimal, "0");
+        token = std::make_shared<ConstantToken>(
+            *tp,
+            ConstantType::Decimal,
+            "0"
+        );
     }
 
     else if(isdigit(c)) { //Nonzero decimal constant
         word.append(1,c);
         readMaximumMunchWhile(word, isDigit);
-        token = std::make_shared<ConstantToken>(*tp, ConstantType::Decimal, word);
+        token = std::make_shared<ConstantToken>(
+            *tp,
+            ConstantType::Decimal,
+            word
+        );
     }
 
     //Case: char constants
     else if(c=='\'') {
-        eof_reached = !charStream->read(&c);
+        eof_reached = !readEliding(&c);
         if (eof_reached) {
-            tp = makeTokenPosition(charStream);
+            tp = positionOfLastChar(charStream);
             token = std::make_shared<ErrorToken>(*tp, "EOF in the middle of a character constant");
             validToken = false;
         }
@@ -140,9 +197,9 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         if (validToken && c == '\\') { //Potential escape sequence!
             //We've read a '\'. If we reached EOF or there's an invalid escape sequence we reject.
             word.append(1, '\\');
-            validToken = charStream->read(&c) && escapeSequence(c);
+            validToken = readEliding(&c) && escapeSequence(c);
             if (!validToken) {
-                tp = makeTokenPosition(charStream);
+                tp = positionOfLastChar(charStream);
                 token = std::make_shared<ErrorToken>(*tp, "Invalid escape sequence");
                 validToken = false;
             }
@@ -150,7 +207,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         
         //Disallowed characters
         else if(validToken && (c=='\'' || c=='\n')) {
-            tp = makeTokenPosition(charStream);
+            tp = positionOfLastChar(charStream);
             // std::string errorMsg = "Disallowed character ";
             // errorMsg.append(1, c); errorMsg.append(" in character constant")
             token = std::make_shared<ErrorToken>(*tp, "Disallowed character in character constant");
@@ -159,11 +216,15 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         //Everything else is fine
 
         word.append(1, c); //append last character read before continuing, even in case of error, y not
-        if (validToken && charStream->read(&c) && c=='\'') {
-            token = std::make_shared<ConstantToken>(*tp, ConstantType::Character, word);
+        if (validToken && readEliding(&c) && c=='\'') {
+            token = std::make_shared<ConstantToken>(
+                *tp,
+                ConstantType::Character,
+                word
+            );
         }
         else if (/*it WAS a*/ validToken) { //we don't wanna overwrite error messages
-            tp = makeTokenPosition(charStream);
+            tp = positionOfLastChar(charStream);
             token = std::make_shared<ErrorToken>(*tp, "Expected ' to terminate the character constant");
             validToken = false;
         }
@@ -175,24 +236,29 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         DBGOUT("lexer", "Encountered string start");
 
         bool stringTerminated = false;
-        while(!stringTerminated && charStream->read(&c) && validToken) {
+        while(!stringTerminated && readEliding(&c) && validToken) {
             if (c== '\"') { //String terminated correctly
-                token = std::make_shared<ConstantToken>(*tp, ConstantType::String, word);
+                token = std::make_shared<ConstantToken>(
+                    *tp,
+                    ConstantType::String,
+                    word
+                );
+
                 stringTerminated = true;
             }
             else if (c == '\\') { //Potential escape sequence!
                 //We've read a '\'. If we reached EOF or there's an invalid escape sequence we reject.
                 word.append(1, '\\');
-                bool invalidEscapeSequence = !charStream->read(&c) || !escapeSequence(c);
+                bool invalidEscapeSequence = !readEliding(&c) || !escapeSequence(c);
                 if (invalidEscapeSequence) {
-                    tp = makeTokenPosition(charStream);
+                    tp = positionOfLastChar(charStream);
                     token = std::make_shared<ErrorToken>(*tp, "Invalid escape sequence");
                     validToken = false;
                 }
             }
             else if (c== '\n') {
                 validToken = false;
-                tp = makeTokenPosition(charStream);
+                tp = positionOfLastChar(charStream);
                 token = std::make_shared<ErrorToken>(*tp, "Newlines in string literals are not allowed");
                 validToken = false;
             }
@@ -203,42 +269,62 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         DBGOUT_E("lexer", "String terminated (string = %s)", word.c_str());
 
         if (stringTerminated) {
-            token = std::make_shared<ConstantToken>(*tp, ConstantType::String, word);
+            token = std::make_shared<ConstantToken>(
+                *tp,
+                ConstantType::String,
+                word
+            );
+        }
+        else if(/*it WAS a*/ validToken) {
+            validToken = false;
+            tp = positionOfLastChar(charStream);
+            token = std::make_shared<ErrorToken>(*tp, "Unterminated string");
         }
     }
 
     else {
+        bool commentFound = false;
         if(c == '/') {
-        eof_reached = !charStream->read(&c);
+        eof_reached = !readEliding(&c);
             if (!eof_reached) {
                 if(c == '/') { //Single-line comment
-                    eof_reached = !readMaximumMunchUntil(word, "\n");
+                    // eof_reached = !readMaximumMunchUntil(word, "\n");
+                    commentFound = true;
+                    charStream->pushMark();
+                    while( !(eof_reached = !readEliding(&c)) && c!='\n' && c!='\r') {
+                        charStream->popMark();
+                        charStream->pushMark();
+                    }
+                    charStream->resetToMark();
+                    charStream->popMark();
                 }
                 else if( c== '*') { //Multiline comment
+                    commentFound = true;
                     eof_reached = !readMaximumMunchUntil(word, "*/");
                 }
-                
-                if(eof_reached) {
-                    tp = makeTokenPosition(charStream);
-                    token = std::make_shared<ErrorToken>(*tp, "Unterminated comment :(");
-                    validToken = false;
-                }
-                else {
-                    return nextToken(token); //We don't report any comment token. We keep going
+
+                if(commentFound) {
+                    if(eof_reached) {
+                        tp = positionOfLastChar(charStream);
+                        token = std::make_shared<ErrorToken>(*tp, "Unterminated comment :(");
+                        validToken = false;
+                    }
+                    else {
+                        return nextToken(token); //We don't report any comment token. We keep going. This is tail recursion
+                    }
                 }
             }
         }
-        else { //last chance: Punctuator
+        if(!commentFound) { //last chance: Punctuator
             charStream->resetToMark();
             auto punctutator = this->punctuators->walk(*charStream)->getResult();
 
             if (punctutator != nullptr) {
-                tp = makeTokenPosition(charStream);
                 token = std::make_shared<PunctuatorToken>(*tp, *punctutator);
             } 
             else {
                 charStream->read(&c); //Wastes the unrecognized char!
-                tp = makeTokenPosition(charStream);
+                tp = positionOfLastChar(charStream);
                 token = std::make_shared<ErrorToken>(*tp, "Unrecognized symbol");
                 validToken = false;
             }
@@ -246,8 +332,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     }
         
     charStream->popMark();
-    return validToken; //even if we reached eof, we want to say "true" so we can return the token for now. In the next iteration we'll terminate correctly or report source file not terminated by \n, which is not allowed.
-    //if you substitute true to validToken it will return false only in case of EOF
+    return CASE_ERRORTOKEN_RETURNS_TRUE || validToken; //read definition for clarification
 }
 
 }

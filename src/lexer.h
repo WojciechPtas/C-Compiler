@@ -21,9 +21,11 @@ private:
     std::shared_ptr<c4::service::io::IFileInputStream<char>> charStream;
     const std::shared_ptr<const c4::service::automata::IAutomaton<char, c4::model::token::Punctuator>> punctuators;
     const std::shared_ptr<const c4::service::automata::IAutomaton<char, c4::model::token::Keyword>> keywords;
+    bool emptyFile = true; //source file is required to end in a newline except for the case of an empty file, which must be accepted :(
 
     bool readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (char)); //Takes a function which returns bool on characters, reads from the stream while possible, consumes only valid chars
     bool readMaximumMunchUntil(std::string& wordToAppendTo, const std::string& terminator); //Takes a function which returns bool on characters, reads from the stream while possible, consumes only valid chars
+    bool readEliding(char *c);
 
 public:
     Lexer(const std::shared_ptr<c4::service::io::IFileInputStream<char>> charStream, 

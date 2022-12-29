@@ -24,6 +24,8 @@ ISO88591InputStream::ISO88591InputStream(string filePath)
 
     this->currentLine = 1;
     this->currentColumn = 1;
+    this->lastCharLine = 1;
+    this->lastCharColumn = 1;
 
     // New-line recognition
 
@@ -43,6 +45,14 @@ uint32_t ISO88591InputStream::getCurrentColumn() const {
 
 uint32_t ISO88591InputStream::getCurrentLine() const {
     return this->currentLine;
+}
+
+uint32_t ISO88591InputStream::getLastReadColumn() const {
+    return this->lastCharColumn;
+}
+
+uint32_t ISO88591InputStream::getLastReadLine() const {
+    return this->lastCharLine;
 }
 
 const string &ISO88591InputStream::getFilePath() const {
@@ -95,11 +105,36 @@ void ISO88591InputStream::pushMark() {
     mark->currentColumn = this->currentColumn;
     mark->currentLine = this->currentLine;
     mark->lastCharWasCR = this->lastCharWasCR;
+    mark->lastCharLine = this->lastCharLine;
+    mark->lastCharColumn = this->lastCharColumn;
 
     this->markStack.push_back(mark);
 }
 
+bool ISO88591InputStream::lookahead1(char *dst) {
+    pushMark();
+    bool notEOF = read(dst);
+    resetToMark();
+    popMark();
+    return notEOF;
+}
+
+bool ISO88591InputStream::lookahead(std::string& str, uint32_t amount) { //appends to the string the required amount of lookahead. str.size() < amount in case EOF was reached (in which case return value is false)
+    char c;
+    bool notEOF;
+    pushMark();
+    for(uint32_t i=0; (notEOF = read(&c)) && i<amount; i++ ) {
+        str.append(1,c);
+    }
+    resetToMark();
+    popMark();
+    return notEOF;
+}
+
 bool ISO88591InputStream::read(char *dst) {
+    lastCharColumn = currentColumn;
+    lastCharLine = currentLine;
+
     // First, we clean up any allocated buffer that is not required anymore.
     // This is the case when there is no mark, buffer is not null, but
     // bufferOffset is equal to bufferLimit.
@@ -212,6 +247,8 @@ void ISO88591InputStream::resetToMark() {
     this->currentColumn = mark->currentColumn;
     this->currentLine = mark->currentLine;
     this->lastCharWasCR = mark->lastCharWasCR;
+    this->lastCharLine = mark->lastCharLine;
+    this->lastCharColumn = mark->lastCharColumn;
 }
 
 void ISO88591InputStream::updateMetrics(char readCharacter) {
