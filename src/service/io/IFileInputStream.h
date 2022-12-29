@@ -3,13 +3,13 @@
 #include <cstdint>
 #include <string>
 
-#include "IInputStream.h"
+#include "IBufferedInputStream.h"
 
 namespace c4 {
     namespace service {
         namespace io {
             template <class TElement>
-            class IFileInputStream : public IInputStream<TElement> {
+            class IFileInputStream : public IBufferedInputStream<TElement> {
             public:
                 virtual ~IFileInputStream() { }
 

@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "../../model/node/Node.h"
-#include "../io/IInputStream.h"
+#include "../io/IBufferedInputStream.h"
 
 namespace c4 {
     namespace service {
@@ -12,7 +12,7 @@ namespace c4 {
             class IAutomaton {
             public:
                 virtual std::shared_ptr<const model::node::Node<TEdge, TPayload>> walk(
-                    io::IInputStream<TEdge>& src
+                    io::IBufferedInputStream<TEdge>& src
                 ) const = 0;
             };
         }
