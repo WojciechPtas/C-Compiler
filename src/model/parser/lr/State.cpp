@@ -2,6 +2,9 @@
 #include <stdexcept>
 
 #include "../../../debug.h"
+#include "../../../util/expression/BinaryExpressionUtilities.h"
+#include "../../../util/expression/MemberExpressionUtilities.h"
+#include "../../../util/expression/UnaryExpressionUtilities.h"
 #include "../../../util/token/KeywordUtilities.h"
 #include "../../../util/token/PunctuatorUtilities.h"
 
@@ -10,6 +13,7 @@
 #include "State.h"
 
 using namespace c4::model::parser::lr;
+using namespace c4::util::expression;
 using namespace c4::util::token;
 using namespace std;
 
@@ -21,7 +25,93 @@ void State::addJump(
     ExpressionCondition condition,
     weak_ptr<const State> nextState
 ) {
-    // TODO: Implementation.
+    auto typeMask = condition.typeMask;
+
+    DBGOUT_E(
+        "lr-parser",
+        "(State %p, T=%2hhx, B=%3hx, M=%2hhx, U=%3hhx) Installing jump",
+        this,
+        condition.typeMask,
+        condition.binaryExpressionMask,
+        condition.memberExpressionMask,
+        condition.unaryExpressionMask
+    );
+
+    if ((typeMask & ExpressionType::Binary) == ExpressionType::Binary) {
+        auto operators = decompose(condition.binaryExpressionMask);
+
+        for (auto op : *operators) {
+            if (!this->gotoAfterBinary[op].expired()) {
+                throw logic_error("Goto installed already");
+            }
+
+            this->gotoAfterBinary[op] = nextState;
+        }
+    }
+
+    if ((typeMask & ExpressionType::Call) == ExpressionType::Call) {
+        if (!this->gotoAfterCall.expired()) {
+            throw logic_error("Goto installed already");
+        }
+
+        this->gotoAfterCall = nextState;
+    }
+
+    if ((typeMask & ExpressionType::Conditional) == ExpressionType::Conditional) {
+        if (!this->gotoAfterConditional.expired()) {
+            throw logic_error("Goto installed already");
+        }
+
+        this->gotoAfterConditional = nextState;
+    }
+
+    if ((typeMask & ExpressionType::Constant) == ExpressionType::Constant) {
+        if (!this->gotoAfterConstant.expired()) {
+            throw logic_error("Goto installed already");
+        }
+        
+        this->gotoAfterConstant = nextState;
+    }
+
+    if ((typeMask & ExpressionType::Identifier) == ExpressionType::Identifier) {
+        if (!this->gotoAfterIdentifier.expired()) {
+            throw logic_error("Goto installed already");
+        }
+        
+        this->gotoAfterIdentifier = nextState;
+    }
+
+    if ((typeMask & ExpressionType::Index) == ExpressionType::Index) {
+        if (!this->gotoAfterIndex.expired()) {
+            throw logic_error("Goto installed already");
+        }
+
+        this->gotoAfterIndex = nextState;
+    }
+
+    if ((typeMask & ExpressionType::Member) == ExpressionType::Member) {
+        auto accessTypes = decompose(condition.memberExpressionMask);
+
+        for (auto accessType : *accessTypes) {
+            if (!this->gotoAfterMember[accessType].expired()) {
+                throw logic_error("Goto installed already");
+            }
+
+            this->gotoAfterMember[accessType] = nextState;
+        }
+    }
+
+    if ((typeMask & ExpressionType::Unary) == ExpressionType::Unary) {
+        auto operators = decompose(condition.unaryExpressionMask);
+
+        for (auto op : *operators) {
+            if (!this->gotoAfterUnary[op].expired()) {
+                throw logic_error("Goto installed already");
+            }
+
+            this->gotoAfterUnary[op] = nextState;
+        }
+    }
 }
 
 void State::addReduction(
@@ -37,7 +127,7 @@ void State::addReduction(
         condition.punctuatorMask
     );
 
-    this->installHandler(
+    this->installLookaheadHandler(
         condition,
         make_unique<ReducingStateHandler>(consumedStates)
     );
@@ -58,7 +148,7 @@ void State::addReduction(
         condition.punctuatorMask
     );
 
-    this->installHandler(
+    this->installLookaheadHandler(
         condition,
         make_unique<ReducingStateHandler>(
             consumedStates,
@@ -81,7 +171,7 @@ void State::addShift(
         condition.punctuatorMask
     );
 
-    this->installHandler(
+    this->installLookaheadHandler(
         condition,
         make_unique<ShiftingStateHandler>(nextState)
     );
@@ -102,13 +192,13 @@ void State::addShift(
         condition.punctuatorMask
     );
 
-    this->installHandler(
+    this->installLookaheadHandler(
         condition,
         make_unique<ShiftingStateHandler>(nextState, reduction)
     );
 }
 
-void State::installHandler(
+void State::installLookaheadHandler(
     LookaheadCondition condition,
     std::unique_ptr<StateHandler> handler
 ) {

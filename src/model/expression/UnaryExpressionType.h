@@ -13,6 +13,16 @@ namespace c4 {
                 Sizeof          = 0x10
             };
 
+            inline UnaryExpressionType operator& (
+                UnaryExpressionType l,
+                UnaryExpressionType r
+            ) {
+                return UnaryExpressionType(
+                    std::underlying_type<UnaryExpressionType>::type(l) &
+                    std::underlying_type<UnaryExpressionType>::type(r)
+                );
+            }
+
             inline UnaryExpressionType operator| (
                 UnaryExpressionType l,
                 UnaryExpressionType r

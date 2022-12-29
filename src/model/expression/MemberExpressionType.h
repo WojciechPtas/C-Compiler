@@ -10,6 +10,16 @@ namespace c4 {
                 Pointer = 0x02
             };
 
+            inline MemberExpressionType operator& (
+                MemberExpressionType l,
+                MemberExpressionType r
+            ) {
+                return MemberExpressionType(
+                    std::underlying_type<MemberExpressionType>::type(l) &
+                    std::underlying_type<MemberExpressionType>::type(r)
+                );
+            }
+
             inline MemberExpressionType operator| (
                 MemberExpressionType l,
                 MemberExpressionType r

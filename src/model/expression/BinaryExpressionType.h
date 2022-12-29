@@ -17,6 +17,16 @@ namespace c4 {
                 Unequal         = 0x0100
             };
 
+            inline BinaryExpressionType operator& (
+                BinaryExpressionType l,
+                BinaryExpressionType r
+            ) {
+                return BinaryExpressionType(
+                    std::underlying_type<BinaryExpressionType>::type(l) &
+                    std::underlying_type<BinaryExpressionType>::type(r)
+                );
+            }
+
             inline BinaryExpressionType operator| (
                 BinaryExpressionType l,
                 BinaryExpressionType r

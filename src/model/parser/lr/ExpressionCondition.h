@@ -28,6 +28,16 @@ namespace c4 {
                     expression::UnaryExpressionType unaryExpressionMask;
                 };
 
+                inline ExpressionType operator& (
+                    ExpressionType l,
+                    ExpressionType r
+                ) {
+                    return ExpressionType(
+                        std::underlying_type<ExpressionType>::type(l) &
+                        std::underlying_type<ExpressionType>::type(r)
+                    );
+                }
+
                 inline ExpressionType operator| (
                     ExpressionType l,
                     ExpressionType r

@@ -54,6 +54,8 @@ namespace c4 {
                     );
 
                 private:
+                    // Lookahead-based stuff
+
                     std::unique_ptr<StateHandler> encounterConstant;
                     std::unique_ptr<StateHandler> encounterEnd;
                     std::unique_ptr<StateHandler> encounterError;
@@ -61,10 +63,21 @@ namespace c4 {
                     std::map<token::Keyword, std::unique_ptr<StateHandler>> encounterKeyword;
                     std::map<token::Punctuator, std::unique_ptr<StateHandler>> encounterPunctuator;
 
-                    void installHandler(
+                    void installLookaheadHandler(
                         LookaheadCondition condition,
                         std::unique_ptr<StateHandler> handler
                     );
+
+                    // Jump-based stuff
+
+                    std::weak_ptr<const State> gotoAfterCall;
+                    std::weak_ptr<const State> gotoAfterConditional;
+                    std::weak_ptr<const State> gotoAfterConstant;
+                    std::weak_ptr<const State> gotoAfterIdentifier;
+                    std::weak_ptr<const State> gotoAfterIndex;
+                    std::map<expression::BinaryExpressionType, std::weak_ptr<const State>> gotoAfterBinary;
+                    std::map<expression::MemberExpressionType, std::weak_ptr<const State>> gotoAfterMember;
+                    std::map<expression::UnaryExpressionType, std::weak_ptr<const State>> gotoAfterUnary;
                 };
             }
         }
