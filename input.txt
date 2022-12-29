@@ -99,7 +99,8 @@ _Static_assert
 _Thread_local
 
 'A''B''C''D''A''\
-\a'"adoisjdoaisjdasjd''\\sdfsdfsdfsdf \a\bsadaidas\
+\\
+a'"adoisjdoaisjdasjd''\\sdfsdfsdfsdf \a\bsadaidas\
 "
 "a//b" // four-character string literal
 #include "//e" // undefined behavior
@@ -112,3 +113,7 @@ i(); // part of a two-line comment
 /*//*/ l(); // equivalent to l();
 m = n//**/o
 + p; // equivalent to m = n + p;
+
+'\'' '\"' '\?' '\\'
+'\a' '\b' '\f' '\n' '\r' '\t' '\v'
+'"' '?' '/' '\'

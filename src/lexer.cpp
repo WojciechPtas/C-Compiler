@@ -118,7 +118,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     token = nullptr;
     std::string word;
     char c;
-    bool eof_reached=false, validEndOfFile=false;
+    bool notEOF=true, validEndOfFile=false;
 
     //Empty C source file is valid!
     if(emptyFile && !charStream->lookahead1(&c)) {
@@ -127,7 +127,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     emptyFile = false;
 
     charStream->pushMark();
-    while(!(eof_reached = !(readEliding(&c))) && isspace(c))  {        
+    while( (notEOF = readEliding(&c)) && isspace(c))  {        
         //We don't want to come back to what we wasted
         charStream->popMark();
         charStream->pushMark();
@@ -135,8 +135,9 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     validEndOfFile = (c== '\n' || c=='\r'); //File must end in a newline!
     auto tp = positionOfLastChar(charStream); //Position for working tokens
     
-    if(eof_reached) {
+    if(!notEOF) {
         if(!validEndOfFile) {
+            tp = makeTokenPosition(charStream);
             token = std::make_shared<ErrorToken>(*tp, "Unexpected end of file");
         }
         charStream->popMark();
@@ -178,9 +179,9 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
 
     //Case: char constants
     else if(c=='\'') {
-        eof_reached = !readEliding(&c);
-        if (eof_reached) {
-            tp = positionOfLastChar(charStream);
+        notEOF = readEliding(&c);
+        if (!notEOF) {
+            tp = makeTokenPosition(charStream);
             token = std::make_shared<ErrorToken>(*tp, "EOF in the middle of a character constant");
             validToken = false;
         }
@@ -189,9 +190,13 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         if (validToken && c == '\\') { //Potential escape sequence!
             //We've read a '\'. If we reached EOF or there's an invalid escape sequence we reject.
             word.append(1, '\\');
-            validToken = readEliding(&c) && escapeSequence(c);
+            notEOF = readEliding(&c);
+            validToken = notEOF && escapeSequence(c);
             if (!validToken) {
-                tp = positionOfLastChar(charStream);
+                if(notEOF)
+                    tp = positionOfLastChar(charStream);
+                else 
+                    tp = makeTokenPosition(charStream);
                 token = std::make_shared<ErrorToken>(*tp, "Invalid escape sequence");
                 validToken = false;
             }
@@ -208,11 +213,14 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         //Everything else is fine
 
         word.append(1, c); //append last character read before continuing, even in case of error, y not
-        if (validToken && readEliding(&c) && c=='\'') {
+        if (validToken && (notEOF = readEliding(&c)) && c=='\'') {
             token = std::make_shared<CharacterConstantToken>(*tp, word);
         }
         else if (/*it WAS a*/ validToken) { //we don't wanna overwrite error messages
-            tp = positionOfLastChar(charStream);
+            if(notEOF)
+                tp = positionOfLastChar(charStream);
+            else
+                tp = makeTokenPosition(charStream);
             token = std::make_shared<ErrorToken>(*tp, "Expected ' to terminate the character constant");
             validToken = false;
         }
@@ -232,9 +240,13 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
             else if (c == '\\') { //Potential escape sequence!
                 //We've read a '\'. If we reached EOF or there's an invalid escape sequence we reject.
                 word.append(1, '\\');
-                bool invalidEscapeSequence = !readEliding(&c) || !escapeSequence(c);
-                if (invalidEscapeSequence) {
-                    tp = positionOfLastChar(charStream);
+                notEOF = readEliding(&c);
+                bool validEscapeSequence = notEOF && escapeSequence(c);
+                if (!validEscapeSequence) {
+                    if(notEOF)
+                        tp = positionOfLastChar(charStream);
+                    else
+                        tp = makeTokenPosition(charStream);
                     token = std::make_shared<ErrorToken>(*tp, "Invalid escape sequence");
                     validToken = false;
                 }
@@ -256,7 +268,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         }
         else if(/*it WAS a*/ validToken) {
             validToken = false;
-            tp = positionOfLastChar(charStream);
+            tp = makeTokenPosition(charStream); //Eof reached, basically
             token = std::make_shared<ErrorToken>(*tp, "Unterminated string");
         }
     }
@@ -264,13 +276,13 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     else {
         bool commentFound = false;
         if(c == '/') {
-        eof_reached = !readEliding(&c);
-            if (!eof_reached) {
+        notEOF = readEliding(&c);
+            if (notEOF) {
                 if(c == '/') { //Single-line comment
-                    // eof_reached = !readMaximumMunchUntil(word, "\n");
+                    // notEOF = readMaximumMunchUntil(word, "\n");
                     commentFound = true;
                     charStream->pushMark();
-                    while( !(eof_reached = !readEliding(&c)) && c!='\n' && c!='\r') {
+                    while( (notEOF = readEliding(&c)) && c!='\n' && c!='\r') {
                         charStream->popMark();
                         charStream->pushMark();
                     }
@@ -279,12 +291,12 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
                 }
                 else if( c== '*') { //Multiline comment
                     commentFound = true;
-                    eof_reached = !readMaximumMunchUntil(word, "*/");
+                    notEOF = readMaximumMunchUntil(word, "*/");
                 }
 
                 if(commentFound) {
-                    if(eof_reached) {
-                        tp = positionOfLastChar(charStream);
+                    if(!notEOF) {
+                        tp = makeTokenPosition(charStream);
                         token = std::make_shared<ErrorToken>(*tp, "Unterminated comment :(");
                         validToken = false;
                     }
