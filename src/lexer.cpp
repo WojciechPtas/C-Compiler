@@ -5,7 +5,7 @@
 #define CASE_ERRORTOKEN_RETURNS_TRUE false
 //if set to true, nextToken() will return false only in case of EOF
 
-
+using namespace c4::model;
 using namespace c4::model::token;
 using namespace c4::service;
 
@@ -167,13 +167,21 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
 
     //Case: number constants
     else if (c == '0') {
-        token = std::make_shared<DecimalConstantToken>(*tp, "0");
+        token = std::make_shared<ConstantToken>(
+            *tp,
+            ConstantType::Decimal,
+            "0"
+        );
     }
 
     else if(isdigit(c)) { //Nonzero decimal constant
         word.append(1,c);
         readMaximumMunchWhile(word, isDigit);
-        token = std::make_shared<DecimalConstantToken>(*tp, word);
+        token = std::make_shared<ConstantToken>(
+            *tp,
+            ConstantType::Decimal,
+            word
+        );
     }
 
     //Case: char constants
@@ -209,7 +217,11 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
 
         word.append(1, c); //append last character read before continuing, even in case of error, y not
         if (validToken && readEliding(&c) && c=='\'') {
-            token = std::make_shared<CharacterConstantToken>(*tp, word);
+            token = std::make_shared<ConstantToken>(
+                *tp,
+                ConstantType::Character,
+                word
+            );
         }
         else if (/*it WAS a*/ validToken) { //we don't wanna overwrite error messages
             tp = positionOfLastChar(charStream);
@@ -226,7 +238,12 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         bool stringTerminated = false;
         while(!stringTerminated && readEliding(&c) && validToken) {
             if (c== '\"') { //String terminated correctly
-                token = std::make_shared<StringLiteralToken>(*tp, word);
+                token = std::make_shared<ConstantToken>(
+                    *tp,
+                    ConstantType::String,
+                    word
+                );
+
                 stringTerminated = true;
             }
             else if (c == '\\') { //Potential escape sequence!
@@ -252,7 +269,11 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         DBGOUT_E("lexer", "String terminated (string = %s)", word.c_str());
 
         if (stringTerminated) {
-            token = std::make_shared<StringLiteralToken>(*tp, word);
+            token = std::make_shared<ConstantToken>(
+                *tp,
+                ConstantType::String,
+                word
+            );
         }
         else if(/*it WAS a*/ validToken) {
             validToken = false;

@@ -8,17 +8,18 @@ namespace c4 {
         namespace token {
             class PunctuatorToken : public Token {
             public:
-                PunctuatorToken(TokenPosition position, Punctuator punctuator);
-                virtual ~PunctuatorToken() { }
+                const Punctuator punctuator;
 
-                void accept(
-                    util::token::ITokenVisitor &visitor
-                ) const override;
+                PunctuatorToken(
+                    TokenPosition position,
+                    Punctuator punctuator
+                ) : Token(position), punctuator(punctuator) { }
 
-                Punctuator getPunctuator() const;
+                ~PunctuatorToken() { }
 
-            private:
-                Punctuator punctuator;
+                void accept(ITokenVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

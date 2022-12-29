@@ -8,21 +8,18 @@ namespace c4 {
         namespace token {
             class ErrorToken : public Token {
             public:
+                const std::string message;
+
                 ErrorToken(
                     TokenPosition position,
                     std::string message
-                );
+                ) : Token(position), message(message) { }
 
-                virtual ~ErrorToken() { }
+                ~ErrorToken() { }
 
-                void accept(
-                    util::token::ITokenVisitor &visitor
-                ) const override;
-
-                const std::string &getMessage() const;
-
-            private:
-                const std::string message;
+                void accept(ITokenVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

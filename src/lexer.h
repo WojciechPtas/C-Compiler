@@ -8,13 +8,11 @@
 #include "model/token/Token.h"
 #include "service/automata/IAutomaton.h"
 #include "service/io/IFileInputStream.h"
-#include "model/token/CharacterConstantToken.h"
-#include "model/token/DecimalConstantToken.h"
+#include "model/token/ConstantToken.h"
 #include "model/token/ErrorToken.h"
 #include "model/token/IdentifierToken.h"
 #include "model/token/KeywordToken.h"
 #include "model/token/PunctuatorToken.h"
-#include "model/token/StringLiteralToken.h"
 
 namespace c4 {
 
