@@ -22,6 +22,10 @@ namespace c4 {
                 ) : container(container), member(member), type(type) { }
 
                 ~MemberExpression() { }
+
+                void accept(IExpressionVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

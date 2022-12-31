@@ -18,6 +18,10 @@ namespace c4 {
                     value(value) { }
 
                 ~ConstantExpression() { }
+
+                void accept(IExpressionVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

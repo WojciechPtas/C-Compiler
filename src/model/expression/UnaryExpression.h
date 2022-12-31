@@ -19,6 +19,10 @@ namespace c4 {
                 ) : expression(expression), type(type) { }
 
                 ~UnaryExpression() { }
+
+                void accept(IExpressionVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

@@ -21,6 +21,10 @@ namespace c4 {
                     thenCase(thenCase) { }
 
                 virtual ~ConditionalExpression() { }
+
+                void accept(IExpressionVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

@@ -15,6 +15,10 @@ namespace c4 {
                 ) : arguments(arguments) { }
                 
                 ~CallExpression() { }
+
+                void accept(IExpressionVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

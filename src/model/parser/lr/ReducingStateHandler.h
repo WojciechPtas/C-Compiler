@@ -12,6 +12,10 @@ namespace c4 {
             namespace lr {
                 class ReducingStateHandler : public StateHandler {
                 public:
+                    const std::uint32_t consumedStates;
+                    const std::uint32_t consumedExpressions;
+                    const Reduction executor;
+
                     ReducingStateHandler(std::uint32_t consumedStates) :
                         consumedStates(consumedStates),
                         consumedExpressions(0),
@@ -27,10 +31,9 @@ namespace c4 {
 
                     ~ReducingStateHandler() { }
 
-                private:
-                    const std::uint32_t consumedStates;
-                    const std::uint32_t consumedExpressions;
-                    const Reduction executor;
+                    void accept(IStateHandlerVisitor &visitor) const override {
+                        visitor.visit(*this);
+                    }
                 };
             }
         }

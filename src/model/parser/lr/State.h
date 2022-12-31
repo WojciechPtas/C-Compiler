@@ -17,10 +17,20 @@ namespace c4 {
     namespace model {
         namespace parser {
             namespace lr {
-                typedef std::function<std::shared_ptr<const expression::IExpression>(std::vector<std::shared_ptr<const expression::IExpression>>)> Reduction;
+                // Avoid circular dependencies.
+
+                class GotoFinder;
+                class StateHandlerFinder;
+
+                // Real declarations.
+
+                typedef std::function<std::shared_ptr<const expression::IExpression>(std::vector<std::shared_ptr<const expression::IExpression>>&)> Reduction;
                 typedef std::function<std::unique_ptr<const expression::IExpression>(const token::Token&)> TokenReduction;
 
                 class State {
+                    friend GotoFinder;
+                    friend StateHandlerFinder;
+
                 public:
                     ~State() { }
 
@@ -53,19 +63,29 @@ namespace c4 {
                         TokenReduction reduction
                     );
 
+                    std::shared_ptr<const StateHandler> getEndHandler() const;
+
+                    std::weak_ptr<const State> getGotoState(
+                        const expression::IExpression &expression
+                    ) const;
+
+                    std::shared_ptr<const StateHandler> getHandler(
+                        const model::token::Token &token
+                    ) const;
+
                 private:
                     // Lookahead-based stuff
 
-                    std::unique_ptr<StateHandler> encounterConstant;
-                    std::unique_ptr<StateHandler> encounterEnd;
-                    std::unique_ptr<StateHandler> encounterError;
-                    std::unique_ptr<StateHandler> encounterIdentifier;
-                    std::map<token::Keyword, std::unique_ptr<StateHandler>> encounterKeyword;
-                    std::map<token::Punctuator, std::unique_ptr<StateHandler>> encounterPunctuator;
+                    std::shared_ptr<StateHandler> encounterConstant;
+                    std::shared_ptr<StateHandler> encounterEnd;
+                    std::shared_ptr<StateHandler> encounterError;
+                    std::shared_ptr<StateHandler> encounterIdentifier;
+                    std::map<token::Keyword, std::shared_ptr<StateHandler>> encounterKeyword;
+                    std::map<token::Punctuator, std::shared_ptr<StateHandler>> encounterPunctuator;
 
                     void installLookaheadHandler(
                         LookaheadCondition condition,
-                        std::unique_ptr<StateHandler> handler
+                        std::shared_ptr<StateHandler> handler
                     );
 
                     // Jump-based stuff

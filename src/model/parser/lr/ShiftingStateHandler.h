@@ -11,6 +11,9 @@ namespace c4 {
             namespace lr {
                 class ShiftingStateHandler : public StateHandler {
                 public:
+                    const std::weak_ptr<const State> nextState;
+                    const TokenReduction tokenReduction;
+
                     ShiftingStateHandler(
                         std::weak_ptr<const State> nextState
                     ) : nextState(nextState), tokenReduction(nullptr) { }
@@ -23,9 +26,9 @@ namespace c4 {
                     
                     ~ShiftingStateHandler() { }
 
-                private:
-                    const std::weak_ptr<const State> nextState;
-                    const TokenReduction tokenReduction;
+                    void accept(IStateHandlerVisitor &visitor) const override {
+                        visitor.visit(*this);
+                    }
                 };
             }
         }

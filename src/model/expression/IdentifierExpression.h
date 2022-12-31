@@ -14,6 +14,10 @@ namespace c4 {
                     identifier(identifier) { }
 
                 ~IdentifierExpression() { }
+
+                void accept(IExpressionVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

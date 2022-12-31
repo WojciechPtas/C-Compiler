@@ -21,6 +21,10 @@ namespace c4 {
                 ) : left(left), right(right), type(type) { }
 
                 ~BinaryExpression() { }
+
+                void accept(IExpressionVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

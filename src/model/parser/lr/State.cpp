@@ -8,10 +8,13 @@
 #include "../../../util/token/KeywordUtilities.h"
 #include "../../../util/token/PunctuatorUtilities.h"
 
+#include "GotoFinder.h"
 #include "ReducingStateHandler.h"
 #include "ShiftingStateHandler.h"
 #include "State.h"
+#include "StateHandlerFinder.h"
 
+using namespace c4::model::expression;
 using namespace c4::model::parser::lr;
 using namespace c4::util::expression;
 using namespace c4::util::token;
@@ -129,7 +132,7 @@ void State::addReduction(
 
     this->installLookaheadHandler(
         condition,
-        make_unique<ReducingStateHandler>(consumedStates)
+        make_shared<ReducingStateHandler>(consumedStates)
     );
 }
 
@@ -150,7 +153,7 @@ void State::addReduction(
 
     this->installLookaheadHandler(
         condition,
-        make_unique<ReducingStateHandler>(
+        make_shared<ReducingStateHandler>(
             consumedStates,
             consumedExpressions,
             reduction
@@ -173,7 +176,7 @@ void State::addShift(
 
     this->installLookaheadHandler(
         condition,
-        make_unique<ShiftingStateHandler>(nextState)
+        make_shared<ShiftingStateHandler>(nextState)
     );
 }
 
@@ -194,13 +197,33 @@ void State::addShift(
 
     this->installLookaheadHandler(
         condition,
-        make_unique<ShiftingStateHandler>(nextState, reduction)
+        make_shared<ShiftingStateHandler>(nextState, reduction)
     );
+}
+
+shared_ptr<const StateHandler> State::getEndHandler() const {
+    return this->encounterEnd;
+}
+
+weak_ptr<const State> State::getGotoState(
+    const IExpression &expression
+) const {
+    GotoFinder finder(*this);
+    expression.accept(finder);
+    return finder.getDeterminedState();
+}
+
+shared_ptr<const StateHandler> State::getHandler(
+    const model::token::Token &token
+) const {
+    StateHandlerFinder finder(*this);
+    token.accept(finder);
+    return finder.getDeterminedHandler();
 }
 
 void State::installLookaheadHandler(
     LookaheadCondition condition,
-    std::unique_ptr<StateHandler> handler
+    std::shared_ptr<StateHandler> handler
 ) {
     auto typeMask = condition.typeMask;
 
