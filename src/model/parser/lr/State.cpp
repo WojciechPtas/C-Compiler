@@ -20,6 +20,8 @@ using namespace c4::util::expression;
 using namespace c4::util::token;
 using namespace std;
 
+State::State(const std::string &name) : name(name) { }
+
 void State::addAccept(LookaheadCondition condition) {
     // TODO: Implementation.
 }
@@ -32,12 +34,12 @@ void State::addJump(
 
     DBGOUT_E(
         "lr-parser",
-        "(State %p, T=%2hhx, B=%3hx, M=%2hhx, U=%3hhx) Installing jump",
-        this,
+        "(T=%2hhx, B=%3hx, M=%2hhx, U=%3hhx) Installing jump [S='%s']",
         condition.typeMask,
         condition.binaryExpressionMask,
         condition.memberExpressionMask,
-        condition.unaryExpressionMask
+        condition.unaryExpressionMask,
+        this->name.c_str()
     );
 
     if ((typeMask & ExpressionType::Binary) == ExpressionType::Binary) {
@@ -123,17 +125,15 @@ void State::addReduction(
 ) {
     DBGOUT_E(
         "lr-parser",
-        "(State %p, T=%2hhx, K=%11llx, P=%15llx) Installing pseudo reduction",
-        this,
+        "(T=%2hhx, K=%11llx, P=%15llx) Installing pseudo reduction [S='%s']",
         condition.typeMask,
         condition.keywordMask,
-        condition.punctuatorMask
+        condition.punctuatorMask,
+        this->name.c_str()
     );
 
-    this->installLookaheadHandler(
-        condition,
-        make_shared<ReducingStateHandler>(consumedStates)
-    );
+    auto handler = make_shared<ReducingStateHandler>(consumedStates);
+    this->installLookaheadHandler(condition, handler);
 }
 
 void State::addReduction(
@@ -144,21 +144,20 @@ void State::addReduction(
 ) {
     DBGOUT_E(
         "lr-parser",
-        "(State %p, T=%2hhx, K=%11llx, P=%15llx) Installing reduction",
-        this,
+        "(T=%2hhx, K=%11llx, P=%15llx) Installing reduction [S='%s']",
         condition.typeMask,
         condition.keywordMask,
-        condition.punctuatorMask
+        condition.punctuatorMask,
+        this->name.c_str()
     );
 
-    this->installLookaheadHandler(
-        condition,
-        make_shared<ReducingStateHandler>(
-            consumedStates,
-            consumedExpressions,
-            reduction
-        )
+    auto handler = make_shared<ReducingStateHandler>(
+        consumedStates,
+        consumedExpressions,
+        reduction
     );
+
+    this->installLookaheadHandler(condition, handler);
 }
 
 void State::addShift(
@@ -167,17 +166,15 @@ void State::addShift(
 ) {
     DBGOUT_E(
         "lr-parser",
-        "(State %p, T=%2hhx, K=%11llx, P=%15llx) Installing shift",
-        this,
+        "(T=%2hhx, K=%11llx, P=%15llx) Installing shift [S='%s']",
         condition.typeMask,
         condition.keywordMask,
-        condition.punctuatorMask
+        condition.punctuatorMask,
+        this->name.c_str()
     );
 
-    this->installLookaheadHandler(
-        condition,
-        make_shared<ShiftingStateHandler>(nextState)
-    );
+    auto handler = make_shared<ShiftingStateHandler>(nextState);
+    this->installLookaheadHandler(condition, handler);
 }
 
 void State::addShift(
@@ -187,18 +184,16 @@ void State::addShift(
 ) {
     DBGOUT_E(
         "lr-parser",
-        "(State %p, T=%2hhx, K=%11llx, P=%15llx) Installing shift with "
-        "reduction",
-        this,
+        "(T=%2hhx, K=%11llx, P=%15llx) Installing shift with reduction "
+        "[S='%s']",
         condition.typeMask,
         condition.keywordMask,
-        condition.punctuatorMask
+        condition.punctuatorMask,
+        this->name.c_str()
     );
 
-    this->installLookaheadHandler(
-        condition,
-        make_shared<ShiftingStateHandler>(nextState, reduction)
-    );
+    auto handler = make_shared<ShiftingStateHandler>(nextState, reduction);
+    this->installLookaheadHandler(condition, handler);
 }
 
 shared_ptr<const StateHandler> State::getEndHandler() const {
@@ -232,7 +227,7 @@ void State::installLookaheadHandler(
             throw logic_error("Handler installed already");
         }
         
-        this->encounterConstant = move(handler);
+        this->encounterConstant = handler;
     }
 
     if ((typeMask & TokenType::End) == TokenType::End) {
@@ -240,7 +235,7 @@ void State::installLookaheadHandler(
             throw logic_error("Handler installed already");
         }
         
-        this->encounterEnd = move(handler);
+        this->encounterEnd = handler;
     }
 
     if ((typeMask & TokenType::Error) == TokenType::Error) {
@@ -248,7 +243,7 @@ void State::installLookaheadHandler(
             throw logic_error("Handler installed already");
         }
         
-        this->encounterError = move(handler);
+        this->encounterError = handler;
     }
 
     if ((typeMask & TokenType::Identifier) == TokenType::Identifier) {
@@ -256,7 +251,7 @@ void State::installLookaheadHandler(
             throw logic_error("Handler installed already");
         }
         
-        this->encounterIdentifier = move(handler);
+        this->encounterIdentifier = handler;
     }
 
     if ((typeMask & TokenType::Keyword) == TokenType::Keyword) {
@@ -267,7 +262,7 @@ void State::installLookaheadHandler(
                 throw logic_error("Handler installed already");
             }
 
-            this->encounterKeyword[keyword] = move(handler);
+            this->encounterKeyword[keyword] = handler;
         }
     }
 
@@ -279,7 +274,7 @@ void State::installLookaheadHandler(
                 throw logic_error("Handler installed already");
             }
 
-            this->encounterPunctuator[punctuator] = move(handler);
+            this->encounterPunctuator[punctuator] = handler;
         }
     }
 }

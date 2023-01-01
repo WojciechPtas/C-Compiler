@@ -1,59 +1,41 @@
-#include <iostream>
+#include <cstdio>
+#include <memory>
 
-#include "lexer.h"
-#include "service/automata/NodeAutomaton.h"
-#include "service/io/ISO88591InputStream.h"
-#include "util/node/NodeUtilities.h"
-#include "util/token/KeywordUtilities.h"
-#include "util/token/PrintVisitor.h"
-#include "util/token/PunctuatorUtilities.h"
+#include "model/token/Token.h"
+#include "model/token/ConstantToken.h"
+#include "model/token/PunctuatorToken.h"
+#include "service/io/VectorInputStream.h"
+#include "service/parser/ExpressionParser.h"
+#include "util/parser/lr/StateUtilities.h"
 
+using namespace c4::model;
+using namespace c4::model::parser::lr;
 using namespace c4::model::token;
-using namespace c4::service::automata;
 using namespace c4::service::io;
-using namespace c4::util::token;
+using namespace c4::service::parser;
+using namespace c4::util::parser::lr;
 using namespace std;
 
-enum RetCode {
-    OK=0, ERR=1
-};
-
 int main(int argc, char* argv[]) {
-    RetCode retval=OK;
-    string input="input.txt";
-    for(int i=0; i<argc;i++){
-        string in=argv[i];
-        if(in == "--tokenize" && i<argc-1){
-            input = argv[i+1];
-        }
-        else if(in =="--parse" && i < argc-1){
-            input= argv[i+1];
-            return 0;
-        }
-    }
-    //cout<<input<<endl;
-    std::string word;
+    VectorInputStream<shared_ptr<const Token>> input({
+        make_shared<ConstantToken>(
+            TokenPosition("abc.c", 0, 0),
+            ConstantType::Decimal,
+            "234"
+        ),
+        make_shared<PunctuatorToken>(
+            TokenPosition("def.c", 0, 0),
+            Punctuator::Plus
+        ),
+        make_shared<ConstantToken>(
+            TokenPosition("ghi.c", 0, 0),
+            ConstantType::Decimal,
+            "1337"
+        )
+    });
 
-    shared_ptr<ISO88591InputStream> src = std::make_shared<ISO88591InputStream>(input);
-    c4::Lexer l(
-        src,
-        make_shared<NodeAutomaton<char, Punctuator>>(PUNCTUATOR_TREE),
-        make_shared<NodeAutomaton<char, Keyword>>(KEYWORD_TREE)
-    );
-    shared_ptr<const Token> token;
-    int i=0;
+    auto ptr = make_shared<const State>(INITIAL_STATE); 
     
-    PrintVisitor pt(cout);
-    PrintVisitor pe(cerr);
-    while(l.nextToken(token)) {
-        i++;
-        token->accept(pt);
-    }
-    if(token != nullptr){
-        token->accept(pe);
-        retval = ERR;
-    }
-    //cout << i << "\n";
-
-    return retval;
+    ExpressionParser parser(ptr);
+    parser.parse(input);
 }

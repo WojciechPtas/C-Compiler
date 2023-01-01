@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "../../expression/IExpression.h"
@@ -32,6 +33,9 @@ namespace c4 {
                     friend StateHandlerFinder;
 
                 public:
+                    const std::string name;
+
+                    State(const std::string &name);
                     ~State() { }
 
                     void addAccept(LookaheadCondition condition);

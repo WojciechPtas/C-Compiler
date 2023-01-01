@@ -17,7 +17,7 @@ namespace c4 {
 
             public:
                 ExpressionParser(
-                    const std::shared_ptr<model::parser::lr::State> &initialState
+                    std::weak_ptr<const model::parser::lr::State> initialState
                 );
 
                 ~ExpressionParser() { }

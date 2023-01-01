@@ -23,7 +23,7 @@ using namespace std;
 using namespace std::placeholders;
 
 #define MAKE_STATE(name) \
-    static const shared_ptr<State> name = make_shared<State>()
+    static const shared_ptr<State> name = make_shared<State>(#name)
 
 static shared_ptr<const State> _initialize();
 
@@ -124,7 +124,7 @@ static inline void _addUnaryShifts(State &state);
 // States initializer
 
 static shared_ptr<const State> _initialize() {
-    auto _initial = make_shared<State>();
+    auto _initial = make_shared<State>("_initial");
 
     // State: _additionReductionState
 
