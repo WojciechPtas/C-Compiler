@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "BinaryExpressionUtilities.h"
 
 using namespace c4::model::expression;
@@ -25,6 +26,22 @@ unique_ptr<set<BinaryExpressionType>> c4::util::expression::decompose(
     _decomposeOne(*r, t, BinaryExpressionType::Unequal);
 
     return r;
+}
+
+const string c4::util::expression::stringify(BinaryExpressionType type) {
+    switch (type) {
+        case BinaryExpressionType::Assignment:      return "=";
+        case BinaryExpressionType::Equal:           return "==";
+        case BinaryExpressionType::LessThan:        return "<";
+        case BinaryExpressionType::LogicalAnd:      return "&&";
+        case BinaryExpressionType::LogicalOr:       return "||";
+        case BinaryExpressionType::Multiplication:  return "*";
+        case BinaryExpressionType::Subtraction:     return "-";
+        case BinaryExpressionType::Sum:             return "+";
+        case BinaryExpressionType::Unequal:         return "!=";
+        default:
+            throw logic_error("Unimplemented binary expression type");
+    }
 }
 
 static inline void _decomposeOne(

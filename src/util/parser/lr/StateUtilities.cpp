@@ -138,7 +138,8 @@ static shared_ptr<const State> _initialize() {
             Punctuator::Equal |
             Punctuator::ExclamationMarkEqual |
             Punctuator::LessThan |
-            Punctuator::QuestionMark
+            Punctuator::QuestionMark |
+            Punctuator::RightParenthesis
         ),
         3, 2,
         bind(_reduceBinary, _1, BinaryExpressionType::Sum)
@@ -310,7 +311,8 @@ static shared_ptr<const State> _initialize() {
             Punctuator::LessThan |
             Punctuator::Minus |
             Punctuator::Plus |
-            Punctuator::QuestionMark
+            Punctuator::QuestionMark |
+            Punctuator::RightParenthesis
         ),
         3, 2,
         bind(_reduceBinary, _1, BinaryExpressionType::Multiplication)
@@ -388,6 +390,7 @@ static shared_ptr<const State> _initialize() {
     // State: _operatorState
 
     _addAssignmentShift(*_operatorState);
+    _operatorState->addAccept(END_TOKEN);
 
     // State: _parenthesesReductionState
 

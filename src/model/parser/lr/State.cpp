@@ -8,6 +8,7 @@
 #include "../../../util/token/KeywordUtilities.h"
 #include "../../../util/token/PunctuatorUtilities.h"
 
+#include "AcceptingStateHandler.h"
 #include "GotoFinder.h"
 #include "ReducingStateHandler.h"
 #include "ShiftingStateHandler.h"
@@ -23,7 +24,17 @@ using namespace std;
 State::State(const std::string &name) : name(name) { }
 
 void State::addAccept(LookaheadCondition condition) {
-    // TODO: Implementation.
+    DBGOUT_E(
+        "lr-parser",
+        "(T=%2hhx, K=%11llx, P=%15llx) Installing accept [S='%s']",
+        condition.typeMask,
+        condition.keywordMask,
+        condition.punctuatorMask,
+        this->name.c_str()
+    );
+
+    auto handler = make_shared<AcceptingStateHandler>();
+    this->installLookaheadHandler(condition, handler);
 }
 
 void State::addJump(

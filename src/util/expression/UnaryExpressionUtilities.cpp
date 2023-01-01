@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "UnaryExpressionUtilities.h"
 
 using namespace c4::model::expression;
@@ -21,6 +22,18 @@ unique_ptr<set<UnaryExpressionType>> c4::util::expression::decompose(
     _decomposeOne(*r, t, UnaryExpressionType::Sizeof);
 
     return r;
+}
+
+const string c4::util::expression::stringify(UnaryExpressionType type) {
+    switch (type) {
+        case UnaryExpressionType::AdditiveInverse:  return "-";
+        case UnaryExpressionType::AddressOf:        return "&";
+        case UnaryExpressionType::Indirection:      return "*";
+        case UnaryExpressionType::LogicalInverse:   return "!";
+        case UnaryExpressionType::Sizeof:           return "sizeof";
+        default:
+            throw logic_error("Unimplemented unary expression type");
+    }
 }
 
 static inline void _decomposeOne(

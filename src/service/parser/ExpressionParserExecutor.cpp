@@ -1,6 +1,8 @@
 #include <stdexcept>
 
 #include "../../model/expression/IExpression.h"
+#include "../../model/parser/lr/ReducingStateHandler.h"
+#include "../../model/parser/lr/ShiftingStateHandler.h"
 #include "../../debug.h"
 #include "ExpressionParser.h"
 #include "ExpressionParserExecutor.h"
@@ -14,7 +16,11 @@ using namespace std;
 ExpressionParserExecutor::ExpressionParserExecutor(
     ExpressionParser &parser,
     shared_ptr<const Token> token
-) : executed(false), parser(parser), shifted(false), token(token) { }
+) : accepting(false),
+    executed(false),
+    parser(parser),
+    shifted(false),
+    token(token) { }
 
 bool ExpressionParserExecutor::hasShifted() {
     if (!this->executed) {
@@ -22,6 +28,22 @@ bool ExpressionParserExecutor::hasShifted() {
     }
 
     return this->shifted;
+}
+
+bool ExpressionParserExecutor::isAccepting() {
+    if (!this->executed) {
+        throw logic_error("Not yet executed");
+    }
+
+    return this->accepting;
+}
+
+void ExpressionParserExecutor::visit(const AcceptingStateHandler &handler) {
+    (void) handler;
+
+    this->ensureAndSetExecuted();
+    DBGOUT("parser", "Accepting input.");
+    this->accepting = true;
 }
 
 void ExpressionParserExecutor::visit(const ReducingStateHandler &handler) {

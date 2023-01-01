@@ -18,7 +18,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
     IInputStream<shared_ptr<const Token>> &input
 ) {
     shared_ptr<const Token> token;
-    bool eofReached, readNext = true;
+    bool accepting, eofReached, readNext = true;
     size_t stateCount = 0, newStateCount = this->states.size();
 
     do {
@@ -41,8 +41,6 @@ shared_ptr<const IExpression> ExpressionParser::parse(
             currentState->name.c_str()
         );
 
-        DBGOUT_E("parser", "File: '%s'", token->position.file.c_str());
-
         if (isGoto) {
             if (this->expressions.empty()) {
                 throw logic_error("No expression available!");
@@ -52,6 +50,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
             auto nextState = currentState->getGotoState(*lastExpression);
 
             this->states.push_back(nextState);
+            accepting = false;
         } else {
             shared_ptr<const StateHandler> handler;
 
@@ -68,10 +67,11 @@ shared_ptr<const IExpression> ExpressionParser::parse(
             ExpressionParserExecutor executor(*this, token);
             handler->accept(executor);
             readNext = executor.hasShifted();
+            accepting = executor.isAccepting();
         }
 
         newStateCount = this->states.size();
-    } while (!eofReached || stateCount != newStateCount);
+    } while (!eofReached || !accepting);
 
     if (this->expressions.empty()) {
         throw logic_error("No expression available!");

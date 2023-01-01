@@ -2,8 +2,6 @@
 
 #include <memory>
 #include "../../model/parser/lr/IStateHandlerVisitor.h"
-#include "../../model/parser/lr/ReducingStateHandler.h"
-#include "../../model/parser/lr/ShiftingStateHandler.h"
 #include "../../model/token/Token.h"
 
 namespace c4 {
@@ -22,6 +20,11 @@ namespace c4 {
                 ~ExpressionParserExecutor() { }
 
                 bool hasShifted();
+                bool isAccepting();
+
+                void visit(
+                    const model::parser::lr::AcceptingStateHandler &handler
+                ) override;
 
                 void visit(
                     const model::parser::lr::ReducingStateHandler &handler
@@ -32,6 +35,7 @@ namespace c4 {
                 ) override;
 
             private:
+                bool accepting;
                 bool executed;
                 ExpressionParser &parser;
                 bool shifted;
