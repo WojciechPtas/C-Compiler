@@ -14,30 +14,30 @@ using namespace c4::util::token;
 using namespace std;
 
 TokenKind ParserVisitor::visit(const CharacterConstantToken &token) {
-    return TokenKind::character_constant;
+    this->kind= TokenKind::character_constant;
 }
 
 
 TokenKind ParserVisitor::visit(const DecimalConstantToken &token) {
-    return TokenKind::constant;
+    this->kind= TokenKind::constant;
 }
 
 TokenKind ParserVisitor::visit(const ErrorToken &token) {
-   return TokenKind::Error;
+   this->kind= TokenKind::Error;
 }
 
 TokenKind ParserVisitor::visit(const IdentifierToken &token) {
-    return TokenKind::identifier;
+    this->kind= TokenKind::identifier;
 }
 
 TokenKind ParserVisitor::visit(const KeywordToken &token) {
-    return keyword;
+    this->kind= keyword;
 }
 
 TokenKind ParserVisitor::visit(const PunctuatorToken &token) {
-    return TokenKind::punctuator;
+    this->kind= TokenKind::punctuator;
 }
 
 TokenKind ParserVisitor::visit(const StringLiteralToken &token) {
-    return string_literal;
+    this->kind= string_literal;
 }

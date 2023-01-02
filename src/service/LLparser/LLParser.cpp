@@ -10,7 +10,8 @@ bool LLParser::parse(io::IInputStream<std::shared_ptr<const model::token::Token>
     // First, we need to check whetver we should parse extern definition or function definition
     m_input.pushMark();
     EOFreached=!m_input.read(&lookahead);
-    switch(visitor.visit(&lookahead)){
+    visitor.visit(&lookahead);
+    switch(visitor.getKind()){
         case TokenKind::keyword:
         switch(dynamic_cast<KeywordToken>(token).getKeyword()){
             case Keyword::__Static_assert:
@@ -34,7 +35,8 @@ bool LLParser::parseDeclaration(){
     //First lets parse the type specifier
     m_input.pushMark();
     m_input.read(&token);
-    switch(visitor(visit(token))){
+    visitor(visit(token));
+    switch(visitor.getKind()){
         case TokenKind::keyword:
         switch(dynamic_cast<KeywordToken>(token).getKeyword()){
         case Keyword::Void:
@@ -59,28 +61,34 @@ bool LLParser::parseStaticAssertDeclaration(){
     ParserVisitor visitor;
    
     m_input.read(&token);
-    if(visitor.visit(token)!=TokenKind::Keyword) return 1;
+    visitor(visit(token));
+    if(visitor.getKind()!=TokenKind::Keyword) return 1;
     if(dynamic_cast<KeywordToken>(token).getKeyword()!=Keyword::__Static_assert) return 1;
 
     m_input.read(&token);
-    if(visitor.visit(token)!=TokenKind::punctuator) return 1;
+    visitor(visit(token));
+    if(visitor.getKind()!=TokenKind::punctuator) return 1;
     if(dynamic_cast<PunctuatorToken>(token).getPunctuator()!=Punctuator::LeftParenthesis) return 1;
 
     // @TODO INVOKE LR PARSER HERE TO PARSE CONSTANT EXPRESSION
 
     m_input.read(&token);
-    if(visitor.visit(token)!=TokenKind::punctuator) return 1;
+    visitor(visit(token));
+    if(visitor.getKind()!=TokenKind::punctuator) return 1;
     if(dynamic_cast<PunctuatorToken>(token).getPunctuator()!=Punctuator::Comma) return 1;
 
     m_input.read(&token);
-    if(visitor.visit(token)!=TokenKind::string_literal) return 1;
+    visitor(visit(token));
+    if(visitor.getKind()!=TokenKind::string_literal) return 1;
 
     m_input.read(&token);
-    if(visitor.visit(token)!=TokenKind::punctuator) return 1;
+    visitor(visit(token));
+    if(visitor.getKind()!=TokenKind::punctuator) return 1;
     if(dynamic_cast<PunctuatorToken>(token).getPunctuator()!=Punctuator::RightParenthesis) return 1;
 
     m_input.read(&token);
-    if(visitor.visit(token)!=TokenKind::punctuator) return 1;
+    visitor(visit(token));
+    if(visitor.getKind()!=TokenKind::punctuator) return 1;
     if(dynamic_cast<PunctuatorToken>(token).getPunctuator()!=Punctuator::Semicolon) return 1;
     
     return 0;
@@ -91,12 +99,13 @@ bool LLParser::parseStructorUnionSpecifier(){
     ParserVisitor visitor;
 
     m_input.read(&token);
-    if(visitor.visit(token)!=TokenKind::Keyword) return 1;
+    visitor(visit(token));
+    if(visitor.getKind()!=TokenKind::Keyword) return 1;
     if(dynamic_cast<KeywordToken>(token).getKeyword()!=Keyword::Struct || dynamic_cast<KeywordToken>(token).getKeyword()!=Keyword::Union) return 1;
 
     m_input.read(&token);
-    if(visitor.visit(token)==TokenKind::punctuator){ 
+    if(visitor.getKind()==TokenKind::punctuator){ 
         if(dynamic_cast<PunctuatorToken>(token).getPunctuator()!=Punctuator::LeftBracket) return 1;
-        
+
     }
 }

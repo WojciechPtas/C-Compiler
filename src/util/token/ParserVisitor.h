@@ -5,6 +5,7 @@
 #include "TokenKind.h"
 namespace c4::util::token{
     class ParserVisitor : public ITokenVisitor{
+        TokenKind kind;
         public:
         ParserVisitor(){}
         TokenKind visit(
@@ -24,5 +25,6 @@ namespace c4::util::token{
         TokenKind visit(
             const model::token::StringLiteralToken &token
         ) override;
+        TokenKind getKind(){return kind;}
     }
 }
