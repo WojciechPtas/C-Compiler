@@ -14,7 +14,7 @@ namespace c4 {
                 virtual ~NodeAutomaton() { }
 
                 std::shared_ptr<const model::node::Node<TEdge, TPayload>> walk(
-                    io::IInputStream<TEdge>& src
+                    io::IBufferedInputStream<TEdge>& src
                 ) const {
                     DBGOUT("automata", "Entering walk");
 
