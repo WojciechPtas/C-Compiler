@@ -8,7 +8,7 @@
 namespace c4::service::parser{
     class LLParser{
         private:
-            io::IInputStream<std::shared_ptr<const model::token::Token>> &m_input
+            io::IInputStream<std::shared_ptr<const model::token::Token>> &m_input;
         public:
             LLParser();
             bool parse( io::IInputStream<std::shared_ptr<const model::token::Token>> &input);
@@ -17,5 +17,5 @@ namespace c4::service::parser{
             bool parseStaticAssertDeclaration();
             bool parseStructorUnionSpecifier();
 
-    }
+    };
 }

@@ -26,5 +26,5 @@ namespace c4::util::token{
             const model::token::StringLiteralToken &token
         ) override;
         TokenKind getKind(){return kind;}
-    }
+    };
 }
