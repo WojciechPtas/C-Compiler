@@ -1,18 +1,15 @@
 #pragma once
 
 #include <ostream>
-#include "ITokenVisitor.h"
+#include "../../model/token/ITokenVisitor.h"
 #include "TokenKind.h"
 namespace c4::util::token{
-    class ParserVisitor : public ITokenVisitor{
+    class ParserVisitor : public model::token::ITokenVisitor {
         TokenKind kind;
         public:
         ParserVisitor(){}
         void visit(
-            const model::token::CharacterConstantToken &token
-        ) override;
-        void visit(
-            const model::token::DecimalConstantToken &token
+            const model::token::ConstantToken &token
         ) override;
         void visit(const model::token::ErrorToken &token) override;
         void visit(
@@ -21,9 +18,6 @@ namespace c4::util::token{
         void visit(const model::token::KeywordToken &token) override;
         void visit(
             const model::token::PunctuatorToken &token
-        ) override;
-        void visit(
-            const model::token::StringLiteralToken &token
         ) override;
         TokenKind getKind(){return kind;}
     };
