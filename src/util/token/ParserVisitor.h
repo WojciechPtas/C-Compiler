@@ -8,21 +8,21 @@ namespace c4::util::token{
         TokenKind kind;
         public:
         ParserVisitor(){}
-        TokenKind visit(
+        void visit(
             const model::token::CharacterConstantToken &token
         ) override;
-        TokenKind visit(
+        void visit(
             const model::token::DecimalConstantToken &token
         ) override;
-        TokenKind visit(const model::token::ErrorToken &token) override;
-        TokenKind visit(
+        void visit(const model::token::ErrorToken &token) override;
+        void visit(
             const model::token::IdentifierToken &token
         ) override;
-        TokenKind visit(const model::token::KeywordToken &token) override;
-        TokenKind visit(
+        void visit(const model::token::KeywordToken &token) override;
+        void visit(
             const model::token::PunctuatorToken &token
         ) override;
-        TokenKind visit(
+        void visit(
             const model::token::StringLiteralToken &token
         ) override;
         TokenKind getKind(){return kind;}
