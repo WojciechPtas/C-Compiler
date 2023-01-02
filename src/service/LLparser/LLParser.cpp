@@ -15,7 +15,7 @@ bool LLParser::parse(io::IInputStream<std::shared_ptr<const model::token::Token>
     lookahead->accept(visitor);
     switch(visitor.getKind()){
         case TokenKind::keyword:
-        switch(dynamic_cast<KeywordToken>(lookahead)->getKeyword()){
+        switch((std::dynamic_pointer_cast<const KeywordToken>(lookahead))->getKeyword()){
             case Keyword::__Static_assert:
             m_input.resetToMark();
             m_input.popMark();
@@ -37,10 +37,10 @@ bool LLParser::parseDeclaration(){
     //First lets parse the type specifier
     m_input.pushMark();
     m_input.read(&token);
-    visitor(visit(token));
+    token->accept(visitor);
     switch(visitor.getKind()){
         case TokenKind::keyword:
-        switch(dynamic_cast<KeywordToken>(token).getKeyword()){
+        switch((std::dynamic_pointer_cast<const KeywordToken>(token))->getKeyword()){
         case Keyword::Void:
         case Keyword::Int:
         case Keyword::Char:
@@ -63,35 +63,35 @@ bool LLParser::parseStaticAssertDeclaration(){
     ParserVisitor visitor;
    
     m_input.read(&token);
-    visitor(visit(token));
-    if(visitor.getKind()!=TokenKind::Keyword) return 1;
-    if(dynamic_cast<KeywordToken>(token).getKeyword()!=Keyword::__Static_assert) return 1;
+    token->accept(visitor);
+    if(visitor.getKind()!=TokenKind::keyword) return 1;
+    if((std::dynamic_pointer_cast<const KeywordToken>(token))->getKeyword()!=Keyword::__Static_assert) return 1;
 
     m_input.read(&token);
-    visitor(visit(token));
+    token->accept(visitor);
     if(visitor.getKind()!=TokenKind::punctuator) return 1;
-    if(dynamic_cast<PunctuatorToken>(token).getPunctuator()!=Punctuator::LeftParenthesis) return 1;
+    if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->getPunctuator()!=Punctuator::LeftParenthesis) return 1;
 
     // @TODO INVOKE LR PARSER HERE TO PARSE CONSTANT EXPRESSION
 
     m_input.read(&token);
-    visitor(visit(token));
+    token->accept(visitor);
     if(visitor.getKind()!=TokenKind::punctuator) return 1;
-    if(dynamic_cast<PunctuatorToken>(token).getPunctuator()!=Punctuator::Comma) return 1;
+    if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->getPunctuator()!=Punctuator::Comma) return 1;
 
     m_input.read(&token);
-    visitor(visit(token));
+    token->accept(visitor);
     if(visitor.getKind()!=TokenKind::string_literal) return 1;
 
     m_input.read(&token);
-    visitor(visit(token));
+    token->accept(visitor);
     if(visitor.getKind()!=TokenKind::punctuator) return 1;
-    if(dynamic_cast<PunctuatorToken>(token).getPunctuator()!=Punctuator::RightParenthesis) return 1;
+    if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->getPunctuator()!=Punctuator::RightParenthesis) return 1;
 
     m_input.read(&token);
-    visitor(visit(token));
+    token->accept(visitor);
     if(visitor.getKind()!=TokenKind::punctuator) return 1;
-    if(dynamic_cast<PunctuatorToken>(token).getPunctuator()!=Punctuator::Semicolon) return 1;
+    if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->getPunctuator()!=Punctuator::Semicolon) return 1;
     
     return 0;
 }
@@ -101,13 +101,13 @@ bool LLParser::parseStructorUnionSpecifier(){
     ParserVisitor visitor;
 
     m_input.read(&token);
-    visitor(visit(token));
-    if(visitor.getKind()!=TokenKind::Keyword) return 1;
-    if(dynamic_cast<KeywordToken>(token).getKeyword()!=Keyword::Struct || dynamic_cast<KeywordToken>(token).getKeyword()!=Keyword::Union) return 1;
+        token->accept(visitor);
+    if(visitor.getKind()!=TokenKind::keyword) return 1;
+    if((std::dynamic_pointer_cast<const KeywordToken>(token))->getKeyword()!=Keyword::Struct || std::dynamic_pointer_cast<const KeywordToken>(token)->getKeyword()!=Keyword::Union) return 1;
 
     m_input.read(&token);
     if(visitor.getKind()==TokenKind::punctuator){ 
-        if(dynamic_cast<PunctuatorToken>(token).getPunctuator()!=Punctuator::LeftBracket) return 1;
+        if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->getPunctuator()!=Punctuator::LeftBracket) return 1;
 
     }
 }
