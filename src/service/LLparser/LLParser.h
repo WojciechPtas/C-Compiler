@@ -21,6 +21,6 @@ namespace c4::service::parser{
             bool parseDeclaration();
             bool parseStaticAssertDeclaration();
             bool parseStructorUnionSpecifier();
-
+            bool parseStructDeclarationList();
     };
 }
