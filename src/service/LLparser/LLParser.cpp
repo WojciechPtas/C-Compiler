@@ -12,10 +12,10 @@ bool LLParser::parse(io::IInputStream<std::shared_ptr<const model::token::Token>
     // First, we need to check whetver we should parse extern definition or function definition
     m_input.pushMark();
     EOFreached=!m_input.read(&lookahead);
-    visitor.visit(&lookahead);
+    visitor.visit(lookahead);
     switch(visitor.getKind()){
         case TokenKind::keyword:
-        switch(dynamic_cast<KeywordToken>(token).getKeyword()){
+        switch(dynamic_cast<KeywordToken>(lookahead).getKeyword()){
             case Keyword::__Static_assert:
             m_input.resetToMark();
             m_input.popMark();
