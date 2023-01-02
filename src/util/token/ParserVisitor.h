@@ -2,7 +2,7 @@
 
 #include <ostream>
 #include "ITokenVisitor.h"
-#include "TokenKind"
+#include "TokenKind.h"
 namespace c4::util::token{
     class ParserVisitor : public ITokenVisitor{
         public:
