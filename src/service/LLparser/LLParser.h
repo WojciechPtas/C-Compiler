@@ -15,12 +15,14 @@ namespace c4::service::parser{
         private:
             io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &m_input;
         public:
-            LLParser();
+            LLParser(){};
             bool parse( io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input);
         private:
             bool parseDeclaration();
             bool parseStaticAssertDeclaration();
             bool parseStructorUnionSpecifier();
             bool parseStructDeclarationList();
+            bool parsePointer();
+            bool parseDeclarator();
     };
 }

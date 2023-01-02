@@ -40,13 +40,15 @@ bool LLParser::parseDeclaration(){
     m_input.pushMark();
     m_input.read(&token);
     token->accept(visitor);
-    switch(visitor.getKind()){
+    switch(visitor.getKind())
+    {
         case TokenKind::keyword:
         switch((std::dynamic_pointer_cast<const KeywordToken>(token))->keyword){
         case Keyword::Void:
         case Keyword::Int:
         case Keyword::Char:
         m_input.popMark();
+        // TODO PARSE DECLARATOR
         break;
         case Keyword::Struct:
         case Keyword::Union:
@@ -59,6 +61,7 @@ bool LLParser::parseDeclaration(){
         }
         
     } 
+    
 }
 bool LLParser::parseStaticAssertDeclaration(){
     std::shared_ptr<const Token> token;
@@ -120,7 +123,7 @@ bool LLParser::parseStructorUnionSpecifier(){
              m_input.popMark();
             return 0;
         }
-        // TODO PARSE STRUCT DECLARATION LIST
+        if(this->parseStructDeclarationList()) return 1;
         m_input.read(&token);
         token->accept(visitor);
         if(visitor.getKind()!=TokenKind::punctuator) return 1;
@@ -132,7 +135,7 @@ bool LLParser::parseStructorUnionSpecifier(){
     else if(visitor.getKind()==TokenKind::punctuator){ 
         if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::LeftBrace) return 1;
         m_input.popMark();
-        // TODO PARSE STRUCT DECLARATION LIST
+        if(this->parseStructDeclarationList()) return 1;
         m_input.read(&token);
         token->accept(visitor);
         if(visitor.getKind()!=TokenKind::punctuator) return 1;
@@ -144,5 +147,32 @@ bool LLParser::parseStructorUnionSpecifier(){
 }
 
 bool LLParser::parseStructDeclarationList(){
-    
+    // TODO PARSE STRUCT DECLARATION
+    m_input.pushMark();
+    m_input.read(&token);
+    token->accept(visitor);
+    if(visitor.getKind()==TokenKind::punctuator){
+        if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator==Punctuator::RightBrace){
+            m_input.resetToMark();
+            m_input.popMark();
+            return 0;
+        }
+        return 1;
+    }
+    else{
+        m_input.resetToMark();
+        m_input.popMark();
+        this->parseStructDeclarationList();
+    }
+
+}
+
+bool c4::service::parser::LLParser::parsePointer()
+{
+    return false;
+}
+
+bool c4::service::parser::LLParser::parseDeclarator()
+{
+    return false;
 }
