@@ -2,6 +2,8 @@
 using namespace c4::util::token;
 //using namespace c4::util::token::Keyword;
 using namespace c4::service::parser;
+using namespace c4::model::token;
+
 bool LLParser::parse(io::IInputStream<std::shared_ptr<const model::token::Token>> &input){
     std::shared_ptr<const Token> lookahead;
     m_input=input;
