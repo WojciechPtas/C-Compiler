@@ -1,18 +1,17 @@
 #pragma once
 #include "IStatement.h"
 #include "../expression/IExpression.h"
-using namespace c4::model::expression;
 namespace c4 {
     namespace model {
         namespace statement {
             class SelectionStatement : IStatement {
                 private:
-                    std::shared_ptr<IExpression> ifExpr;
+                    std::shared_ptr<c4::model::expression::IExpression> ifExpr;
                     std::shared_ptr<IStatement> thenStatement;
                     std::shared_ptr<IStatement> elseStatement;
                 public:
                     SelectionStatement(
-                        std::shared_ptr<IExpression> ifExpr,
+                        std::shared_ptr<c4::model::expression::IExpression> ifExpr,
                         std::shared_ptr<IStatement> thenStatement,
                         std::shared_ptr<IStatement> elseStatement=nullptr
                     ) : ifExpr(ifExpr), thenStatement(thenStatement), elseStatement(elseStatement) {};
