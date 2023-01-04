@@ -11,18 +11,31 @@
 #include "../../util/token/ParserVisitor.h"
 #include "../io/IBufferedInputStream.h"
 namespace c4::service::parser{
+    union SpecifiedToken
+    {
+        bool empty;
+        model::token::Punctuator p;
+        model::token::Keyword k;
+    };
     class LLParser{
         private:
             io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &m_input;
+            util::token::ParserVisitor visitor;
+            std::shared_ptr<const model::token::Token> token;
         public:
-            LLParser(){};
+            //LLParser(){};
             bool parse( io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input);
         private:
+            bool consume(util::token::TokenKind k, SpecifiedToken s);
+            bool checkLookAhead(util::token::TokenKind k, SpecifiedToken s);
             bool parseDeclaration();
             bool parseStaticAssertDeclaration();
             bool parseStructorUnionSpecifier();
             bool parseStructDeclarationList();
             bool parsePointer();
             bool parseDeclarator();
+            bool parseDirectDeclarator();
+            bool parseParameterTypeList();
+            bool parseIdentifierList();
     };
 }
