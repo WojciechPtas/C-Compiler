@@ -3,7 +3,7 @@ using namespace c4::util::token;
 //using namespace c4::util::token::Keyword;
 using namespace c4::service::parser;
 using namespace c4::model::token;
-
+// DONE!
 bool LLParser::checkLookAhead(TokenKind k, SpecifiedToken s)
 {
     m_input.pushMark();
@@ -13,7 +13,7 @@ bool LLParser::checkLookAhead(TokenKind k, SpecifiedToken s)
     return seen;
 }
 
-
+//DONE!
 bool LLParser::consume(TokenKind k, SpecifiedToken s)
 {
     m_input.read(&token);
@@ -38,7 +38,7 @@ bool LLParser::parse(io::IBufferedInputStream<std::shared_ptr<const model::token
     // First, we need to check whetver we should parse extern definition or function definition
 
     m_input.pushMark();
-    EOFreached=!m_input.read(&lookahead);
+    
     lookahead->accept(visitor);
 
     switch(visitor.getKind()){
@@ -58,6 +58,10 @@ bool LLParser::parse(io::IBufferedInputStream<std::shared_ptr<const model::token
         default:
         return 1;
     }
+    EOFreached=!m_input.read(&lookahead);
+    if(!EOFreached){
+        return parse();
+    }
 }
 
 bool LLParser::parseDeclaration()
@@ -76,7 +80,7 @@ bool LLParser::parseDeclaration()
         case Keyword::Int:
         case Keyword::Char:
         m_input.popMark();
-        // TODO PARSE DECLARATOR
+        if(this->parseDeclarator()) return 1;
         break;
         case Keyword::Struct:
         case Keyword::Union:
@@ -201,40 +205,44 @@ bool LLParser::parseStructDeclarationList(){
     }
 
 }
-
+// DONE!
 bool c4::service::parser::LLParser::parsePointer()
 {
-    //std::shared_ptr<const Token> token;
-    //ParserVisitor visitor;
     //Consume asterisk
-    m_input.read(&token);
-    token->accept(visitor);
-    if(visitor.getKind()!=TokenKind::punctuator) return 1;
-    if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Asterisk) return 1;
+    // m_input.read(&token);
+    // token->accept(visitor);
+    // if(visitor.getKind()!=TokenKind::punctuator) return 1;
+    // if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Asterisk) return 1;
+    if(this->consume(TokenKind::punctuator,{.p=Punctuator::Asterisk})) return 1;
     //Check if we should parse another pointer;
-    m_input.pushMark();
-    m_input.read(&token);
-    token->accept(visitor);
-    if(visitor.getKind()!=TokenKind::punctuator) return 0;
-    if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Asterisk) return 0;
-    m_input.resetToMark();
-    m_input.popMark();
+    // m_input.pushMark();
+    // m_input.read(&token);
+    // token->accept(visitor);
+    // if(visitor.getKind()!=TokenKind::punctuator) return 0;
+    // if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Asterisk) return 0;
+    // m_input.resetToMark();
+    // m_input.popMark();
+    if(!checkLookAhead(TokenKind::punctuator,{.p=Punctuator::Asterisk})) return 0;
     return this->parsePointer();
 }
-
+// DONE!
 bool c4::service::parser::LLParser::parseDeclarator()
 {
     //std::shared_ptr<const Token> token;
     //ParserVisitor visitor;
-    m_input.pushMark();
-    m_input.read(&token);
-    token->accept(visitor);
-    if(visitor.getKind()==TokenKind::punctuator)
+    // m_input.pushMark();
+    // m_input.read(&token);
+    // token->accept(visitor);
+    // if(visitor.getKind()==TokenKind::punctuator)
+    // {
+    //     if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator==Punctuator::Asterisk) 
+    //     m_input.resetToMark();
+    //     m_input.popMark();
+    //     this->parsePointer();
+    // }
+    if(checkLookAhead(TokenKind::punctuator,{.p=Punctuator::Asterisk})) 
     {
-        if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator==Punctuator::Asterisk) 
-        m_input.resetToMark();
-        m_input.popMark();
-        this->parsePointer();
+        if(parsePointer()) return 1;
     }
     return parseDirectDeclarator();
 }
@@ -284,8 +292,7 @@ bool c4::service::parser::LLParser::parseDirectDeclarator()
             if(this->parseParameterTypeList()) return 1;
         }
         //parse ")"
-        m_input.read(&token);
-        token->accept(visitor);
+        if(this->consume(TokenKind::punctuator,{.p=Punctuator::RightBrace})) return 1;
         break;
         default:
         // TODO PARSE [ sdadasd ]
