@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include "debug.h"
 #include "lexer.h"
@@ -5,23 +6,27 @@
 #define CASE_ERRORTOKEN_RETURNS_TRUE false
 //if set to true, nextToken() will return false only in case of EOF
 
+using namespace c4;
 using namespace c4::model;
 using namespace c4::model::token;
-using namespace c4::service;
+using namespace c4::service::io;
+using namespace std;
 
-bool isStartOfIdentifier(const char c) {
+// TODO: Make everything internal static to avoid collisions.
+
+static inline bool isStartOfIdentifier(const char c) {
     return (isalpha(c) || c=='_');
 }
 
-bool isCharOfIdentifier(const char c) {
+static inline bool isCharOfIdentifier(const char c) {
     return (isalnum(c) || c=='_');
 }
 
-bool isDigit(char c) {
+static inline bool isDigit(char c) {
     return isdigit(c);
 }
 
-bool escapeSequence(const char c) {
+static inline bool escapeSequence(const char c) {
     return 
         (c=='\'') || (c=='\"') || (c=='\?') || 
         (c=='\\') || (c=='a') || (c=='b') || 
@@ -29,27 +34,30 @@ bool escapeSequence(const char c) {
         (c=='t') || (c=='v');
 }
 
-std::shared_ptr<TokenPosition> makeTokenPosition(
-    std::shared_ptr<c4::service::io::IFileInputStream<char>> stream
+static inline shared_ptr<TokenPosition> makeTokenPosition(
+    shared_ptr<MetricInputStream> stream
 ) {
     return std::make_shared<TokenPosition>(
-        stream->getFilePath(),
-        stream->getCurrentLine(),
-        stream->getCurrentColumn()
+        stream->filePath,
+        stream->getLine(),
+        stream->getColumn()
     );
 }
 
-std::shared_ptr<TokenPosition> positionOfLastChar(
-    std::shared_ptr<c4::service::io::IFileInputStream<char>> stream
+static inline shared_ptr<TokenPosition> positionOfLastChar(
+    shared_ptr<MetricInputStream> stream
 ) {
+    size_t column, line;
+
+    assert(stream->getLastColumn(&column));
+    assert(stream->getLastLine(&line));
+
     return std::make_shared<TokenPosition>(
-        stream->getFilePath(),
-        stream->getLastReadLine(),
-        stream->getLastReadColumn()
+        stream->filePath,
+        line,
+        column
     );
 }
-
-namespace c4 {
 
 bool Lexer::readEliding(char *c) { //Read wrapper that implements backslash+newline eliding
     bool backSlashNewLine = true;
@@ -57,29 +65,25 @@ bool Lexer::readEliding(char *c) { //Read wrapper that implements backslash+newl
     charStream->pushMark();
     while(backSlashNewLine && (notEOF = charStream->read(c))) {
         backSlashNewLine = false;
-        charStream->popMark();
-        charStream->pushMark(); //want to retreat if it wasn't the case of backslash+newline
+        charStream->moveMark(); //want to retreat if it wasn't the case of backslash+newline
         if(*c == '\\') {
             char c2;
             bool notEOF2; //separate EOF boolean. If we encounter EOF in the next steps we simply backtrack and return the char
             if( (notEOF2 = charStream->read(&c2)) ) {
                 if(c2 == '\r') {
-                    charStream->popMark();
-                    charStream->pushMark(); //i accept up to here, and update the mark accordingly
+                    charStream->moveMark(); //i accept up to here, and update the mark accordingly
                     notEOF2 = charStream->read(&c2);
                     backSlashNewLine = true;
                 }
                 if(notEOF2 && c2 == '\n') {
                     //also takes into account CRLF, not only CR or LF, in a maximal munch strategy
-                    charStream->popMark();
-                    charStream->pushMark(); //i accept up to here, and update the mark accordingly
+                    charStream->moveMark(); //i accept up to here, and update the mark accordingly
                     backSlashNewLine = true;
                 }
             }
         }
     }
-    charStream->resetToMark();
-    charStream->popMark();
+    charStream->resetAndPopMark();
     return notEOF;
 }
 
@@ -88,12 +92,10 @@ bool Lexer::readMaximumMunchWhile(std::string& wordToAppendTo, bool (*filter) (c
     bool eof_NOT_reached;
     charStream->pushMark();
     while( (eof_NOT_reached = readEliding(&c)) && filter(c)) {
-        charStream->popMark();
-        charStream->pushMark();
+        charStream->moveMark();
         wordToAppendTo.append(1, c); //Appends c to the word
     }
-    charStream->resetToMark(); //makes sure stream is now after the last valid char was read
-    charStream->popMark();
+    charStream->resetAndPopMark(); //makes sure stream is now after the last valid char was read
     return eof_NOT_reached;
 }
 
@@ -121,7 +123,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     bool notEOF=true, validEndOfFile=false;
 
     //Empty C source file is valid!
-    if(emptyFile && !charStream->lookahead1(&c)) {
+    if(emptyFile && !charStream->peek(&c)) {
         return false;
     }
     emptyFile = false;
@@ -129,8 +131,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
     charStream->pushMark();
     while( (notEOF = readEliding(&c)) && isspace(c))  {        
         //We don't want to come back to what we wasted
-        charStream->popMark();
-        charStream->pushMark();
+        charStream->moveMark();
     } //Wastes all whitespaces, newlines, etc.
     validEndOfFile = (c== '\n' || c=='\r'); //File must end in a newline!
     auto tp = positionOfLastChar(charStream); //Position for working tokens
@@ -158,7 +159,7 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
             token = std::make_shared<KeywordToken>(*tp, *keyword);
         }
         // token = keywords->walk(*charStream); //After this, only accepted part of the stream has been used up
-        bool leftovers = charStream->lookahead1(&c);
+        bool leftovers = charStream->peek(&c);
         if(token == nullptr || (leftovers && isCharOfIdentifier(c)) ) { //No keyword found OR keyword found but other letters are following
             charStream->resetToMark();
             readMaximumMunchWhile(word, isCharOfIdentifier);
@@ -304,11 +305,9 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
                     commentFound = true;
                     charStream->pushMark();
                     while( (notEOF = readEliding(&c)) && c!='\n' && c!='\r') {
-                        charStream->popMark();
-                        charStream->pushMark();
+                        charStream->moveMark();
                     }
-                    charStream->resetToMark();
-                    charStream->popMark();
+                    charStream->resetAndPopMark();
                 }
                 else if( c== '*') { //Multiline comment
                     commentFound = true;
@@ -345,6 +344,4 @@ bool Lexer::nextToken(std::shared_ptr<const Token> &token) {
         
     charStream->popMark();
     return CASE_ERRORTOKEN_RETURNS_TRUE || validToken; //read definition for clarification
-}
-
 }
