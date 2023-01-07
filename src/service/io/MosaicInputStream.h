@@ -96,21 +96,49 @@ namespace c4 {
                     // Hence, we need to deallocate any fragments that preceed
                     // the fragment of cursorOffset, because they cannot be
                     // reached anymore.
+                    //
+                    // Exception:   If the cursor is at a fragment boundary at
+                    //              the moment, i.e. it points to the first
+                    //              element of a new fragment, and it is also
+                    //              equal to the current limit, this means that
+                    //              the next read call will allocate or reuse a
+                    //              fragment.
+                    //              Since we remove all pevious fragments and
+                    //              we must ensure the invariant that there is
+                    //              always one fragment allocated, we have to
+                    //              preserve the last allocated fragment.
+                    //              (Although the cursor does not point to it.)
 
-                    for (
-                        auto i = this->cursorOffset / this->fragmentCapacity;
-                        i > 0;
-                        i--
-                    ) {
+                    auto shrinkMore =
+                        this->cursorOffset >= this->fragmentCapacity;
+
+                    while (shrinkMore) {
+                        this->cursorLimit -= this->fragmentCapacity;
+                        this->cursorOffset -= this->fragmentCapacity;
+
                         DBGOUT_E(
                             "stream",
-                            "I: %p, Deallocating fragment %p (mark pop)",
+                            "I: %p, Decreased offset to %zu, decreased limit "
+                            "to %zu (mark pop)",
                             this,
-                            this->fragments.front()
+                            this->cursorOffset,
+                            this->cursorLimit
                         );
 
-                        delete[] this->fragments.front();
-                        this->fragments.pop_front();
+                        shrinkMore =
+                            this->cursorOffset >= this->fragmentCapacity;
+
+                        if (shrinkMore) {
+                            DBGOUT_E(
+                                "stream",
+                                "I: %p, Deallocating fragment %p (mark pop)",
+                                this,
+                                this->fragments.front()
+                            );
+
+                            delete[] this->fragments.front();
+                            this->fragments.pop_front();
+                        }
                     }
 
                     return true;
