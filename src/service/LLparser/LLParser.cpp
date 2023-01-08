@@ -1,6 +1,5 @@
 #include "LLParser.h"
 using namespace c4::util::token;
-//using namespace c4::util::token::Keyword;
 using namespace c4::service::parser;
 using namespace c4::model::token;
 // DONE!
@@ -21,9 +20,9 @@ bool LLParser::consume(TokenKind k, SpecifiedToken s={.empty=true})
     if(visitor.getKind()!=k) return 1;
     switch(k){
         case TokenKind::keyword:
-        return !(((std::dynamic_pointer_cast<const KeywordToken>(token))->keyword)==s.k);
+        return !(visitor.getSepcificValue().k==s.k);
         case TokenKind::punctuator:
-        return !(((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator)==s.p);
+        return !(visitor.getSepcificValue().p==s.p);
         default:
         return 0;
     }
@@ -301,12 +300,12 @@ bool c4::service::parser::LLParser::parseDirectDeclarator()
     //
     return 0;
 }
-
+// TODO IMPLEMENT
 bool c4::service::parser::LLParser::parseParameterTypeList()
 {
-    
+    return false;
 }
-
+// DONE
 bool c4::service::parser::LLParser::parseIdentifierList()
 {
     if(consume(TokenKind::identifier)) return 1;
@@ -314,7 +313,7 @@ bool c4::service::parser::LLParser::parseIdentifierList()
     if(checkLookAhead(TokenKind::punctuator,{.p=Punctuator::Comma})) return 1;
     parseIdentifierList();
 }
-// TODO PARSE STMT
+// DONE
 bool c4::service::parser::LLParser::parseCompundStatement()
 {
     if(consume(TokenKind::punctuator,{.p=Punctuator::LeftBrace})) return 1;
@@ -326,34 +325,35 @@ bool c4::service::parser::LLParser::parseCompundStatement()
             if(parseDeclaration()) return 1;
         }
         else{
-            // PARSE STMT
+            if(parseStatement()) return 1;
         }
     }
     if(checkLookAhead(TokenKind::punctuator,{.p=Punctuator::RightBrace})) return 1;
     return 0;
 
 }
-// TODO PARSE STMT
+// TODO PARSE EXPRESSION
 bool c4::service::parser::LLParser::parseSelectionStatement()
 {
     if(consume(TokenKind::keyword,{.k=Keyword::If})) return 1;
     if(consume(TokenKind::punctuator,{.p=Punctuator::LeftParenthesis})) return 1;
     // PARSE EXPRESSION
     if(consume(TokenKind::punctuator,{.p=Punctuator::RightParenthesis})) return 1;
-    // PARSE STMT
+    if(parseStatement()) return 1;
     if(!checkLookAhead(TokenKind::keyword,{.k=Keyword::Else}))return 0;
     consume(TokenKind::keyword,{.k=Keyword::Else});
-    // PARSE STMT
+    if(parseStatement()) return 1;
+    return 0;
 }
-// TODO PARSE STMT
+// TODO PARSE EXPRESSION
 bool c4::service::parser::LLParser::parseIterationStatement()
 {
     if(consume(TokenKind::keyword,{.k=Keyword::While})) return 1;
     if(consume(TokenKind::punctuator,{.p=Punctuator::LeftParenthesis})) return 1;
     // PARSE EXPRESSION
     if(consume(TokenKind::punctuator,{.p=Punctuator::RightParenthesis})) return 1;
-    // PARSE STMT
-
+    if(parseStatement()) return 1;
+    return 0;
 
 }
 // DONE
@@ -379,4 +379,36 @@ bool c4::service::parser::LLParser::parseJumpStatement()
     }
     if(consume(TokenKind::punctuator, {.p=Punctuator::Semicolon})) return 1;
     return 0;
+}
+// TODO PARSE EXPRESSION STMT
+bool c4::service::parser::LLParser::parseStatement()
+{
+    if(checkLookAhead(TokenKind::identifier)){
+        return (parseLabeledStatement()) ? 1: 0;
+    }
+    else if(checkLookAhead(TokenKind::punctuator,{.p=Punctuator::LeftBrace})){
+        return (parseCompundStatement()) ? 1: 0;
+    }
+    else if(checkLookAhead(TokenKind::keyword)){
+        switch(visitor.getSepcificValue().k){
+            case Keyword::If:
+            return parseSelectionStatement() ? 1 : 0;
+            case Keyword::While:
+            return parseIterationStatement() ? 1 : 0;
+            case Keyword::Goto:
+            case Keyword::Continue:
+            case Keyword::Return:
+            return parseJumpStatement() ? 1 : 0;
+            default:
+            break;
+        }
+    }
+    // TODO PARSE EXPRESSION STMT
+}
+
+bool c4::service::parser::LLParser::parseLabeledStatement()
+{
+    if(consume(TokenKind::identifier)) return 1;
+    if(consume(TokenKind::punctuator,{.p=Punctuator::Colon})) return 1;
+    return parseStatement();
 }

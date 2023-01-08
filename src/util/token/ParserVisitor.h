@@ -6,6 +6,7 @@
 namespace c4::util::token{
     class ParserVisitor : public model::token::ITokenVisitor {
         TokenKind kind;
+        SpecifiedToken specifed;
         public:
         ParserVisitor(){}
         void visit(
@@ -20,5 +21,6 @@ namespace c4::util::token{
             const model::token::PunctuatorToken &token
         ) override;
         TokenKind getKind(){return kind;}
+        SpecifiedToken getSepcificValue() {return specifed;}
     };
 }

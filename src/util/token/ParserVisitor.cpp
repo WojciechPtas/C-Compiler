@@ -30,11 +30,13 @@ void ParserVisitor::visit(const IdentifierToken &token) {
 }
 
 void ParserVisitor::visit(const KeywordToken &token) {
-    this->kind= TokenKind::keyword;
+    this->kind = TokenKind::keyword;
+    this->specifed.k = token.keyword;
 }
 
 void ParserVisitor::visit(const PunctuatorToken &token) {
     this->kind= TokenKind::punctuator;
+    this->specifed.p = token.punctuator;
 }
 
 // void ParserVisitor::visit(const StringLiteralToken &token) {
