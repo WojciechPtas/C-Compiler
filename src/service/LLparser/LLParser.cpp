@@ -14,7 +14,7 @@ bool LLParser::checkLookAhead(TokenKind k, SpecifiedToken s)
 }
 
 //DONE!
-bool LLParser::consume(TokenKind k, SpecifiedToken s)
+bool LLParser::consume(TokenKind k, SpecifiedToken s={.empty=true})
 {
     m_input.read(&token);
     token->accept(visitor);
@@ -60,7 +60,7 @@ bool LLParser::parse(io::IBufferedInputStream<std::shared_ptr<const model::token
     }
     EOFreached=!m_input.read(&lookahead);
     if(!EOFreached){
-        return parse();
+        return parse(m_input);
     }
 }
 
@@ -310,4 +310,58 @@ bool c4::service::parser::LLParser::parseParameterTypeList()
 bool c4::service::parser::LLParser::parseIdentifierList()
 {
     return false;
+}
+bool c4::service::parser::LLParser::parseCompundStatement()
+{
+    if(consume(TokenKind::punctuator,{.p=Punctuator::LeftBrace})) return 1;
+    while(!checkLookAhead(TokenKind::punctuator,{.p=Punctuator::RightBrace})){
+        // PARSE BLOCK ITEM
+    }
+}
+// TODO PARSE STMT
+bool c4::service::parser::LLParser::parseSelectionStatement()
+{
+    if(consume(TokenKind::keyword,{.k=Keyword::If})) return 1;
+    if(consume(TokenKind::punctuator,{.p=Punctuator::LeftParenthesis})) return 1;
+    // PARSE EXPRESSION
+    if(consume(TokenKind::punctuator,{.p=Punctuator::RightParenthesis})) return 1;
+    // PARSE STMT
+    if(!checkLookAhead(TokenKind::keyword,{.k=Keyword::Else}))return 0;
+    consume(TokenKind::keyword,{.k=Keyword::Else});
+    // PARSE STMT
+}
+// TODO PARSE STMT
+bool c4::service::parser::LLParser::parseIterationStatement()
+{
+    if(consume(TokenKind::keyword,{.k=Keyword::While})) return 1;
+    if(consume(TokenKind::punctuator,{.p=Punctuator::LeftParenthesis})) return 1;
+    // PARSE EXPRESSION
+    if(consume(TokenKind::punctuator,{.p=Punctuator::RightParenthesis})) return 1;
+    // PARSE STMT
+
+
+}
+// DONE
+bool c4::service::parser::LLParser::parseJumpStatement()
+{
+    m_input.read(&token);
+    token->accept(visitor);
+    if(visitor.getKind()!=TokenKind::keyword) return 1;
+    switch(std::dynamic_pointer_cast<const KeywordToken>(token)->keyword){
+        case Keyword::Goto:
+            if(consume(TokenKind::identifier)) return 1;
+        case Keyword::Continue:
+        case Keyword::Break:
+        break;
+        case Keyword::Return:
+        if(this->checkLookAhead(TokenKind::punctuator,{.p=Punctuator::Semicolon})) break;
+        else{
+        // TODO PARSE EXPRESSION
+        }
+        break;
+        default:
+        return 1;
+    }
+    if(consume(TokenKind::punctuator, {.p=Punctuator::Semicolon})) return 1;
+    return 0;
 }

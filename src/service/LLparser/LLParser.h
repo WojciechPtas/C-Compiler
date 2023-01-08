@@ -11,7 +11,7 @@
 #include "../../util/token/ParserVisitor.h"
 #include "../io/IBufferedInputStream.h"
 namespace c4::service::parser{
-    union SpecifiedToken
+    struct SpecifiedToken
     {
         bool empty;
         model::token::Punctuator p;
@@ -27,7 +27,7 @@ namespace c4::service::parser{
             bool parse( io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input);
         private:
             bool consume(util::token::TokenKind k, SpecifiedToken s);
-            bool checkLookAhead(util::token::TokenKind k, SpecifiedToken s);
+            bool checkLookAhead(util::token::TokenKind k, SpecifiedToken s={.empty=true});
             bool parseDeclaration();
             bool parseStaticAssertDeclaration();
             bool parseStructorUnionSpecifier();
@@ -37,5 +37,9 @@ namespace c4::service::parser{
             bool parseDirectDeclarator();
             bool parseParameterTypeList();
             bool parseIdentifierList();
+            bool parseCompundStatement();
+            bool parseSelectionStatement();
+            bool parseIterationStatement();
+            bool parseJumpStatement();
     };
 }
