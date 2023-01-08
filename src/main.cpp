@@ -2,7 +2,9 @@
 
 #include "lexer.h"
 #include "service/automata/NodeAutomaton.h"
-#include "service/io/ISO88591InputStream.h"
+#include "service/io/FileInputStream.h"
+#include "service/io/MetricInputStream.h"
+#include "service/io/MosaicInputStream.h"
 #include "util/node/NodeUtilities.h"
 #include "util/token/KeywordUtilities.h"
 #include "util/token/PrintVisitor.h"
@@ -34,9 +36,12 @@ int main(int argc, char* argv[]) {
     //cout<<input<<endl;
     std::string word;
 
-    shared_ptr<ISO88591InputStream> src = std::make_shared<ISO88591InputStream>(input);
+    auto fileSrc = make_shared<FileInputStream>(input);
+    auto bufferedSrc = make_shared<MosaicInputStream<char>>(fileSrc, 1024);
+    auto metricSrc = make_shared<MetricInputStream>(bufferedSrc, input);
+
     c4::Lexer l(
-        src,
+        metricSrc,
         make_shared<NodeAutomaton<char, Punctuator>>(PUNCTUATOR_TREE),
         make_shared<NodeAutomaton<char, Keyword>>(KEYWORD_TREE)
     );
