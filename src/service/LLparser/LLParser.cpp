@@ -314,13 +314,24 @@ bool c4::service::parser::LLParser::parseIdentifierList()
     if(checkLookAhead(TokenKind::punctuator,{.p=Punctuator::Comma})) return 1;
     parseIdentifierList();
 }
-// PARSE BLOCK ITEM
+// TODO PARSE STMT
 bool c4::service::parser::LLParser::parseCompundStatement()
 {
     if(consume(TokenKind::punctuator,{.p=Punctuator::LeftBrace})) return 1;
     while(!checkLookAhead(TokenKind::punctuator,{.p=Punctuator::RightBrace})){
-        // PARSE BLOCK ITEM
+        if(checkLookAhead(TokenKind::keyword,{.k=Keyword::__Static_assert})){
+            if(parseStaticAssertDeclaration()) return 1;
+        }
+        else if(checkLookAhead(TokenKind::keyword,{.k=Keyword::Int})||checkLookAhead(TokenKind::keyword,{.k=Keyword::Void})||checkLookAhead(TokenKind::keyword,{.k=Keyword::Char})){
+            if(parseDeclaration()) return 1;
+        }
+        else{
+            // PARSE STMT
+        }
     }
+    if(checkLookAhead(TokenKind::punctuator,{.p=Punctuator::RightBrace})) return 1;
+    return 0;
+
 }
 // TODO PARSE STMT
 bool c4::service::parser::LLParser::parseSelectionStatement()

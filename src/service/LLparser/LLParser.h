@@ -41,5 +41,6 @@ namespace c4::service::parser{
             bool parseSelectionStatement();
             bool parseIterationStatement();
             bool parseJumpStatement();
+            bool parseStatement();
     };
 }
