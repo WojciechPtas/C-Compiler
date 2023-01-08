@@ -181,7 +181,7 @@ bool LLParser::parseStructorUnionSpecifier(){
     }
     else return 1;
 }
-
+// TODO PARSE STRUCT DECLARATION
 bool LLParser::parseStructDeclarationList(){
     //ParserVisitor visitor;
 
@@ -304,13 +304,17 @@ bool c4::service::parser::LLParser::parseDirectDeclarator()
 
 bool c4::service::parser::LLParser::parseParameterTypeList()
 {
-    return false;
+    
 }
 
 bool c4::service::parser::LLParser::parseIdentifierList()
 {
-    return false;
+    if(consume(TokenKind::identifier)) return 1;
+    if(!checkLookAhead(TokenKind::punctuator,{.p=Punctuator::Comma})) return 0;
+    if(checkLookAhead(TokenKind::punctuator,{.p=Punctuator::Comma})) return 1;
+    parseIdentifierList();
 }
+// PARSE BLOCK ITEM
 bool c4::service::parser::LLParser::parseCompundStatement()
 {
     if(consume(TokenKind::punctuator,{.p=Punctuator::LeftBrace})) return 1;
