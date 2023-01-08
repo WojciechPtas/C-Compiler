@@ -82,8 +82,22 @@ namespace c4 {
                     size_t markCount = this->marks.size();
 
                     if (markCount == 0) {
+                        DBGOUT_E(
+                            "stream",
+                            "I: %p, Attempted to pop non-existent mark.",
+                            this
+                        );
+
                         return false;
                     }
+
+                    DBGOUT_E(
+                        "stream",
+                        "I: %p, Popping mark at %zu (remaining marks = %d).",
+                        this,
+                        this->marks.back(),
+                        markCount - 1
+                    );
 
                     this->marks.pop_back();
 
@@ -128,7 +142,7 @@ namespace c4 {
                         shrinkMore =
                             this->cursorOffset >= this->fragmentCapacity;
 
-                        if (shrinkMore) {
+                        if (this->cursorLimit > 0) {
                             DBGOUT_E(
                                 "stream",
                                 "I: %p, Deallocating fragment %p (mark pop)",
@@ -145,6 +159,13 @@ namespace c4 {
                 }
 
                 void pushMark() override {
+                    DBGOUT_E(
+                        "stream",
+                        "I: %p, Pushing mark at %zu.",
+                        this,
+                        this->cursorOffset
+                    );
+
                     this->marks.push_back(this->cursorOffset);
                 }
 

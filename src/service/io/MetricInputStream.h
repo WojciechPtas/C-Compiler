@@ -13,7 +13,6 @@ namespace c4 {
         namespace io {
             struct MetricSnapshot {
                 std::size_t column;
-                bool lastCharWasCR;
                 util::Optional<std::size_t> lastColumn;
                 util::Optional<std::size_t> lastLine;
                 std::size_t line;
@@ -123,7 +122,6 @@ namespace c4 {
 
             private:
                 const std::shared_ptr<IBufferedInputStream<char>> source;
-                bool lastCharWasCR;
                 util::Optional<std::size_t> lastColumn;
                 util::Optional<std::size_t> lastLine;
                 std::size_t nextColumn;

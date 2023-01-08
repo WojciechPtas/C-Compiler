@@ -9,7 +9,6 @@ MetricInputStream::MetricInputStream(
     const string_view &filePath
 ) : filePath(filePath),
     source(src),
-    lastCharWasCR(false),
     lastColumn(),
     lastLine(),
     nextColumn(1),
@@ -54,7 +53,6 @@ void MetricInputStream::pushMark() {
     this->source->pushMark();
     this->markedMetrics.push_back({
         this->nextColumn,
-        this->lastCharWasCR,
         this->lastColumn,
         this->lastLine,
         this->nextLine,
@@ -62,6 +60,8 @@ void MetricInputStream::pushMark() {
 }
 
 bool MetricInputStream::read(char *dst) {
+    char nextChar;
+
     if (!this->source->read(dst)) {
         return false;
     }
@@ -69,14 +69,16 @@ bool MetricInputStream::read(char *dst) {
     this->lastColumn = this->nextColumn;
     this->lastLine = this->nextLine;
 
-    if (*dst == '\r' || (*dst == '\n' && !this->lastCharWasCR)) {
+    if (
+        *dst == '\n' ||
+        (*dst == '\r' && (!this->source->peek(&nextChar) || nextChar != '\n'))
+    ) {
         this->nextColumn = 1;
         this->nextLine++;
-    } else if (*dst != '\n') {
+    } else if (*dst != '\r') {
         this->nextColumn++;
     }
 
-    this->lastCharWasCR = *dst == '\r';
     return true;
 }
 
@@ -95,7 +97,6 @@ bool MetricInputStream::resetToMark() {
     auto snapshot = this->markedMetrics.back();
 
     this->nextColumn = snapshot.column;
-    this->lastCharWasCR = snapshot.lastCharWasCR;
     this->nextLine = snapshot.line;
 
     return true;
