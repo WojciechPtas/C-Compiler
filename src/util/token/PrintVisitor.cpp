@@ -22,6 +22,11 @@ void PrintVisitor::visit(const ConstantToken &token) {
 
     switch (token.type) {
     case ConstantType::Character:
+        this->outputStream << "constant '";
+        this->outputStream << token.value;
+        this->outputStream << "'\n";
+        break;
+
     case ConstantType::Decimal:
         this->outputStream << "constant ";
         this->outputStream << token.value;
