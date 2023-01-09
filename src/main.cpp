@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
     std::string word;
 
     auto fileSrc = make_shared<FileInputStream>(input);
-    auto bufferedSrc = make_shared<MosaicInputStream<char>>(fileSrc, 64);
+    auto bufferedSrc = make_shared<MosaicInputStream<char>>(fileSrc, 1024);
     auto metricSrc = make_shared<MetricInputStream>(bufferedSrc, input);
 
     auto keywordAutomata = make_shared<NodeAutomaton<char, Keyword>>(KEYWORD_TREE);
