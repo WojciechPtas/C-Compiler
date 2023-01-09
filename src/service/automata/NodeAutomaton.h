@@ -19,6 +19,8 @@ namespace c4 {
                     DBGOUT("automata", "Entering walk");
 
                     auto curState = this->rootNode;
+                    std::shared_ptr<const model::node::Node<TEdge, TPayload>> acceptingState =
+                        nullptr;
                     TEdge curElement;
                     
                     src.pushMark();
@@ -27,18 +29,20 @@ namespace c4 {
                         auto newState = curState->getChildNode(curElement);
 
                         if (!newState) {
-                            src.resetToMark();
                             break;
                         }
                         
                         curState = newState;
-                        src.popMark();
-                        src.pushMark();
+
+                        if (curState->getResult() != nullptr) {
+                            acceptingState = curState;
+                            src.moveMark();
+                        }
                     }
                     
-                    src.popMark();
+                    src.resetAndPopMark();
                     DBGOUT("automata", "Leaving walk");
-                    return curState;
+                    return acceptingState;
                 }
 
             private:

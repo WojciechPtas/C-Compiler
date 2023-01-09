@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "lexer.h"
 #include "service/automata/NodeAutomaton.h"
 #include "service/io/FileInputStream.h"
+#include "service/io/LexingInputStream.h"
 #include "service/io/MetricInputStream.h"
 #include "service/io/MosaicInputStream.h"
 #include "util/node/NodeUtilities.h"
@@ -37,28 +37,27 @@ int main(int argc, char* argv[]) {
     std::string word;
 
     auto fileSrc = make_shared<FileInputStream>(input);
-    auto bufferedSrc = make_shared<MosaicInputStream<char>>(fileSrc, 1024);
+    auto bufferedSrc = make_shared<MosaicInputStream<char>>(fileSrc, 64);
     auto metricSrc = make_shared<MetricInputStream>(bufferedSrc, input);
 
-    c4::Lexer l(
-        metricSrc,
-        make_shared<NodeAutomaton<char, Punctuator>>(PUNCTUATOR_TREE),
-        make_shared<NodeAutomaton<char, Keyword>>(KEYWORD_TREE)
-    );
-    shared_ptr<const Token> token;
-    int i=0;
+    auto keywordAutomata = make_shared<NodeAutomaton<char, Keyword>>(KEYWORD_TREE);
+    auto punctuatorAutomata = make_shared<NodeAutomaton<char, Punctuator>>(PUNCTUATOR_TREE);
+
+    LexingInputStream lexer(metricSrc, keywordAutomata, punctuatorAutomata);
+
+    unique_ptr<Token> token;
     
     PrintVisitor pt(cout);
     PrintVisitor pe(cerr);
-    while(l.nextToken(token)) {
-        i++;
+
+    while(lexer.read(&token)) {
         token->accept(pt);
     }
+
     if(token != nullptr){
-        token->accept(pe);
+        //token->accept(pe);
         retval = ERR;
     }
-    //cout << i << "\n";
 
     return retval;
 }
