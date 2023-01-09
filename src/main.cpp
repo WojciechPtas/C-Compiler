@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <iostream>
 
 #include "service/automata/NodeAutomaton.h"
@@ -50,9 +51,22 @@ int main(int argc, char* argv[]) {
     PrintVisitor pt(cout);
     PrintVisitor pe(cerr);
 
+    // We adjust the buffering behavior of the standard output stream to
+    // increase the efficiency of writing to stdout:
+    //
+    //  - The default strategy flushes the buffer after each line, which
+    //    requires a system call and hence comes with heavy cost.
+    //  - We switch from line buffering to full buffering and we set the size
+    //    to 4 KiB, which is equivalent to a whole memory page on an x86
+    //    system.
+
+    setvbuf(stdout, nullptr, _IOFBF, 4096);
+
     while(lexer.read(&token)) {
         token->accept(pt);
     }
+
+    setvbuf(stdout, nullptr, _IOLBF, 4096);
 
     if(token != nullptr){
         //token->accept(pe);
