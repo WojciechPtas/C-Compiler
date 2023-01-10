@@ -64,13 +64,13 @@ int main(int argc, char* argv[]) {
 
     setvbuf(stdout, nullptr, _IOFBF, 4096);
 
-    while(lexer.read(&token)) {
+    while(lexer.read(&token) && !token->isError()) {
         token->accept(pt);
     }
 
     setvbuf(stdout, nullptr, _IOLBF, 4096);
 
-    if(dynamic_cast<ErrorToken*>(token.get())){
+    if(token->isError()){
         token->accept(pe);
         retval = ERR;
     }

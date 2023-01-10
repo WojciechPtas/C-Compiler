@@ -20,6 +20,10 @@ namespace c4 {
                 void accept(ITokenVisitor &visitor) const override {
                     visitor.visit(*this);
                 }
+
+                bool isError() const override {
+                    return true;
+                }
             };
         }
     }
