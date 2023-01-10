@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
     unique_ptr<Token> token;
     
     PrintVisitor pt(cout);
+    PrintVisitor pe(cerr);
 
     // We adjust the buffering behavior of the standard output stream to
     // increase the efficiency of writing to stdout:
@@ -70,6 +71,7 @@ int main(int argc, char* argv[]) {
     setvbuf(stdout, nullptr, _IOLBF, 4096);
 
     if(dynamic_cast<ErrorToken*>(token.get())){
+        token->accept(pe);
         retval = ERR;
     }
 
