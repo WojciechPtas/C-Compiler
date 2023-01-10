@@ -1,6 +1,8 @@
 #include <cstdio>
 #include <iostream>
 
+#include "model/token/Token.h"
+#include "model/token/ErrorToken.h"
 #include "service/automata/NodeAutomaton.h"
 #include "service/io/FileInputStream.h"
 #include "service/io/LexingInputStream.h"
@@ -49,7 +51,6 @@ int main(int argc, char* argv[]) {
     unique_ptr<Token> token;
     
     PrintVisitor pt(cout);
-    PrintVisitor pe(cerr);
 
     // We adjust the buffering behavior of the standard output stream to
     // increase the efficiency of writing to stdout:
@@ -68,8 +69,7 @@ int main(int argc, char* argv[]) {
 
     setvbuf(stdout, nullptr, _IOLBF, 4096);
 
-    if(token != nullptr){
-        //token->accept(pe);
+    if(dynamic_cast<ErrorToken*>(token.get())){
         retval = ERR;
     }
 
