@@ -29,7 +29,7 @@ LexingInputStream::LexingInputStream(
     eofReached(false),
     isEmpty(true) { }
 
-bool LexingInputStream::read(unique_ptr<Token> *dst) {
+bool LexingInputStream::read(shared_ptr<Token> *dst) {
     char nextChar;
 
     // If we hit EOF right at the beginning, we encountered an empty stream,
@@ -133,7 +133,7 @@ bool LexingInputStream::read(unique_ptr<Token> *dst) {
     return true;
 }
 
-void LexingInputStream::readCharacterConstant(unique_ptr<Token> *dst) {
+void LexingInputStream::readCharacterConstant(shared_ptr<Token> *dst) {
     MAKE_TOKEN_POSITION(constantBeginning, *this->source);
     string constant;
     char nextChar;
@@ -216,7 +216,7 @@ void LexingInputStream::readCharacterConstant(unique_ptr<Token> *dst) {
     );
 }
 
-void LexingInputStream::readDecimalConstant(unique_ptr<Token> *dst) {
+void LexingInputStream::readDecimalConstant(shared_ptr<Token> *dst) {
     MAKE_TOKEN_POSITION(tokenPosition, *this->source);
     string constant;
     char firstChar;
@@ -243,7 +243,7 @@ void LexingInputStream::readDecimalConstant(unique_ptr<Token> *dst) {
     );
 }
 
-void LexingInputStream::readIdentifierOrKeyword(unique_ptr<Token> *dst) {
+void LexingInputStream::readIdentifierOrKeyword(shared_ptr<Token> *dst) {
     MAKE_TOKEN_POSITION(tokenPosition, *this->source);
     char nextChar;
 
@@ -284,7 +284,7 @@ void LexingInputStream::readIdentifierOrKeyword(unique_ptr<Token> *dst) {
     *dst = make_unique<IdentifierToken>(tokenPosition, identifier);
 }
 
-void LexingInputStream::readPunctuatorOrError(unique_ptr<Token> *dst) {
+void LexingInputStream::readPunctuatorOrError(shared_ptr<Token> *dst) {
     MAKE_TOKEN_POSITION(tokenPosition, *this->source);
 
     auto punctuatorNode = this->punctuatorAutomaton->walk(*this->source);
@@ -301,7 +301,7 @@ void LexingInputStream::readPunctuatorOrError(unique_ptr<Token> *dst) {
     );
 }
 
-void LexingInputStream::readStringLiteral(unique_ptr<Token> *dst) {
+void LexingInputStream::readStringLiteral(shared_ptr<Token> *dst) {
     MAKE_TOKEN_POSITION(tokenPosition, *this->source);
     bool inEscapeSequence = false;
     string literal;

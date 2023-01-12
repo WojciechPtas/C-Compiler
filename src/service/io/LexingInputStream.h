@@ -17,7 +17,7 @@ namespace c4 {
              * and transforms them to tokens.
              */
             class LexingInputStream :
-                public IInputStream<std::unique_ptr<model::token::Token>> {
+                public IInputStream<std::shared_ptr<model::token::Token>> {
             public:
                 LexingInputStream(
                     const std::shared_ptr<MetricInputStream> &src,
@@ -26,7 +26,7 @@ namespace c4 {
                 );
 
                 bool read(
-                    std::unique_ptr<model::token::Token> *dst
+                    std::shared_ptr<model::token::Token> *dst
                 ) override;
 
             private:
@@ -38,23 +38,23 @@ namespace c4 {
                 bool isEmpty;
 
                 void readCharacterConstant(
-                    std::unique_ptr<model::token::Token> *dst
+                    std::shared_ptr<model::token::Token> *dst
                 );
 
                 void readDecimalConstant(
-                    std::unique_ptr<model::token::Token> *dst
+                    std::shared_ptr<model::token::Token> *dst
                 );
 
                 void readIdentifierOrKeyword(
-                    std::unique_ptr<model::token::Token> *dst
+                    std::shared_ptr<model::token::Token> *dst
                 );
 
                 void readPunctuatorOrError(
-                    std::unique_ptr<model::token::Token> *dst
+                    std::shared_ptr<model::token::Token> *dst
                 );
 
                 void readStringLiteral(
-                    std::unique_ptr<model::token::Token> *dst
+                    std::shared_ptr<model::token::Token> *dst
                 );
             };
         }
