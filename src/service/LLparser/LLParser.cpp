@@ -258,46 +258,64 @@ bool c4::service::parser::LLParser::parseDirectDeclarator()
         m_input.popMark();
         return 0;
         case TokenKind::punctuator:
-        if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::LeftParenthesis) return 1;
+        if(visitor.getSepcificValue().p!=Punctuator::LeftParenthesis) return 1;
         m_input.popMark();
-        this->parseDeclarator();
-        m_input.read(&token);
-        token->accept(visitor);
-        if(visitor.getKind()!=TokenKind::punctuator) return 1;
-        if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::RightParenthesis) return 1;
+        if(this->parseDeclarator()) return 1;
+        if(consume(TokenKind::punctuator,{.p=Punctuator::RightParenthesis})) return 1;
         return 0;
         default:
         m_input.resetToMark();
         m_input.popMark();
-        this->parseDirectDeclarator();
+        if(this->parseDirectDeclarator()) return 1;
         break;
     }
     // Now we need to decide which productions we will use
     m_input.read(&token);
     token->accept(visitor);
     if(visitor.getKind()!=TokenKind::punctuator) return 1;
-    switch((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator){
+    switch(visitor.getSepcificValue().p){
         case Punctuator::LeftParenthesis:
         // we encounterd ither parameter type list or identyfier type list
-        m_input.pushMark();
-        m_input.read(&token);
-        token->accept(visitor);
-        m_input.resetToMark();
-        m_input.popMark();
-        if(visitor.getKind()==TokenKind::identifier){            
-            if(this->parseIdentifierList()) return 1;
-        }
-        else{
+        //m_input.pushMark();
+        //m_input.read(&token);
+        //token->accept(visitor);
+        //m_input.resetToMark();
+        //m_input.popMark();
+        if(!checkLookAhead(TokenKind::punctuator,{.p=Punctuator::RightBrace})){
+            if(checkLookAhead(TokenKind::identifier))
+            {            
+                if(this->parseIdentifierList()) return 1;
+            }
+            else{
             if(this->parseParameterTypeList()) return 1;
+            }
         }
         //parse ")"
         if(this->consume(TokenKind::punctuator,{.p=Punctuator::RightBrace})) return 1;
+        return 0;
         break;
+        case Punctuator::LeftBracket:
+            m_input.read(&token);
+            token->accept(visitor);
+            switch(visitor.getKind()){
+                case TokenKind::keyword:
+                switch(visitor.getSepcificValue){
+                    case Keyword::Static:
+                    // parse TYPE QUALFIER LIST
+                    // PARSE ASSIGNMENT EXPRESSION OPT
+                    case Keyword::Void:
+                    case Keyword::Int:
+                    case Keyword::Char:
+                    if(checkLookAhead(TokenKind::punctuator,{.p=Punctuator::Asterisk})) {
+                        consume(TokenKind::punctuator,{.p=Punctuator::Asterisk});
+                        break; // We only need to parse right bracket
+                    }
+                }
+            }
         default:
-        // TODO PARSE [ sdadasd ]
         return 1;
     }
-    //
+    if(consume(TokenKind::punctuator,{.p=Punctuator::RightBracket})) return 1;
     return 0;
 }
 // TODO IMPLEMENT
