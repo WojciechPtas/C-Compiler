@@ -1,8 +1,11 @@
+#include <cstdio>
 #include <iostream>
 
-#include "lexer.h"
+#include "model/token/Token.h"
+#include "model/token/ErrorToken.h"
 #include "service/automata/NodeAutomaton.h"
 #include "service/io/FileInputStream.h"
+#include "service/io/LexingInputStream.h"
 #include "service/io/MetricInputStream.h"
 #include "service/io/MosaicInputStream.h"
 #include "util/node/NodeUtilities.h"
@@ -40,25 +43,37 @@ int main(int argc, char* argv[]) {
     auto bufferedSrc = make_shared<MosaicInputStream<char>>(fileSrc, 1024);
     auto metricSrc = make_shared<MetricInputStream>(bufferedSrc, input);
 
-    c4::Lexer l(
-        metricSrc,
-        make_shared<NodeAutomaton<char, Punctuator>>(PUNCTUATOR_TREE),
-        make_shared<NodeAutomaton<char, Keyword>>(KEYWORD_TREE)
-    );
-    shared_ptr<const Token> token;
-    int i=0;
+    auto keywordAutomata = make_shared<NodeAutomaton<char, Keyword>>(KEYWORD_TREE);
+    auto punctuatorAutomata = make_shared<NodeAutomaton<char, Punctuator>>(PUNCTUATOR_TREE);
+
+    LexingInputStream lexer(metricSrc, keywordAutomata, punctuatorAutomata);
+
+    unique_ptr<Token> token;
     
     PrintVisitor pt(cout);
     PrintVisitor pe(cerr);
-    while(l.nextToken(token)) {
-        i++;
+
+    // We adjust the buffering behavior of the standard output stream to
+    // increase the efficiency of writing to stdout:
+    //
+    //  - The default strategy flushes the buffer after each line, which
+    //    requires a system call and hence comes with heavy cost.
+    //  - We switch from line buffering to full buffering and we set the size
+    //    to 4 KiB, which is equivalent to a whole memory page on an x86
+    //    system.
+
+    setvbuf(stdout, nullptr, _IOFBF, 4096);
+
+    while(lexer.read(&token) && !token->isError()) {
         token->accept(pt);
     }
-    if(token != nullptr){
+
+    setvbuf(stdout, nullptr, _IOLBF, 4096);
+
+    if(token->isError()){
         token->accept(pe);
         retval = ERR;
     }
-    //cout << i << "\n";
 
     return retval;
 }
