@@ -293,13 +293,12 @@ bool c4::service::parser::LLParser::parseDirectDeclarator()
         //parse ")"
         if(this->consume(TokenKind::punctuator,{.p=Punctuator::RightBrace})) return 1;
         return 0;
-        break;
         case Punctuator::LeftBracket:
             m_input.read(&token);
             token->accept(visitor);
             switch(visitor.getKind()){
                 case TokenKind::keyword:
-                switch(visitor.getSepcificValue){
+                switch(visitor.getSepcificValue().k){
                     case Keyword::Static:
                     // parse TYPE QUALFIER LIST
                     // PARSE ASSIGNMENT EXPRESSION OPT
