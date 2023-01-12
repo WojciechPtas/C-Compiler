@@ -14,14 +14,17 @@ namespace c4::service::parser{
     
     class LLParser{
         private:
-            io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &m_input;
+            const std::shared_ptr<io::IBufferedInputStream<std::shared_ptr<model::token::Token>>> m_input;
             util::token::ParserVisitor visitor;
-            std::shared_ptr<const model::token::Token> token;
+            std::shared_ptr<model::token::Token> token;
         public:
-            //LLParser(){};
-            bool parse( io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input);
+            LLParser(const std::shared_ptr<io::IBufferedInputStream<std::shared_ptr<model::token::Token>>>& input) : m_input(input){
+                visitor=c4::util::token::ParserVisitor();
+                token=nullptr;
+                };
+            bool parse(/* io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input*/);
         private:
-            bool consume(util::token::TokenKind k, util::token::SpecifiedToken s);
+            bool consume(util::token::TokenKind k, util::token::SpecifiedToken s, bool inlookahead=false);
             bool checkLookAhead(util::token::TokenKind k, util::token::SpecifiedToken s={.empty=true});
             bool parseDeclaration();
             bool parseStaticAssertDeclaration();

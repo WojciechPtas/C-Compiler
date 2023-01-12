@@ -1,21 +1,25 @@
 #include "LLParser.h"
+#include <iostream>
 using namespace c4::util::token;
 using namespace c4::service::parser;
 using namespace c4::model::token;
 // DONE!
 bool LLParser::checkLookAhead(TokenKind k, SpecifiedToken s)
 {
-    m_input.pushMark();
-    bool seen = consume(k,s);
-    m_input.resetToMark();
-    m_input.popMark();
+    std::cout<<"In lookahead:";
+    m_input->pushMark();
+    bool seen = !consume(k,s,true);
+    m_input->resetToMark();
+    m_input->popMark();
+    //std::cout<<"exiting\n";
     return seen;
 }
 
 //DONE!
-bool LLParser::consume(TokenKind k, SpecifiedToken s={.empty=true})
+bool LLParser::consume(TokenKind k, SpecifiedToken s={.empty=true}, bool inlookahead)
 {
-    m_input.read(&token);
+    if(!inlookahead) std::cout<<"Consumed:";    
+    m_input->read(&token);
     token->accept(visitor);
     if(visitor.getKind()!=k) return 1;
     switch(k){
@@ -29,37 +33,40 @@ bool LLParser::consume(TokenKind k, SpecifiedToken s={.empty=true})
 }
 
 
-bool LLParser::parse(io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input){
-    std::shared_ptr<const Token> lookahead;
-    m_input=input;
+bool LLParser::parse(/*io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input*/){
+    //std::unique_ptr<Token> lookahead;
+    //m_input=input;
+    //std::cout << " parsing \n";
+std::cout << "parse():\n";
     bool EOFreached=false, accepting=true;
     //ParserVisitor visitor;
     // First, we need to check whetver we should parse extern definition or function definition
 
-    m_input.pushMark();
-    
-    lookahead->accept(visitor);
-
+    m_input->pushMark();
+    //std::cout << " parsing \n";
+    m_input->read(&token);
+    token->accept(visitor);
+    //std::cout << " parsing \n";
     switch(visitor.getKind()){
         case TokenKind::keyword:
-        switch((std::dynamic_pointer_cast<const KeywordToken>(lookahead))->keyword){
+        switch(visitor.getSepcificValue().k){
             case Keyword::__Static_assert:
-            m_input.resetToMark();
-            m_input.popMark();
+            m_input->resetToMark();
+            m_input->popMark();
             if(this->parseStaticAssertDeclaration()) return 1;
             break;
             default:
-            m_input.resetToMark();
-            m_input.popMark();
+            m_input->resetToMark();
+            m_input->popMark();
             if(this->parseDeclaration()) return 1;
         }
         break;
         default:
         return 1;
     }
-    EOFreached=!m_input.read(&lookahead);
+    EOFreached=!m_input->read(&token);
     if(!EOFreached){
-        return parse(m_input);
+        return parse();
     }
 }
 
@@ -68,23 +75,30 @@ bool LLParser::parseDeclaration()
     //std::shared_ptr<const Token> token;
     ////ParserVisitor visitor;
     //First lets parse the type specifier
-    m_input.pushMark();
-    m_input.read(&token);
+    std::cout << "parseDeclaration()\n";
+    m_input->pushMark();
+    m_input->read(&token);
+    //std::cout << " parsing before ttt\n";
+    //if(token!=nullptr) std::cout <<"dupa";
+    //else std::cout << "dupa223\n";
+    std::cout<<"Consumed:";
     token->accept(visitor);
+    //std::cout << " parsingdEclaration \n";
     switch(visitor.getKind())
     {
         case TokenKind::keyword:
-        switch((std::dynamic_pointer_cast<const KeywordToken>(token))->keyword){
+        switch((visitor.getSepcificValue().k)){
         case Keyword::Void:
         case Keyword::Int:
         case Keyword::Char:
-        m_input.popMark();
+        //std::cout << " VOID! \n";
+        m_input->popMark();
         if(this->parseDeclarator()) return 1;
         break;
         case Keyword::Struct:
         case Keyword::Union:
-        m_input.resetToMark();
-        m_input.popMark();
+        m_input->resetToMark();
+        m_input->popMark();
         if(this->parseStructorUnionSpecifier()) return 1;
         break;
         default:
@@ -101,38 +115,47 @@ bool LLParser::parseStaticAssertDeclaration()
     //std::shared_ptr<const Token> token;
     ////ParserVisitor visitor;
    
-    // m_input.read(&token);
+    // m_input->read(&token);
     // token->accept(visitor);
     // if(visitor.getKind()!=TokenKind::keyword) return 1;
     // if((std::dynamic_pointer_cast<const KeywordToken>(token))->keyword!=Keyword::__Static_assert) return 1;
     if(this->consume(TokenKind::keyword,{.k=Keyword::__Static_assert})) return 1;
 
-    // m_input.read(&token);
+    // m_input->read(&token);
     // token->accept(visitor);
     // if(visitor.getKind()!=TokenKind::punctuator) return 1;
     // if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::LeftParenthesis) return 1;
     if(this->consume(TokenKind::punctuator,{.p=Punctuator::LeftParenthesis})) return 1;
     // @TODO INVOKE LR PARSER HERE TO PARSE CONSTANT EXPRESSION
 
-    m_input.read(&token);
-    token->accept(visitor);
-    if(visitor.getKind()!=TokenKind::punctuator) return 1;
-    if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Comma) return 1;
+    //m_input->read(&token);
+    //token->accept(visitor);
+    //if(visitor.getKind()!=TokenKind::punctuator) return 1;
+    //if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Comma) return 1;
 
-    m_input.read(&token);
-    token->accept(visitor);
-    if(visitor.getKind()!=TokenKind::string_literal) return 1;
+    if(this->consume(TokenKind::punctuator,{.p=Punctuator::Comma})) return 1;
 
-    m_input.read(&token);
-    token->accept(visitor);
-    if(visitor.getKind()!=TokenKind::punctuator) return 1;
-    if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::RightParenthesis) return 1;
+    //m_input->read(&token);
+    //token->accept(visitor);
+    //if(visitor.getKind()!=TokenKind::string_literal) return 1;
 
-    m_input.read(&token);
-    token->accept(visitor);
-    if(visitor.getKind()!=TokenKind::punctuator) return 1;
-    if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Semicolon) return 1;
+    if(this->consume(TokenKind::string_literal)) return 1;
+
+    //m_input->read(&token);
+    //token->accept(visitor);
+    //if(visitor.getKind()!=TokenKind::punctuator) return 1;
+    //if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::RightParenthesis) return 1;
+
+    if(this->consume(TokenKind::punctuator,{.p=Punctuator::RightParenthesis})) return 1;
+
+    //m_input->read(&token);
+    //token->accept(visitor);
+    //if(visitor.getKind()!=TokenKind::punctuator) return 1;
+    //if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Semicolon) return 1;
     
+    if(this->consume(TokenKind::punctuator,{.p=Punctuator::Semicolon})) return 1;
+
+
     return 0;
 }
 
@@ -141,41 +164,41 @@ bool LLParser::parseStructorUnionSpecifier(){
     //std::shared_ptr<const Token> token1;
     ////ParserVisitor visitor;
 
-    m_input.read(&token);
+    m_input->read(&token);
     token->accept(visitor);
     if(visitor.getKind()!=TokenKind::keyword) return 1;
-    if((std::dynamic_pointer_cast<const KeywordToken>(token))->keyword!=Keyword::Struct || std::dynamic_pointer_cast<const KeywordToken>(token)->keyword!=Keyword::Union) return 1;
+    if(visitor.getSepcificValue().k!=Keyword::Struct || visitor.getSepcificValue().k!=Keyword::Union) return 1;
 
     
-    m_input.read(&token);
+    m_input->read(&token);
     token->accept(visitor);
     if(visitor.getKind()==TokenKind::identifier){
-        m_input.pushMark();
-        m_input.read(&token);
+        m_input->pushMark();
+        m_input->read(&token);
         token->accept(visitor);
         if(visitor.getKind()==TokenKind::punctuator){ 
-        if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::LeftBrace) {
-             m_input.popMark();
+        if(visitor.getSepcificValue().p!=Punctuator::LeftBrace) {
+             m_input->popMark();
             return 0;
         }
         if(this->parseStructDeclarationList()) return 1;
-        m_input.read(&token);
+        m_input->read(&token);
         token->accept(visitor);
         if(visitor.getKind()!=TokenKind::punctuator) return 1;
-        if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::RightBrace) return 1;
-        m_input.popMark();
+        if(visitor.getSepcificValue().p!=Punctuator::RightBrace) return 1;
+        m_input->popMark();
         return 0;
     }
     }
     else if(visitor.getKind()==TokenKind::punctuator){ 
-        if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::LeftBrace) return 1;
-        m_input.popMark();
+        if(visitor.getSepcificValue().p!=Punctuator::LeftBrace) return 1;
+        m_input->popMark();
         if(this->parseStructDeclarationList()) return 1;
-        m_input.read(&token);
+        m_input->read(&token);
         token->accept(visitor);
         if(visitor.getKind()!=TokenKind::punctuator) return 1;
-        if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::RightBrace) return 1;
-        m_input.popMark();
+        if(visitor.getSepcificValue().p!=Punctuator::RightBrace) return 1;
+        m_input->popMark();
         return 0;
     }
     else return 1;
@@ -186,20 +209,20 @@ bool LLParser::parseStructDeclarationList(){
 
     // TODO PARSE STRUCT DECLARATION
     //std::shared_ptr<const Token> token;
-    m_input.pushMark();
-    m_input.read(&token);
+    m_input->pushMark();
+    m_input->read(&token);
     token->accept(visitor);
     if(visitor.getKind()==TokenKind::punctuator){
-        if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator==Punctuator::RightBrace){
-            m_input.resetToMark();
-            m_input.popMark();
+        if(visitor.getSepcificValue().p==Punctuator::RightBrace){
+            m_input->resetToMark();
+            m_input->popMark();
             return 0;
         }
         return 1;
     }
     else{
-        m_input.resetToMark();
-        m_input.popMark();
+        m_input->resetToMark();
+        m_input->popMark();
         this->parseStructDeclarationList();
     }
 
@@ -208,19 +231,19 @@ bool LLParser::parseStructDeclarationList(){
 bool c4::service::parser::LLParser::parsePointer()
 {
     //Consume asterisk
-    // m_input.read(&token);
+    // m_input->read(&token);
     // token->accept(visitor);
     // if(visitor.getKind()!=TokenKind::punctuator) return 1;
     // if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Asterisk) return 1;
     if(this->consume(TokenKind::punctuator,{.p=Punctuator::Asterisk})) return 1;
     //Check if we should parse another pointer;
-    // m_input.pushMark();
-    // m_input.read(&token);
+    // m_input->pushMark();
+    // m_input->read(&token);
     // token->accept(visitor);
     // if(visitor.getKind()!=TokenKind::punctuator) return 0;
     // if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Asterisk) return 0;
-    // m_input.resetToMark();
-    // m_input.popMark();
+    // m_input->resetToMark();
+    // m_input->popMark();
     if(!checkLookAhead(TokenKind::punctuator,{.p=Punctuator::Asterisk})) return 0;
     return this->parsePointer();
 }
@@ -229,20 +252,22 @@ bool c4::service::parser::LLParser::parseDeclarator()
 {
     //std::shared_ptr<const Token> token;
     //ParserVisitor visitor;
-    // m_input.pushMark();
-    // m_input.read(&token);
+    // m_input->pushMark();
+    // m_input->read(&token);
     // token->accept(visitor);
     // if(visitor.getKind()==TokenKind::punctuator)
     // {
     //     if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator==Punctuator::Asterisk) 
-    //     m_input.resetToMark();
-    //     m_input.popMark();
+    //     m_input->resetToMark();
+    //     m_input->popMark();
     //     this->parsePointer();
     // }
+    std::cout<< "parseDeclarator()\n";
     if(checkLookAhead(TokenKind::punctuator,{.p=Punctuator::Asterisk})) 
     {
         if(parsePointer()) return 1;
     }
+    //std::cout<< "Direct declarator\n";
     return parseDirectDeclarator();
 }
 
@@ -250,37 +275,43 @@ bool c4::service::parser::LLParser::parseDirectDeclarator()
 {
     //std::shared_ptr<const Token> token;
     //ParserVisitor visitor;
-    m_input.pushMark();
-    m_input.read(&token);
+    m_input->pushMark();
+    m_input->read(&token);
     token->accept(visitor);
+    //std::cout <<"inside DirectDeclarator\n";
     switch(visitor.getKind()){
         case TokenKind::identifier:
-        m_input.popMark();
-        return 0;
+        m_input->popMark();
+        //std::cout <<"inside DirectDeclarator\n";
+        if(!checkLookAhead(TokenKind::punctuator,{.p=Punctuator::LeftParenthesis})||checkLookAhead(TokenKind::punctuator,{.p=Punctuator::LeftBrace})){
+            return 0;
+        }
+        break;
         case TokenKind::punctuator:
         if(visitor.getSepcificValue().p!=Punctuator::LeftParenthesis) return 1;
-        m_input.popMark();
+        m_input->popMark();
         if(this->parseDeclarator()) return 1;
         if(consume(TokenKind::punctuator,{.p=Punctuator::RightParenthesis})) return 1;
         return 0;
         default:
-        m_input.resetToMark();
-        m_input.popMark();
+        m_input->resetToMark();
+        m_input->popMark();
         if(this->parseDirectDeclarator()) return 1;
         break;
     }
     // Now we need to decide which productions we will use
-    m_input.read(&token);
+    //std::cout <<"Parsed main\n";
+    m_input->read(&token);
     token->accept(visitor);
     if(visitor.getKind()!=TokenKind::punctuator) return 1;
     switch(visitor.getSepcificValue().p){
         case Punctuator::LeftParenthesis:
         // we encounterd ither parameter type list or identyfier type list
-        //m_input.pushMark();
-        //m_input.read(&token);
+        //m_input->pushMark();
+        //m_input->read(&token);
         //token->accept(visitor);
-        //m_input.resetToMark();
-        //m_input.popMark();
+        //m_input->resetToMark();
+        //m_input->popMark();
         if(!checkLookAhead(TokenKind::punctuator,{.p=Punctuator::RightBrace})){
             if(checkLookAhead(TokenKind::identifier))
             {            
@@ -294,7 +325,7 @@ bool c4::service::parser::LLParser::parseDirectDeclarator()
         if(this->consume(TokenKind::punctuator,{.p=Punctuator::RightBrace})) return 1;
         return 0;
         case Punctuator::LeftBracket:
-            m_input.read(&token);
+            m_input->read(&token);
             token->accept(visitor);
             switch(visitor.getKind()){
                 case TokenKind::keyword:
@@ -376,10 +407,10 @@ bool c4::service::parser::LLParser::parseIterationStatement()
 // DONE
 bool c4::service::parser::LLParser::parseJumpStatement()
 {
-    m_input.read(&token);
+    m_input->read(&token);
     token->accept(visitor);
     if(visitor.getKind()!=TokenKind::keyword) return 1;
-    switch(std::dynamic_pointer_cast<const KeywordToken>(token)->keyword){
+    switch(visitor.getSepcificValue().k){
         case Keyword::Goto:
             if(consume(TokenKind::identifier)) return 1;
         case Keyword::Continue:
