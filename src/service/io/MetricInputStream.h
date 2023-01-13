@@ -98,7 +98,7 @@ namespace c4 {
                  *                  end-of-stream, the value pointed to by the
                  *                  specified pointer is implementation-specific.
                  *
-                 * @param column    A pointer to some memory where the line of
+                 * @param line    A pointer to some memory where the line of
                  *                  the read character will be stored.
                  *                  If the read is unsuccessful, i.e. the
                  *                  method returns false, the value stored at

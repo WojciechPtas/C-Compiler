@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
     //    to 4 KiB, which is equivalent to a whole memory page on an x86
     //    system.
 
-    // setvbuf(stdout, nullptr, _IOFBF, 4096);
+    setvbuf(stdout, nullptr, _IOFBF, 4096);
 
     
     while(lexer.read(&token) && !token->isError()) {
