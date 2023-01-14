@@ -41,5 +41,6 @@ namespace c4::service::parser{
             bool parseJumpStatement();
             bool parseStatement();
             bool parseLabeledStatement();
+            bool visit();
     };
 }
