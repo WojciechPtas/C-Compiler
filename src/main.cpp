@@ -26,19 +26,32 @@ enum RetCode {
     OK=0, ERR=1
 };
 
+enum Action{
+    TOKENIZE,
+    PARSE,
+    PRETTYPRINT,
+    COMPILE
+};
+
 int main(int argc, char* argv[]) {
-    cout << "dupa\n";
+    ///cout << "dupa\n";
     RetCode retval=OK;
     string input="input.txt";
-
+    Action action;
     for(int i=0; i<argc;i++){
         string in=argv[i];
         if(in == "--tokenize" && i<argc-1){
             input = argv[i+1];
+            action=Action::TOKENIZE;
         }
         else if(in =="--parse" && i < argc-1){
             input= argv[i+1];
+            action=Action::PARSE;
             //return 0;
+        }
+        else if(in =="--compile" && i < argc-1){
+            input =argv[i+1];
+            action=Action::COMPILE;
         }
     }
     //cout<<input<<endl;
@@ -46,34 +59,36 @@ int main(int argc, char* argv[]) {
     std::string word;
 
     auto fileSrc = make_shared<FileInputStream>(input);
-    cout << "File stream\n";
+    //cout << "File stream\n";
 
     auto bufferedSrc = make_shared<MosaicInputStream<char>>(fileSrc, 1024);
-    cout << "mosaic stream\n";
+    //cout << "mosaic stream\n";
 
     auto metricSrc = make_shared<MetricInputStream>(bufferedSrc, input);
-    cout << "metric\n";
+    //cout << "metric\n";
 
     auto keywordAutomata = make_shared<NodeAutomaton<char, Keyword>>(KEYWORD_TREE);
     auto punctuatorAutomata = make_shared<NodeAutomaton<char, Punctuator>>(PUNCTUATOR_TREE);
-    cout << "automaton\n";
+    //cout << "automaton\n";
 
     auto lexer =make_shared<LexingInputStream>(metricSrc, keywordAutomata, punctuatorAutomata);
-    cout << "lexer\n";
+    //cout << "lexer\n";
 
     shared_ptr<Token> token;
     
     PrintVisitor pt(cout);
     PrintVisitor pe(cerr);
-
+    if(action==Action::PARSE){
     auto mosaic = make_shared<MosaicInputStream<shared_ptr<Token>>>(lexer,1024);
-    cout << "mosaic\n";
+    //cout << "mosaic\n";
     
     LLParser parser(mosaic);
-    cout << "parser\n";
+    //cout << "parser\n";
 
     auto a =parser.parse();
     cout<< "PARSED!\n";
+    return a;
+    }
     // We adjust the buffering behavior of the standard output stream to
     // increase the efficiency of writing to stdout:
     //
@@ -82,19 +97,19 @@ int main(int argc, char* argv[]) {
     //  - We switch from line buffering to full buffering and we set the size
     //    to 4 KiB, which is equivalent to a whole memory page on an x86
     //    system.
-
-    //setvbuf(stdout, nullptr, _IOFBF, 4096);
+    else if(action==Action::PARSE){
+    setvbuf(stdout, nullptr, _IOFBF, 4096);
 //
-    //while(lexer->read(&token) && !token->isError()) {
-    //    token->accept(pt);
-    //}
+    while(lexer->read(&token) && !token->isError()) {
+        token->accept(pt);
+    }
 //
-    //setvbuf(stdout, nullptr, _IOLBF, 4096);
+    setvbuf(stdout, nullptr, _IOLBF, 4096);
 //
-    //if(token->isError()){
-    //    token->accept(pe);
-    //    retval = ERR;
-    //}
-
-    return a;
+    if(token->isError()){
+        token->accept(pe);
+        retval = ERR;
+    }
+    }
+    return retval;
 }
