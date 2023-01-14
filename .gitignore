@@ -3,7 +3,7 @@ build_test/
 llvm/
 .vscode/
 src/.vscode
-
+llvm/
 # Created by https://www.gitignore.io/api/c,c++
 
 ### C ###

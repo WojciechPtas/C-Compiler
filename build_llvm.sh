@@ -60,8 +60,8 @@ cmake ../llvm/llvm \
 #       backend code for the X86 backend. As backends tend to be huge, this
 #       improves build times and memory as well as disk space consumption.
 
-make install
+#make install
 
 # You can replace the above command with the following one to use more threads
 # for building LLVM (this might increase the memory consumption significantly).
-# make -j2 install
+ make -j2 install
