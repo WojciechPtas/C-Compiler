@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <vector>
-
+#include "../parser/ExpressionParser.h"
 #include "../../model/token/ConstantToken.h"
 #include "../../model/token/ErrorToken.h"
 #include "../../model/token/IdentifierToken.h"
@@ -14,11 +14,12 @@ namespace c4::service::parser{
     
     class LLParser{
         private:
-            const std::shared_ptr<io::IBufferedInputStream<std::shared_ptr<model::token::Token>>> m_input;
+            std::shared_ptr<io::IBufferedInputStream<std::shared_ptr<model::token::Token>>> m_input;
             util::token::ParserVisitor visitor;
             std::shared_ptr<model::token::Token> token;
+            std::shared_ptr<ExpressionParser> expression_parser;
         public:
-            LLParser(const std::shared_ptr<io::IBufferedInputStream<std::shared_ptr<model::token::Token>>>& input) : m_input(input){
+            LLParser(std::shared_ptr<io::IBufferedInputStream<std::shared_ptr<model::token::Token>>> input, std::shared_ptr<ExpressionParser> expression_parser) : m_input(input), expression_parser(expression_parser){
                 visitor=c4::util::token::ParserVisitor();
                 token=nullptr;
                 };

@@ -1,5 +1,5 @@
 #include <stdexcept>
-
+#include <iostream>
 #include "../../debug.h"
 #include "ExpressionParser.h"
 
@@ -15,12 +15,12 @@ ExpressionParser::ExpressionParser(weak_ptr<const State> initialState) {
 }
 
 shared_ptr<const IExpression> ExpressionParser::parse(
-    IInputStream<shared_ptr<const Token>> &input
+    IInputStream<shared_ptr<Token>> &input
 ) {
-    shared_ptr<const Token> token;
+    shared_ptr<Token> token;
     bool accepting, eofReached, readNext = true;
     size_t stateCount = 0, newStateCount = this->states.size();
-
+    ////std::cout<<"Parsing\n";
     do {
         auto isGoto = stateCount > newStateCount;
         stateCount = newStateCount;
@@ -28,11 +28,13 @@ shared_ptr<const IExpression> ExpressionParser::parse(
         if (readNext) {
             eofReached = !input.read(&token);
         }
+        //std::cout<<"Parsing\n";
 
         if (this->states.empty()) {
             throw logic_error("No state left!");
         }
-
+        //std::cout<<"Parsing\n" <<this->states.size();
+        //std::cout<<"Parsing\n";
         auto currentState = this->states.back().lock();
 
         DBGOUT_E(
@@ -40,6 +42,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
             "Parser in state: '%s'",
             currentState->name.c_str()
         );
+        //std::cout<<"Parsing\n";
 
         if (isGoto) {
             if (this->expressions.empty()) {

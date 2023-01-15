@@ -23,7 +23,7 @@ namespace c4 {
                 ~ExpressionParser() { }
 
                 std::shared_ptr<const model::expression::IExpression> parse(
-                    io::IInputStream<std::shared_ptr<const model::token::Token>> &input
+                    io::IInputStream<std::shared_ptr<model::token::Token>> &input
                 );
 
             private:

@@ -501,12 +501,12 @@ bool c4::service::parser::LLParser::parseStatement()
 {
     std::cout<<"parseStatement()\n";
     visit();
-    if(visitor.getKind()==(TokenKind::identifier)){
+    /*if(visitor.getKind()==(TokenKind::identifier)){
         std::cout<<"dupa1!\n";
 
         return (parseLabeledStatement()) ? 1: 0;
     }
-    else if(checkLookAhead(TokenKind::punctuator,{.p=Punctuator::LeftBrace})){
+    else */if(checkLookAhead(TokenKind::punctuator,{.p=Punctuator::LeftBrace})){
         std::cout<<"dupa2\n";
 
         return (parseCompoundStatement()) ? 1: 0;
@@ -525,9 +525,9 @@ bool c4::service::parser::LLParser::parseStatement()
             break;
         }
     }
-        std::cout<<"dupa!\n";
+    std::cout<<"dupa!\n";
 
-    // TODO PARSE EXPRESSION STMT
+    expression_parser->parse(*m_input);
     return 0;
 }
 
