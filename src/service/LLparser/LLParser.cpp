@@ -1,8 +1,10 @@
 #include "LLParser.h"
+#include "../../util/expression/PrintVisitor.h"
 #include <iostream>
 using namespace c4::util::token;
 using namespace c4::service::parser;
 using namespace c4::model::token;
+using namespace c4::util::expression;
 // DONE!
 bool LLParser::checkLookAhead(TokenKind k, SpecifiedToken s)
 {
@@ -526,8 +528,11 @@ bool c4::service::parser::LLParser::parseStatement()
         }
     }
     std::cout<<"dupa!\n";
-
-    expression_parser->parse(*m_input);
+    auto a = PrintVisitor(std::cout);
+    try{
+        expression_parser->parse(*m_input)->accept(a);
+    }
+    catch (std::logic_error){};
     return 0;
 }
 
