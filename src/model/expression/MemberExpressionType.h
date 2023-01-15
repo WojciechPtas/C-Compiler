@@ -14,7 +14,7 @@ namespace c4 {
                 MemberExpressionType l,
                 MemberExpressionType r
             ) {
-                return MemberExpressionType(
+                return MemberExpressionType( //Is it a type cast to unsigned char?
                     std::underlying_type<MemberExpressionType>::type(l) &
                     std::underlying_type<MemberExpressionType>::type(r)
                 );

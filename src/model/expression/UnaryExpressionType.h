@@ -13,7 +13,7 @@ namespace c4 {
                 Sizeof          = 0x10
             };
 
-            inline UnaryExpressionType operator& (
+            inline UnaryExpressionType operator& ( //Is it a type cast to unsigned char?
                 UnaryExpressionType l,
                 UnaryExpressionType r
             ) {
@@ -27,7 +27,7 @@ namespace c4 {
                 UnaryExpressionType l,
                 UnaryExpressionType r
             ) {
-                return UnaryExpressionType(
+                return UnaryExpressionType( //Is it a type cast to unsigned char?
                     std::underlying_type<UnaryExpressionType>::type(l) |
                     std::underlying_type<UnaryExpressionType>::type(r)
                 );
