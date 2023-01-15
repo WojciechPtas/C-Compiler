@@ -18,7 +18,7 @@ Q ?= @
 
 BINDIR := $(BUILDDIR)/$(CFG)
 BIN    := $(BINDIR)/$(NAME)
-SRC    := $(sort $(wildcard $(SRCDIR)/*.cpp $(SRCDIR)/**/**/*.cpp $(SRCDIR)/**/*.cpp))
+SRC    := $(sort $(wildcard $(SRCDIR)/*.cpp $(SRCDIR)/**/**/**/**/*.cpp $(SRCDIR)/**/**/**/*.cpp $(SRCDIR)/**/**/*.cpp $(SRCDIR)/**/*.cpp))
 OBJ    := $(SRC:$(SRCDIR)/%.cpp=$(BINDIR)/%.o)
 DEP    := $(OBJ:%.o=%.d)
 

@@ -9,6 +9,12 @@ using namespace c4::util::node;
 using namespace c4::util::token;
 using namespace std;
 
+static inline void _decomposeOne(
+    set<Keyword> &dst,
+    Keyword compoundKeyword,
+    Keyword testedKeyword
+);
+
 const shared_ptr<const Node<char, Keyword>> c4::util::token::KEYWORD_TREE =
     buildTree(
         {
@@ -59,6 +65,57 @@ const shared_ptr<const Node<char, Keyword>> c4::util::token::KEYWORD_TREE =
         }
     );
 
+unique_ptr<set<Keyword>> c4::util::token::decompose(Keyword k) {
+    auto r = make_unique<set<Keyword>>();
+
+    _decomposeOne(*r, k, Keyword::Auto);
+    _decomposeOne(*r, k, Keyword::Break);
+    _decomposeOne(*r, k, Keyword::Case);
+    _decomposeOne(*r, k, Keyword::Char);
+    _decomposeOne(*r, k, Keyword::Const);
+    _decomposeOne(*r, k, Keyword::Continue);
+    _decomposeOne(*r, k, Keyword::Default);
+    _decomposeOne(*r, k, Keyword::Do);
+    _decomposeOne(*r, k, Keyword::Double);
+    _decomposeOne(*r, k, Keyword::Else);
+    _decomposeOne(*r, k, Keyword::Enum);
+    _decomposeOne(*r, k, Keyword::Extern);
+    _decomposeOne(*r, k, Keyword::Float);
+    _decomposeOne(*r, k, Keyword::For);
+    _decomposeOne(*r, k, Keyword::Goto);
+    _decomposeOne(*r, k, Keyword::If);
+    _decomposeOne(*r, k, Keyword::Inline);
+    _decomposeOne(*r, k, Keyword::Int);
+    _decomposeOne(*r, k, Keyword::Long);
+    _decomposeOne(*r, k, Keyword::Register);
+    _decomposeOne(*r, k, Keyword::Restrict);
+    _decomposeOne(*r, k, Keyword::Return);
+    _decomposeOne(*r, k, Keyword::Short);
+    _decomposeOne(*r, k, Keyword::Signed);
+    _decomposeOne(*r, k, Keyword::Sizeof);
+    _decomposeOne(*r, k, Keyword::Static);
+    _decomposeOne(*r, k, Keyword::Struct);
+    _decomposeOne(*r, k, Keyword::Switch);
+    _decomposeOne(*r, k, Keyword::Typedef);
+    _decomposeOne(*r, k, Keyword::Union);
+    _decomposeOne(*r, k, Keyword::Unsigned);
+    _decomposeOne(*r, k, Keyword::Void);
+    _decomposeOne(*r, k, Keyword::Volatile);
+    _decomposeOne(*r, k, Keyword::While);
+    _decomposeOne(*r, k, Keyword::__Alignas);
+    _decomposeOne(*r, k, Keyword::__Alignof);
+    _decomposeOne(*r, k, Keyword::__Atomic);
+    _decomposeOne(*r, k, Keyword::__Bool);
+    _decomposeOne(*r, k, Keyword::__Complex);
+    _decomposeOne(*r, k, Keyword::__Generic);
+    _decomposeOne(*r, k, Keyword::__Imaginary);
+    _decomposeOne(*r, k, Keyword::__Noreturn);
+    _decomposeOne(*r, k, Keyword::__Static_assert);
+    _decomposeOne(*r, k, Keyword::__Thread_local);
+
+    return r;
+}
+
 const string &c4::util::token::stringify(Keyword keyword) {
     switch (keyword) {
         case Keyword::Auto:             return AUTO;
@@ -107,5 +164,15 @@ const string &c4::util::token::stringify(Keyword keyword) {
         case Keyword::__Thread_local:   return __THREAD_LOCAL;
         default:
             throw std::invalid_argument("keyword");
+    }
+}
+
+static inline void _decomposeOne(
+    set<Keyword> &dst,
+    Keyword compoundKeyword,
+    Keyword testedKeyword
+) {
+    if ((compoundKeyword & testedKeyword) == testedKeyword) {
+        dst.insert(testedKeyword);
     }
 }

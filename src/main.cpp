@@ -1,6 +1,6 @@
 #include <cstdio>
 #include <iostream>
-
+#include <memory>
 #include "model/token/Token.h"
 #include "model/token/ErrorToken.h"
 #include "service/automata/NodeAutomaton.h"
@@ -12,11 +12,16 @@
 #include "util/token/KeywordUtilities.h"
 #include "util/token/PrintVisitor.h"
 #include "util/token/PunctuatorUtilities.h"
+#include "service/parser/ExpressionParser.h"
+#include "util/parser/lr/StateUtilities.h"
 
+using namespace c4::model;
+using namespace c4::model::parser::lr;
 using namespace c4::model::token;
-using namespace c4::service::automata;
 using namespace c4::service::io;
-using namespace c4::util::token;
+using namespace c4::service::parser;
+using namespace c4::util::expression;
+using namespace c4::util::parser::lr;
 using namespace std;
 
 enum RetCode {
@@ -36,6 +41,7 @@ int main(int argc, char* argv[]) {
             return 0;
         }
     }
+    //cout<<input<<endl;
     std::string word;
 
     auto fileSrc = make_shared<FileInputStream>(input);
@@ -74,4 +80,12 @@ int main(int argc, char* argv[]) {
     }
 
     return retval;
+
+    /*
+      auto ptr = make_shared<const State>(INITIAL_STATE); 
+    
+    ExpressionParser parser(ptr);
+    PrintVisitor visitor(cout);
+    parser.parse(input)->accept(visitor);
+    */
 }

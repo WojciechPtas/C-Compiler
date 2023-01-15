@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <set>
 #include <string>
 
 #include "../../model/node/Node.h"
@@ -55,6 +56,10 @@ namespace c4 {
             const std::string __THREAD_LOCAL    = "_Thread_local";
 
             extern const std::shared_ptr<const model::node::Node<char, model::token::Keyword>> KEYWORD_TREE;
+
+            std::unique_ptr<std::set<model::token::Keyword>> decompose(
+                model::token::Keyword keyword
+            );
 
             const std::string &stringify(model::token::Keyword keyword);
         }

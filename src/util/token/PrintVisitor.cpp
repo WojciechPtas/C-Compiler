@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include "../../model/token/ConstantToken.h"
 #include "../../model/token/ErrorToken.h"
 #include "../../model/token/IdentifierToken.h"
