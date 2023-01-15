@@ -1,6 +1,6 @@
 int main(){
 	int x;
-	x=x+23*asd;
+	x=x+23*asd+int*2;
 	int a;
 	return;
 
