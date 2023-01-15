@@ -44,12 +44,11 @@ enum Action{
     COMPILE
 };
 
-string input="input.txt";
 
-bool tokenize() {
+bool tokenize(std::string input) {
     ///cout << "dupa\n";
     RetCode retval=OK;
-    string input="input.txt";
+    
 
     auto fileSrc = make_shared<FileInputStream>(input);
     //cout << "File stream\n";
@@ -95,10 +94,10 @@ bool tokenize() {
     return retval;
 }
 
-bool parse() {
+bool parse(std::string input) {
         ///cout << "dupa\n";
-    RetCode retval=OK;
-    string input="input.txt";
+    //RetCode retval=OK;
+    //string input="input.txt";
 
     auto fileSrc = make_shared<FileInputStream>(input);
     //cout << "File stream\n";
@@ -134,15 +133,16 @@ bool parse() {
 }
 
 int main(int argc, char* argv[]) {
+    string input="input.txt";
     for(int i=0; i<argc;i++){
         string in=argv[i];
         if(in == "--tokenize" && i<argc-1){
             input = argv[i+1];
-            return tokenize();
+            return tokenize(input);
         }
         else if(in =="--parse" && i < argc-1){
             input= argv[i+1];
-            return parse();
+            return parse(input);
         }
     }
     //cout<<input<<endl;
