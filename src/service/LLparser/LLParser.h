@@ -33,7 +33,10 @@ namespace c4::service::parser{
             bool parsePointer();
             bool parseDeclarator();
             bool parseDirectDeclarator();
+            bool parseDirectDeclarator2();
             bool parseParameterTypeList();
+            bool parseParameterDeclaration();
+            bool parseDeclarationSpecifier();
             bool parseIdentifierList();
             bool parseCompoundStatement();
             bool parseSelectionStatement();
