@@ -86,9 +86,10 @@ int main(int argc, char* argv[]) {
     //cout << "parser\n";
 
     auto a =parser.parse();
-    cout<< "PARSED!\n";
+    cout<< "Returned with:!" << a << "\n";
     return a;
     }
+    
     // We adjust the buffering behavior of the standard output stream to
     // increase the efficiency of writing to stdout:
     //
@@ -97,7 +98,8 @@ int main(int argc, char* argv[]) {
     //  - We switch from line buffering to full buffering and we set the size
     //    to 4 KiB, which is equivalent to a whole memory page on an x86
     //    system.
-    else if(action==Action::PARSE){
+    else if(action==Action::TOKENIZE){
+    std::cout<<"Lexer\n";
     setvbuf(stdout, nullptr, _IOFBF, 4096);
 //
     while(lexer->read(&token) && !token->isError()) {

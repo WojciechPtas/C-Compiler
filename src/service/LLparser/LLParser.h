@@ -35,7 +35,7 @@ namespace c4::service::parser{
             bool parseDirectDeclarator();
             bool parseParameterTypeList();
             bool parseIdentifierList();
-            bool parseCompundStatement();
+            bool parseCompoundStatement();
             bool parseSelectionStatement();
             bool parseIterationStatement();
             bool parseJumpStatement();
