@@ -1,24 +1,33 @@
 #include <cstdio>
 #include <iostream>
-
+#include <memory>
 #include "model/token/Token.h"
-#include "model/token/ErrorToken.h"
+#include "util/token/PrintVisitor.h"
+// #include "model/token/ErrorToken.h"
 #include "service/automata/NodeAutomaton.h"
+
 #include "service/io/FileInputStream.h"
 #include "service/io/LexingInputStream.h"
 #include "service/io/MetricInputStream.h"
 #include "service/io/MosaicInputStream.h"
+
 #include "util/node/NodeUtilities.h"
 #include "util/token/KeywordUtilities.h"
-#include "util/token/PrintVisitor.h"
 #include "util/token/PunctuatorUtilities.h"
+#include "service/parser/ExpressionParser.h"
+#include "util/parser/lr/StateUtilities.h"
 
+using namespace c4::model;
+using namespace c4::model::parser::lr;
 #include "service/LLparser/LLParser.h"
 
 using namespace c4::service::parser;
 using namespace c4::model::token;
-using namespace c4::service::automata;
 using namespace c4::service::io;
+using namespace c4::service::automata;
+using namespace c4::service::parser;
+// using namespace c4::util::expression;
+using namespace c4::util::parser::lr;
 using namespace c4::util::token;
 using namespace std;
 
@@ -33,29 +42,23 @@ enum Action{
     COMPILE
 };
 
-int main(int argc, char* argv[]) {
+string input="input.txt";
+
+bool tokenize() {
     ///cout << "dupa\n";
     RetCode retval=OK;
     string input="input.txt";
-    Action action;
     for(int i=0; i<argc;i++){
         string in=argv[i];
         if(in == "--tokenize" && i<argc-1){
             input = argv[i+1];
-            action=Action::TOKENIZE;
         }
         else if(in =="--parse" && i < argc-1){
             input= argv[i+1];
-            action=Action::PARSE;
-            //return 0;
-        }
-        else if(in =="--compile" && i < argc-1){
-            input =argv[i+1];
-            action=Action::COMPILE;
+            return 0;
         }
     }
     //cout<<input<<endl;
-
     std::string word;
 
     auto fileSrc = make_shared<FileInputStream>(input);
@@ -101,17 +104,44 @@ int main(int argc, char* argv[]) {
     else if(action==Action::TOKENIZE){
     std::cout<<"Lexer\n";
     setvbuf(stdout, nullptr, _IOFBF, 4096);
-//
-    while(lexer->read(&token) && !token->isError()) {
+
+    
+    while(lexer.read(&token) && !token->isError()) {
         token->accept(pt);
     }
-//
-    setvbuf(stdout, nullptr, _IOLBF, 4096);
-//
-    if(token->isError()){
+
+    if(token != nullptr && token->isError()) {
         token->accept(pe);
         retval = ERR;
     }
     }
     return retval;
+}
+
+bool parse() {
+    return 1;
+}
+
+int main(int argc, char* argv[]) {
+    for(int i=0; i<argc;i++){
+        string in=argv[i];
+        if(in == "--tokenize" && i<argc-1){
+            input = argv[i+1];
+            return tokenize();
+        }
+        else if(in =="--parse" && i < argc-1){
+            input= argv[i+1];
+            return parse();
+        }
+    }
+    //cout<<input<<endl;
+    
+
+    /*
+      auto ptr = make_shared<const State>(INITIAL_STATE); 
+    
+    ExpressionParser parser(ptr);
+    PrintVisitor visitor(cout);
+    parser.parse(input)->accept(visitor);
+    */
 }

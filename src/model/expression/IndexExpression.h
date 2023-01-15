@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "IExpression.h"
 
 namespace c4 {
@@ -7,19 +8,19 @@ namespace c4 {
         namespace expression {
             class IndexExpression : public IExpression {
             public:
+                const std::shared_ptr<const IExpression> container;
+                const std::shared_ptr<const IExpression> index;
+
                 IndexExpression(
-                    const IExpression &container,
-                    const IExpression &index
-                );
+                    std::shared_ptr<const IExpression> container,
+                    std::shared_ptr<const IExpression> index
+                ) : container(container), index(index) { }
 
-                virtual ~IndexExpression() { }
+                ~IndexExpression() { }
 
-                const IExpression &getContainer() const;
-                const IExpression &getIndex() const;
-
-            private:
-                const IExpression container;
-                const IExpression index;
+                void accept(IExpressionVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

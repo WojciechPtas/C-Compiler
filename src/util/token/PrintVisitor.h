@@ -1,7 +1,9 @@
 #pragma once
 
 #include <ostream>
+
 #include "../../model/token/ITokenVisitor.h"
+#include "../../model/token/Token.h"
 
 namespace c4 {
     namespace util {

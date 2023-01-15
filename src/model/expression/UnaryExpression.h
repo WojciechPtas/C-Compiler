@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "IExpression.h"
 #include "UnaryExpressionType.h"
 
@@ -8,19 +10,19 @@ namespace c4 {
         namespace expression {
             class UnaryExpression : public IExpression {
             public:
+                const std::shared_ptr<const IExpression> expression;
+                const UnaryExpressionType type;
+
                 UnaryExpression(
                     UnaryExpressionType type,
-                    const IExpression &expression
-                );
+                    const std::shared_ptr<const IExpression> expression
+                ) : expression(expression), type(type) { }
 
-                virtual ~UnaryExpression() { }
+                ~UnaryExpression() { }
 
-                const IExpression &getExpression() const;
-                const UnaryExpressionType getType() const;
-
-            private:
-                const IExpression expression;
-                const UnaryExpressionType type;
+                void accept(IExpressionVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

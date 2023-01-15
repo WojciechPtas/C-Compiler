@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "IExpression.h"
 #include "IdentifierExpression.h"
 #include "MemberExpressionType.h"
@@ -9,22 +11,21 @@ namespace c4 {
         namespace expression {
             class MemberExpression : public IExpression {
             public:
+                const std::shared_ptr<const IExpression> container;
+                const std::shared_ptr<const IdentifierExpression> member;
+                const MemberExpressionType type;
+
                 MemberExpression(
                     MemberExpressionType type,
-                    const IExpression &container,
-                    const IdentifierExpression &member
-                );
+                    const std::shared_ptr<const IExpression> container,
+                    const std::shared_ptr<const IdentifierExpression> member
+                ) : container(container), member(member), type(type) { }
 
-                virtual ~MemberExpression() { }
+                ~MemberExpression() { }
 
-                const IExpression &getContainer() const;
-                const IdentifierExpression &getMember() const;
-                MemberExpressionType getType() const;
-
-            private:
-                const IExpression container;
-                const IdentifierExpression member;
-                const MemberExpressionType type;
+                void accept(IExpressionVisitor &visitor) const override {
+                    visitor.visit(*this);
+                }
             };
         }
     }

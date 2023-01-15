@@ -9,6 +9,12 @@ using namespace c4::util::node;
 using namespace c4::util::token;
 using namespace std;
 
+static inline void _decomposeOne(
+    set<Punctuator> &dst,
+    Punctuator compoundPunctuator,
+    Punctuator testedPunctuator
+);
+
 const shared_ptr<const Node<char, Punctuator>> c4::util::token::PUNCTUATOR_TREE =
     buildTree(
         {
@@ -68,6 +74,67 @@ const shared_ptr<const Node<char, Punctuator>> c4::util::token::PUNCTUATOR_TREE 
             makeBranch(PERCENT_COLON_PERCENT_COLON, Punctuator::PercentColonPercentColon)
         }
     );
+
+unique_ptr<set<Punctuator>> c4::util::token::decompose(Punctuator p) {
+    auto r = make_unique<set<Punctuator>>();
+
+    _decomposeOne(*r, p, Punctuator::LeftBracket);
+    _decomposeOne(*r, p, Punctuator::RightBracket);
+    _decomposeOne(*r, p, Punctuator::LeftParenthesis);
+    _decomposeOne(*r, p, Punctuator::RightParenthesis);
+    _decomposeOne(*r, p, Punctuator::LeftBrace);
+    _decomposeOne(*r, p, Punctuator::RightBrace);
+    _decomposeOne(*r, p, Punctuator::Dot);
+    _decomposeOne(*r, p, Punctuator::DashGreaterThan);
+    _decomposeOne(*r, p, Punctuator::DoublePlus);
+    _decomposeOne(*r, p, Punctuator::DoubleMinus);
+    _decomposeOne(*r, p, Punctuator::And);
+    _decomposeOne(*r, p, Punctuator::Asterisk);
+    _decomposeOne(*r, p, Punctuator::Plus);
+    _decomposeOne(*r, p, Punctuator::Minus);
+    _decomposeOne(*r, p, Punctuator::Tilde);
+    _decomposeOne(*r, p, Punctuator::ExclamationMark);
+    _decomposeOne(*r, p, Punctuator::Slash);
+    _decomposeOne(*r, p, Punctuator::Percent);
+    _decomposeOne(*r, p, Punctuator::DoubleLessThan);
+    _decomposeOne(*r, p, Punctuator::DoubleGreaterThan);
+    _decomposeOne(*r, p, Punctuator::LessThan);
+    _decomposeOne(*r, p, Punctuator::GreaterThan);
+    _decomposeOne(*r, p, Punctuator::LessThanEqual);
+    _decomposeOne(*r, p, Punctuator::GreaterThanEqual);
+    _decomposeOne(*r, p, Punctuator::DoubleEqual);
+    _decomposeOne(*r, p, Punctuator::ExclamationMarkEqual);
+    _decomposeOne(*r, p, Punctuator::Caret);
+    _decomposeOne(*r, p, Punctuator::Pipe);
+    _decomposeOne(*r, p, Punctuator::DoubleAnd);
+    _decomposeOne(*r, p, Punctuator::DoublePipe);
+    _decomposeOne(*r, p, Punctuator::QuestionMark);
+    _decomposeOne(*r, p, Punctuator::Colon);
+    _decomposeOne(*r, p, Punctuator::Semicolon);
+    _decomposeOne(*r, p, Punctuator::TripleDot);
+    _decomposeOne(*r, p, Punctuator::Equal);
+    _decomposeOne(*r, p, Punctuator::AsteriskEqual);
+    _decomposeOne(*r, p, Punctuator::SlashEqual);
+    _decomposeOne(*r, p, Punctuator::PercentEqual);
+    _decomposeOne(*r, p, Punctuator::PlusEqual);
+    _decomposeOne(*r, p, Punctuator::MinusEqual);
+    _decomposeOne(*r, p, Punctuator::DoubleLessThanEqual);
+    _decomposeOne(*r, p, Punctuator::DoubleGreaterThanEqual);
+    _decomposeOne(*r, p, Punctuator::AndEqual);
+    _decomposeOne(*r, p, Punctuator::CaretEqual);
+    _decomposeOne(*r, p, Punctuator::PipeEqual);
+    _decomposeOne(*r, p, Punctuator::Comma);
+    _decomposeOne(*r, p, Punctuator::Hashtag);
+    _decomposeOne(*r, p, Punctuator::DoubleHashtag);
+    _decomposeOne(*r, p, Punctuator::LessThanColon);
+    _decomposeOne(*r, p, Punctuator::ColonGreaterThan);
+    _decomposeOne(*r, p, Punctuator::LessThanPercent);
+    _decomposeOne(*r, p, Punctuator::PercentGreaterThan);
+    _decomposeOne(*r, p, Punctuator::PercentColon);
+    _decomposeOne(*r, p, Punctuator::PercentColonPercentColon);
+
+    return r;
+}
 
 const string &c4::util::token::stringify(Punctuator punctuator) {
     switch (punctuator) {
@@ -181,5 +248,15 @@ const string &c4::util::token::stringify(Punctuator punctuator) {
             return PERCENT_COLON_PERCENT_COLON;
         default:
             throw std::invalid_argument("punctuator");
+    }
+}
+
+static inline void _decomposeOne(
+    set<Punctuator> &dst,
+    Punctuator compoundPunctuator,
+    Punctuator testedPunctuator
+) {
+    if ((compoundPunctuator & testedPunctuator) == testedPunctuator) {
+        dst.insert(testedPunctuator);
     }
 }
