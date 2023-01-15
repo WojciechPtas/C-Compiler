@@ -17,10 +17,11 @@
 #include "service/parser/ExpressionParser.h"
 #include "util/parser/lr/StateUtilities.h"
 
-using namespace c4::model;
-using namespace c4::model::parser::lr;
+
 #include "service/LLparser/LLParser.h"
 
+using namespace c4::model;
+using namespace c4::model::parser::lr;
 using namespace c4::service::parser;
 using namespace c4::model::token;
 using namespace c4::service::io;
