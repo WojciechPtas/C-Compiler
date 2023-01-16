@@ -8,6 +8,7 @@
 #include "../../model/expression/IndexExpression.h"
 #include "../../model/expression/MemberExpression.h"
 #include "../../model/expression/UnaryExpression.h"
+#include "../../model/expression/CallExpression.h"
 
 #include "BinaryExpressionUtilities.h"
 #include "MemberExpressionUtilities.h"
@@ -31,7 +32,13 @@ void PrintVisitor::visit(const BinaryExpression &expr) {
 }
 
 void PrintVisitor::visit(const CallExpression &expr) {
-    // TODO
+    this->outputStream << "(";
+    for (size_t i=0; i<expr.arguments.size()-1; i++) {
+        expr.arguments[i]->accept(*this);
+        this->outputStream << ", ";
+    }
+    expr.arguments[expr.arguments.size()-1]->accept(*this);
+    this->outputStream << ")";
 }
 
 void PrintVisitor::visit(const ConditionalExpression &expr) {
