@@ -22,7 +22,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
     size_t stateCount = 0, newStateCount = this->states.size();
 
     do {
-        auto isGoto = stateCount > newStateCount;
+        bool isGoto = stateCount > newStateCount; //we reduced last iteration? No confirmation yet.
         stateCount = newStateCount;
 
         if (readNext) {
@@ -30,7 +30,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
         }
 
         if (this->states.empty()) {
-            throw logic_error("No state left!");
+            throw logic_error("No state left!"); //should never happen
         }
 
         auto currentState = this->states.back().lock();
@@ -71,7 +71,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
         }
 
         newStateCount = this->states.size();
-    } while (!eofReached || !accepting);
+    } while (!eofReached || !accepting); //terminates when eofReached && accepting
 
     if (this->expressions.empty()) {
         throw logic_error("No expression available!");
