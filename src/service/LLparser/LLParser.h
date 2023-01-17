@@ -25,8 +25,8 @@ namespace c4::service::parser{
                 };
             bool parse(/* io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input*/);
         private:
-            bool consume(util::token::TokenKind k, util::token::SpecifiedToken s, bool inlookahead=false);
-            bool checkLookAhead(util::token::TokenKind k, util::token::SpecifiedToken s={.empty=true});
+            bool consume(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken(), bool inlookahead=false);
+            bool checkLookAhead(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken());
             bool parseDeclaration();
             bool parseStaticAssertDeclaration();
             bool parseStructorUnionSpecifier();

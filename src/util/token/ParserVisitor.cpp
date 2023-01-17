@@ -43,13 +43,13 @@ void ParserVisitor::visit(const KeywordToken &token) {
     
     std::cout<< "KeywordToken!\n";
     this->kind = TokenKind::keyword;
-    this->specifed.k = token.keyword;
+    this->specifed = SpecifiedToken( token.keyword);
 }
 
 void ParserVisitor::visit(const PunctuatorToken &token) {
     auto a =token;
     this->kind= TokenKind::punctuator;
-    this->specifed.p = token.punctuator;
+    this->specifed = SpecifiedToken(token.punctuator);
     std::cout<< "PunctuatorToken\n";
 
 }
