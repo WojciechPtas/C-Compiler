@@ -532,7 +532,7 @@ bool c4::service::parser::LLParser::parseStatement()
     try{
         expression_parser->parse(*m_input)->accept(a);
     }
-    catch (std::logic_error){};
+    catch (std::logic_error&){};
     return 0;
 }
 

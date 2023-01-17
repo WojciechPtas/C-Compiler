@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 #include "IExpression.h"
 
 namespace c4 {
@@ -8,10 +9,10 @@ namespace c4 {
         namespace expression {
             class CallExpression : public IExpression {
             public:
-                const std::vector<IExpression> arguments;
+                const std::vector<std::shared_ptr<IExpression>> arguments;
 
                 CallExpression(
-                    const std::vector<IExpression> &arguments
+                    const std::vector<std::shared_ptr<IExpression>> &arguments
                 ) : arguments(arguments) { }
                 
                 ~CallExpression() { }
