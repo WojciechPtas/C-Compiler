@@ -1,10 +1,14 @@
 #include "LLParser.h"
 #include "../../util/expression/PrintVisitor.h"
+#include "../../util/parser/lr/StateUtilities.h"
 #include <iostream>
+using namespace c4::service::io;
 using namespace c4::util::token;
 using namespace c4::service::parser;
 using namespace c4::model::token;
+using namespace c4::util::parser::lr;
 using namespace c4::util::expression;
+using namespace c4::model::parser::lr;
 // DONE!
 bool LLParser::checkLookAhead(TokenKind k, SpecifiedToken s)
 {
@@ -437,7 +441,7 @@ bool c4::service::parser::LLParser::parseCompoundStatement() // {dasdasd}
         else{
             std::cout<<"parsing statement\n";
             if(parseStatement()) return 1;
-            
+            //exit(1);
         }
     }
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return 1;
@@ -447,9 +451,14 @@ bool c4::service::parser::LLParser::parseCompoundStatement() // {dasdasd}
 // TODO PARSE EXPRESSION
 bool c4::service::parser::LLParser::parseSelectionStatement()
 {
+    std::cout << "parseSelectionStatement()\n";
     if(consume(TokenKind::keyword,SpecifiedToken(Keyword::If))) return 1;
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 1;
-    // PARSE EXPRESSION
+    ParenthesisDelimiterStream stream(m_input);
+    //auto a = PrintVisitor(std::cout);
+    auto a=std::make_shared<State>(INITIAL_STATE);
+    auto lrparser = std::make_shared<ExpressionParser>(a);
+    lrparser->parse(stream);//->accept(a);
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
     if(parseStatement()) return 1;
     if(!checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Else)))return 0;
@@ -503,12 +512,20 @@ bool c4::service::parser::LLParser::parseStatement()
 {
     std::cout<<"parseStatement()\n";
     visit();
-    /*if(visitor.getKind()==(TokenKind::identifier)){
+    if(visitor.getKind()==(TokenKind::identifier)){
         std::cout<<"dupa1!\n";
-
-        return (parseLabeledStatement()) ? 1: 0;
+        m_input->pushMark();
+        m_input->read(&token);
+        visit();
+        m_input->resetAndPopMark(); // LL2
+        if(visitor.getKind()==TokenKind::punctuator){
+            if(visitor.getSepcificValue().p==Punctuator::Colon){
+                std::cout << "dupa2\n";
+                return (parseLabeledStatement()) ? 1: 0;
+            }
+        }
     }
-    else */if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))){
+    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))){
         std::cout<<"dupa2\n";
 
         return (parseCompoundStatement()) ? 1: 0;
@@ -527,13 +544,14 @@ bool c4::service::parser::LLParser::parseStatement()
             break;
         }
     }
-    std::cout<<"dupa!\n";
-    auto a = PrintVisitor(std::cout);
-    try{
-        expression_parser->parse(*m_input)->accept(a);
-    }
-    catch (std::logic_error&){};
-    return 0;
+    DelimiterStream stream(m_input,TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
+    //auto a = PrintVisitor(std::cout);
+    auto a=std::make_shared<State>(INITIAL_STATE);
+    auto lrparser = std::make_shared<ExpressionParser>(a);
+    lrparser->parse(stream);//->accept(a);
+    //}
+    //catch (std::logic_error&){};
+    return consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
 }
 
 bool c4::service::parser::LLParser::parseLabeledStatement()

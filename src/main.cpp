@@ -10,6 +10,7 @@
 #include "service/io/LexingInputStream.h"
 #include "service/io/MetricInputStream.h"
 #include "service/io/MosaicInputStream.h"
+#include "service/io/DelimiterInputStream.h"
 
 #include "util/node/NodeUtilities.h"
 #include "util/token/KeywordUtilities.h"
@@ -122,9 +123,10 @@ bool parse(std::string input) {
 
     auto mosaic = make_shared<MosaicInputStream<shared_ptr<Token>>>(lexer,1024);
     //cout << "mosaic\n";
+    auto st = make_shared<DelimiterStream>(mosaic, TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
     auto a=make_shared<State>(INITIAL_STATE);
     auto lrparser = make_shared<ExpressionParser>(a);
-    LLParser parser(mosaic, lrparser);
+    LLParser parser(mosaic);
     //cout << "parser\n";
 
     auto re =parser.parse();

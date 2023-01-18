@@ -346,7 +346,7 @@ namespace c4 {
                     return true;
                 }
 
-            private:
+            protected:
                 const std::size_t fragmentCapacity;
                 const std::shared_ptr<IInputStream<TElement>> source;
 

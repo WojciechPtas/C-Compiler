@@ -1,7 +1,9 @@
 int main(){
 	int x;
-	x=x+23*asd+int*2;
-	int a;
+	if(1+2){
+	}
+	else{
+	int z;
+	}
 	return;
-
 }
