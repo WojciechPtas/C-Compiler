@@ -15,7 +15,7 @@ namespace c4 {
                         std::shared_ptr<IStatement> thenStatement,
                         std::shared_ptr<IStatement> elseStatement=nullptr
                     ) : ifExpr(ifExpr), thenStatement(thenStatement), elseStatement(elseStatement) {};
-                    std::shared_ptr<IExpression> getIfExpression(){return ifExpr;}
+                    std::shared_ptr<c4::model::expression::IExpression> getIfExpression(){return ifExpr;}
                     std::shared_ptr<IStatement> getThenStatement(){return thenStatement;}
                     std::shared_ptr<IStatement> getElseStatement(){return elseStatement;}
                 };

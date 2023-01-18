@@ -9,13 +9,12 @@ namespace c4 {
                     std::shared_ptr<c4::model::expression::IExpression> returnExpression;
                     std::shared_ptr<IStatement> gotoIdentifier;
                 public:
-                    SelectionStatement(
+                    JumpStatement(
                         std::shared_ptr<c4::model::expression::IExpression> returnExpression,
                         std::shared_ptr<IStatement> gotoIdentifier
                     ) : returnExpression(returnExpression), gotoIdentifier(gotoIdentifier){};
-                    std::shared_ptr<IExpression> getIfExpression(){return ifExpr;}
-                    std::shared_ptr<IStatement> getThenStatement(){return thenStatement;}
-                    std::shared_ptr<IStatement> getElseStatement(){return elseStatement;}
+                    std::shared_ptr<c4::model::expression::IExpression> getIfExpression(){return ifExpr;}
+                    std::shared_ptr<IStatement> getGotoIdentifier(){return gotoIdentifier;}
                 };
             }
         }

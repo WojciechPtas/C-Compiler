@@ -70,10 +70,6 @@ std::cout << "parse():\n";
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))){
         if(parseCompoundStatement()) return 1;
     }
-    //m_input->pushMark();
-    //bool a = m_input->read(&token);
-    //m_input->resetToMark();
-    //m_input->popMark();
     m_input->pushMark();
     auto a = m_input->read(&token);
     m_input->resetAndPopMark();
@@ -104,61 +100,13 @@ bool LLParser::parseDeclaration()
         }
         return 0;
     }
-    //m_input->pushMark();
-    //m_input->read(&token);
-//
-    //std::cout<<"Consumed:";
-    //token->accept(visitor);
-    //switch(visitor.getKind())
-    //{
-    //    case TokenKind::keyword:
-    //    switch((visitor.getSepcificValue().k)){
-    //    case Keyword::Void:
-    //    case Keyword::Int:
-    //    case Keyword::Char:
-    //    //std::cout << " VOID! \n";
-    //    m_input->popMark();
-    //    if(this->parseDeclarator()) {
-    //        std::cout<<"Exiting parseDeclaration with 1\n";
-    //        return 1;
-    //    }
-    //    if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return 0;
-    //    break;
-    //    case Keyword::Struct:
-    //    case Keyword::Union:
-    //    m_input->resetToMark();
-    //    m_input->popMark();
-    //    if(this->parseStructorUnionSpecifier()) return 1;
-    //    break;
-    //    default:
-    //    return 1;
-    //    }
-    //    break;
-    //    default:
-    //    return 1;
-    //}
-    //if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))){
-    //    std::cout<<"Exiting parseDeclaration with 1\n";
-    //    return 1;
-    //}
-    //return 0;
 }
 
 bool LLParser::parseStaticAssertDeclaration()
 {
-    //std::shared_ptr<const Token> token;
-    ////ParserVisitor visitor;
    
-    // m_input->read(&token);
-    // token->accept(visitor);
-    // if(visitor.getKind()!=TokenKind::keyword) return 1;
-    // if((std::dynamic_pointer_cast<const KeywordToken>(token))->keyword!=Keyword::__Static_assert) return 1;
     if(this->consume(TokenKind::keyword,SpecifiedToken(Keyword::__Static_assert))) return 1;
 
-    // m_input->read(&token);
-    // token->accept(visitor);
-    // if(visitor.getKind()!=TokenKind::punctuator) return 1;
-    // if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::LeftParenthesis) return 1;
     if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 1;
     // @TODO INVOKE LR PARSER HERE TO PARSE CONSTANT EXPRESSION
 
@@ -194,10 +142,6 @@ bool LLParser::parseStaticAssertDeclaration()
 }
 
 bool LLParser::parseStructorUnionSpecifier(){
-    //std::shared_ptr<const Token> token;
-    //std::shared_ptr<const Token> token1;
-    ////ParserVisitor visitor;
-
     m_input->read(&token);
     token->accept(visitor);
     if(visitor.getKind()!=TokenKind::keyword) return 1;
@@ -448,14 +392,13 @@ bool c4::service::parser::LLParser::parseCompoundStatement() // {dasdasd}
     return 0;
 
 }
-// TODO PARSE EXPRESSION
+// DONE
 bool c4::service::parser::LLParser::parseSelectionStatement()
 {
     std::cout << "parseSelectionStatement()\n";
     if(consume(TokenKind::keyword,SpecifiedToken(Keyword::If))) return 1;
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 1;
     ParenthesisDelimiterStream stream(m_input);
-    //auto a = PrintVisitor(std::cout);
     auto a=std::make_shared<State>(INITIAL_STATE);
     auto lrparser = std::make_shared<ExpressionParser>(a);
     lrparser->parse(stream);//->accept(a);
@@ -466,12 +409,15 @@ bool c4::service::parser::LLParser::parseSelectionStatement()
     if(parseStatement()) return 1;
     return 0;
 }
-// TODO PARSE EXPRESSION
+// DONE
 bool c4::service::parser::LLParser::parseIterationStatement()
 {
     if(consume(TokenKind::keyword,SpecifiedToken(Keyword::While))) return 1;
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 1;
-    // PARSE EXPRESSION
+    ParenthesisDelimiterStream stream(m_input);
+    auto a=std::make_shared<State>(INITIAL_STATE);
+    auto lrparser = std::make_shared<ExpressionParser>(a);
+    lrparser->parse(stream);//->accept(a);
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
     if(parseStatement()) return 1;
     return 0;
@@ -498,7 +444,10 @@ bool c4::service::parser::LLParser::parseJumpStatement()
             consume(TokenKind::keyword,SpecifiedToken(Keyword::Return));
         if(this->checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) break;
         else{
-        // TODO PARSE EXPRESSION
+            DelimiterStream stream(m_input, TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
+            auto a=std::make_shared<State>(INITIAL_STATE);
+            auto lrparser = std::make_shared<ExpressionParser>(a);
+            lrparser->parse(stream);//->accept(a);
         }
         break;
         default:
@@ -507,7 +456,7 @@ bool c4::service::parser::LLParser::parseJumpStatement()
     if(consume(TokenKind::punctuator, SpecifiedToken(Punctuator::Semicolon))) return 1;
     return 0;
 }
-// TODO PARSE EXPRESSION STMT
+// DONE
 bool c4::service::parser::LLParser::parseStatement()
 {
     std::cout<<"parseStatement()\n";
@@ -537,6 +486,7 @@ bool c4::service::parser::LLParser::parseStatement()
             case Keyword::While:
             return parseIterationStatement() ? 1 : 0;
             case Keyword::Goto:
+            case Keyword::Break:
             case Keyword::Continue:
             case Keyword::Return:
             return parseJumpStatement() ? 1 : 0;

@@ -1,9 +1,9 @@
 int main(){
 	int x;
-	if(1+2){
-	}
-	else{
-	int z;
+	while(2){
+	int x;
+	x=2;
+	break;
 	}
 	return;
 }

@@ -4,7 +4,7 @@
 namespace c4 {
     namespace model {
         namespace declaration {
-            class Pointer : IDeclaration{};
+            class Pointer : IDeclaration{
             private:
                 std::shared_ptr<Pointer> ptr;                
             public:
@@ -13,3 +13,4 @@ namespace c4 {
             }
         }
     }
+}
