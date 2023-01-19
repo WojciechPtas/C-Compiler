@@ -16,7 +16,7 @@
 
 #include "../../model/statement/CompoundStatement.h"
 #include "../../model/statement/JumpStatement.h"
-#include "../../model/declaration/FunctionDefinition.h"
+#include "../../model/declaration/IDeclaration.h"
 #include "../../model/statement/IterationStatement.h"
 #include "../../model/statement/LabeledStatement.h"
 #include "../../model/statement/SelectionStatement.h"

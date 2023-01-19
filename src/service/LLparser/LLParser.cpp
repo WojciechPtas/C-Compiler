@@ -379,13 +379,13 @@ std::shared_ptr<CompoundStatement> c4::service::parser::LLParser::parseCompoundS
         if(checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::__Static_assert))){
             auto a =parseStaticAssertDeclaration();
             if(!a) return nullptr;
-            stmt.push_back(std::make_shared<IStatement>(a));
+            //stmt.push_back(std::make_shared<IStatement>(a));
         }
         else if(checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Int))||checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Void))||checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Char))){
             // std::cout<<"parsing declaration\n";
             auto a =parseDeclaration();
             if(!a) return nullptr;
-            stmt.push_back(std::make_shared<IStatement>(a));
+            //stmt.push_back(std::make_shared<IStatement>(a));
             // std::cout<<"parsed declaration\n";
             //if(parseStatement()) return 1;
         }
@@ -393,7 +393,7 @@ std::shared_ptr<CompoundStatement> c4::service::parser::LLParser::parseCompoundS
             // std::cout<<"parsing statement\n";
             auto a  = parseStatement();
             if(!a) return nullptr;
-            stmt.push_back(std::make_shared<IStatement>(a));
+            //stmt.push_back(std::make_shared<IStatement>(a));
             //exit(1);
         }
     }
@@ -470,7 +470,7 @@ std::shared_ptr<JumpStatement> c4::service::parser::LLParser::parseJumpStatement
     return std::make_shared<JumpStatement>(b,IdentifierExpression(""));
 }
 // DONE
-bool c4::service::parser::LLParser::parseStatement()
+std::shared_ptr<IStatement> c4::service::parser::LLParser::parseStatement()
 {
     // std::cout<<"parseStatement()\n";
     visit();
@@ -509,8 +509,8 @@ bool c4::service::parser::LLParser::parseStatement()
     }
     DelimiterStream stream(m_input,TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
     //auto a = PrintVisitor(std::cout);
-    auto a=std::make_shared<State>(INITIAL_STATE);
-    auto lrparser = std::make_shared<ExpressionParser>(a);
+    auto c=std::make_shared<State>(INITIAL_STATE);
+    auto lrparser = std::make_shared<ExpressionParser>(c);
     auto a = lrparser->parse(stream);//->accept(a);
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return nullptr;
     //}
