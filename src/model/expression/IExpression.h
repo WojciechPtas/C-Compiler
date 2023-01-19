@@ -5,7 +5,7 @@
 namespace c4 {
     namespace model {
         namespace expression {
-            class IExpression : public IStatement{
+            class IExpression : public model::statement::IStatement{
             public:
                 virtual ~IExpression() { }
                 virtual void accept(IExpressionVisitor &visitor) const = 0;
