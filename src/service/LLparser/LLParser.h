@@ -49,12 +49,12 @@ namespace c4::service::parser{
             bool parseParameterDeclaration();
             bool parseDeclarationSpecifier();
             bool parseIdentifierList();
-            std::shared_ptr<model::statement::CompoundStatement> parseCompoundStatement();
-            std::shared_ptr<model::statement::SelectionStatement> parseSelectionStatement();
-            std::shared_ptr<model::statement::IterationStatement> parseIterationStatement();
-            std::shared_ptr<model::statement::JumpStatement> parseJumpStatement();
-            std::shared_ptr<model::statement::IStatement> parseStatement();
-            std::shared_ptr<model::statement::LabeledStatement> parseLabeledStatement();
+            bool parseCompoundStatement();
+            bool parseSelectionStatement();
+            bool parseIterationStatement();
+            bool parseJumpStatement();
+            bool parseStatement();
+            bool parseLabeledStatement();
             bool visit();
     };
 }
