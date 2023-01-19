@@ -501,7 +501,7 @@ bool c4::service::parser::LLParser::parseStatement()
     auto a=std::make_shared<State>(INITIAL_STATE);
     auto lrparser = std::make_shared<ExpressionParser>(a);
     lrparser->parse(stream);
-    return  0;
+    return  consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
 }
 
 bool c4::service::parser::LLParser::parseLabeledStatement()

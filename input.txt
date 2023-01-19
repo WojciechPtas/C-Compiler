@@ -1,5 +1,10 @@
 int main(){
-	while(2){
+	if(2){
 	int x;
 	}
+	else{
+	int z;
+	break;
+	}
+	return 1;
 }
