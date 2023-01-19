@@ -7,14 +7,14 @@ namespace c4 {
             class JumpStatement : IStatement {
                 private:
                     std::shared_ptr<c4::model::expression::IExpression> returnExpression;
-                    std::shared_ptr<IStatement> gotoIdentifier;
+                    std::shared_ptr<c4::model::expression::IdentifierExpression> gotoIdentifier;
                 public:
                     JumpStatement(
                         std::shared_ptr<c4::model::expression::IExpression> returnExpression,
-                        std::shared_ptr<IStatement> gotoIdentifier
+                        std::shared_ptr<c4::model::expression::IdentifierExpression> gotoIdentifier
                     ) : returnExpression(returnExpression), gotoIdentifier(gotoIdentifier){};
-                    std::shared_ptr<c4::model::expression::IExpression> getIfExpression(){return ifExpr;}
-                    std::shared_ptr<IStatement> getGotoIdentifier(){return gotoIdentifier;}
+                    std::shared_ptr<c4::model::expression::IExpression> getIfExpression(){return returnExpression;}
+                    std::shared_ptr<c4::model::expression::IdentifierExpression> getGotoIdentifier(){return gotoIdentifier;}
                 };
             }
         }
