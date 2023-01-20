@@ -497,6 +497,9 @@ bool c4::service::parser::LLParser::parseStatement()
             break;
         }
     }
+    else if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))){
+        return consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
+    }
     DelimiterStream stream(m_input,TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
     auto a=std::make_shared<State>(INITIAL_STATE);
     auto lrparser = std::make_shared<ExpressionParser>(a);
