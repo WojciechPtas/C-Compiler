@@ -15,7 +15,7 @@ using namespace std;
 void ParserVisitor::visit(const model::token::ConstantToken &token) {
     this->kind= TokenKind::character_constant;
     auto a =token;
-    std::cout<< "ConstantToken!\n";
+    //std::cout<< "ConstantToken!\n";
     
 }
 
@@ -27,21 +27,21 @@ void ParserVisitor::visit(const model::token::ConstantToken &token) {
 void ParserVisitor::visit(const ErrorToken &token) {
    this->kind= TokenKind::error;
     auto a =token;
-    std::cout<< "ErrorToken!\n";
+    //std::cout<< "ErrorToken!\n";
 
 }
 
 void ParserVisitor::visit(const IdentifierToken &token) {
     this->kind= TokenKind::identifier;
     auto a =token;
-    std::cout<< "IdentifierToken!\n";
+    //std::cout<< "IdentifierToken!\n";
 
 }
 
 void ParserVisitor::visit(const KeywordToken &token) {
     auto a =token;
     
-    std::cout<< "KeywordToken!\n";
+    //std::cout<< "KeywordToken!\n";
     this->kind = TokenKind::keyword;
     this->specifed = SpecifiedToken( token.keyword);
 }
@@ -50,7 +50,7 @@ void ParserVisitor::visit(const PunctuatorToken &token) {
     auto a =token;
     this->kind= TokenKind::punctuator;
     this->specifed = SpecifiedToken(token.punctuator);
-    std::cout<< "PunctuatorToken\n";
+    //std::cout<< "PunctuatorToken\n";
 
 }
 

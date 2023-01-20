@@ -129,9 +129,9 @@ bool parse(std::string input) {
     LLParser parser(mosaic);
     //cout << "parser\n";
 
-    auto re =parser.parse();
-    cout<< "Returned with:!" << re << "\n";
-    return re;
+    //auto re =parser.parse();
+    //cout<< "Returned with:!" << re << "\n";
+    return parser.run("add");
 }
 
 int main(int argc, char* argv[]) {
