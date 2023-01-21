@@ -11,6 +11,7 @@ namespace c4 {
             class IdentifierToken;
             class KeywordToken;
             class PunctuatorToken;
+            class EOFToken;
 
             // The subject of this file.
 
@@ -23,6 +24,7 @@ namespace c4 {
                 virtual void visit(const IdentifierToken &token) = 0;
                 virtual void visit(const KeywordToken &token) = 0;
                 virtual void visit(const PunctuatorToken &token) = 0;
+                virtual void visit(const EOFToken &token) = 0;
             };
         }
     }

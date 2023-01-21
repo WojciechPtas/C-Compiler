@@ -54,6 +54,11 @@ void ParserVisitor::visit(const PunctuatorToken &token) {
 
 }
 
+void ParserVisitor::visit(const model::token::EOFToken &token) {
+    (void) token;
+    this->kind = TokenKind::eof;
+}
+
 // void ParserVisitor::visit(const StringLiteralToken &token) {
 //     this->kind= TokenKind::string_literal;
 // }

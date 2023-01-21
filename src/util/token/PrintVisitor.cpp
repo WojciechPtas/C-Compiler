@@ -5,6 +5,7 @@
 #include "../../model/token/IdentifierToken.h"
 #include "../../model/token/KeywordToken.h"
 #include "../../model/token/PunctuatorToken.h"
+#include "../../model/token/EOFToken.h"
 
 #include "KeywordUtilities.h"
 #include "PrintVisitor.h"
@@ -77,6 +78,12 @@ void PrintVisitor::visit(const PunctuatorToken &token) {
     this->outputStream << "punctuator ";
     this->outputStream << stringify(token.punctuator);
     this->outputStream << "\n";
+}
+
+void PrintVisitor::visit(const EOFToken &token) {
+    this->printPosition(token);
+
+    this->outputStream << "EOF\n";
 }
 
 void PrintVisitor::printPosition(const Token &token) {

@@ -18,7 +18,8 @@ enum class TokenKind{
     constant,
     error,
     string_literal,
-    keyword
+    keyword,
+    eof
     };
 
 

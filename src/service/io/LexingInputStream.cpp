@@ -5,6 +5,7 @@
 #include "../../model/token/IdentifierToken.h"
 #include "../../model/token/KeywordToken.h"
 #include "../../model/token/PunctuatorToken.h"
+#include "../../model/token/EOFToken.h"
 
 #include "../../util/lexer/PositionUtilities.h"
 #include "../../util/lexer/ReadUtilities.h"
@@ -38,6 +39,10 @@ bool LexingInputStream::read(shared_ptr<Token> *dst) {
     this->eofReached |= this->isEmpty && !this->source->peek(&nextChar);
 
     if (this->eofReached) {
+        MAKE_TOKEN_POSITION(tokenPosition, *this->source);
+        *dst = make_unique<EOFToken>(
+                tokenPosition
+            );
         return false;
     }
 
@@ -84,19 +89,25 @@ bool LexingInputStream::read(shared_ptr<Token> *dst) {
 
     if (!this->source->peek(&nextChar)) {
         this->eofReached = true;
-
-        if (lastSkippedNewline) {
-            return false;
-        }
-
         MAKE_TOKEN_POSITION(tokenPosition, *this->source);
 
-        *dst = make_unique<ErrorToken>(
-            tokenPosition,
-            "Unexpected end of file"
-        );
 
-        return true;
+        if (lastSkippedNewline) {
+            *dst = make_unique<EOFToken>(
+                tokenPosition
+            );
+            return false;
+        }
+        else {
+            *dst = make_unique<ErrorToken>(
+                tokenPosition,
+                "Unexpected end of file"
+            );
+            return true;
+        }
+
+
+        
     }
     
     // Case: Keyword or Identifier

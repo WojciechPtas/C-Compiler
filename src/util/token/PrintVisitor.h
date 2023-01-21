@@ -11,6 +11,7 @@ namespace c4 {
             class PrintVisitor : public model::token::ITokenVisitor {
             public:
                 PrintVisitor(std::ostream &outputStream);
+
                 virtual ~PrintVisitor() { }
 
                 void visit(const model::token::ConstantToken &token) override;
@@ -23,6 +24,9 @@ namespace c4 {
                 void visit(
                     const model::token::PunctuatorToken &token
                 ) override;
+                
+                void visit(const model::token::EOFToken &token) override;
+                
 
             private:
                 std::ostream &outputStream;

@@ -75,6 +75,13 @@ namespace c4 {
                         }
                     }
 
+                    void visit(const token::EOFToken &token) override {
+                        (void) token;
+
+                        this->checkAndSetExecuted();
+                        this->determinedHandler = this->state.encounterEnd;
+                    }
+
                 private:
                     const State &state;
                     std::shared_ptr<const StateHandler> determinedHandler;

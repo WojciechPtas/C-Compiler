@@ -88,7 +88,7 @@ bool tokenize(std::string input) {
         token->accept(pt);
     }
 
-    if(token != nullptr && token->isError()) {
+    if(token->isError()) {
         token->accept(pe);
         retval = ERR;
     }
