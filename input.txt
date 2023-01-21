@@ -1,1 +1,1 @@
-int x; asd
+int main(
