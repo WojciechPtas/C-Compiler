@@ -131,6 +131,8 @@ static shared_ptr<const State> _initialize() {
     _addMultiplicationShift(*_additionReductionState);
     _additionReductionState->addReduction(
         END_TOKEN | PUNCTUATOR_TOKEN(
+            Punctuator::Plus |
+            Punctuator::Minus |
             Punctuator::Colon |
             Punctuator::DoubleAnd |
             Punctuator::DoubleEqual |
@@ -139,6 +141,7 @@ static shared_ptr<const State> _initialize() {
             Punctuator::ExclamationMarkEqual |
             Punctuator::LessThan |
             Punctuator::QuestionMark |
+            Punctuator::RightBracket |
             Punctuator::RightParenthesis
         ),
         3, 2,
@@ -152,8 +155,13 @@ static shared_ptr<const State> _initialize() {
 
     // State: _assignmentReductionState
 
+    _addAssignmentShift(*_assignmentReductionState);
     _assignmentReductionState->addReduction(
-        ANY_TOKEN,
+        END_TOKEN | PUNCTUATOR_TOKEN(
+            Punctuator::Colon |
+            Punctuator::RightBracket |
+            Punctuator::RightParenthesis
+        ),
         3, 2,
         bind(_reduceBinary, _1, BinaryExpressionType::Assignment)
     );
@@ -172,11 +180,15 @@ static shared_ptr<const State> _initialize() {
     _addRelationalShift(*_compareEqualReductionState);
     _compareEqualReductionState->addReduction(
         END_TOKEN | PUNCTUATOR_TOKEN(
+            Punctuator::DoubleEqual |
+            Punctuator::ExclamationMarkEqual |
             Punctuator::Colon |
             Punctuator::DoubleAnd |
             Punctuator::DoublePipe |
             Punctuator::Equal |
-            Punctuator::QuestionMark
+            Punctuator::QuestionMark |
+            Punctuator::RightBracket |
+            Punctuator::RightParenthesis
         ),
         3, 2,
         bind(_reduceBinary, _1, BinaryExpressionType::Equal)
@@ -192,11 +204,15 @@ static shared_ptr<const State> _initialize() {
     _addRelationalShift(*_compareUnequalReductionState);
     _compareUnequalReductionState->addReduction(
         END_TOKEN | PUNCTUATOR_TOKEN(
+            Punctuator::DoubleEqual |
+            Punctuator::ExclamationMarkEqual |
             Punctuator::Colon |
             Punctuator::DoubleAnd |
             Punctuator::DoublePipe |
             Punctuator::Equal |
-            Punctuator::QuestionMark
+            Punctuator::QuestionMark |
+            Punctuator::RightBracket |
+            Punctuator::RightParenthesis
         ),
         3, 2,
         bind(_reduceBinary, _1, BinaryExpressionType::Unequal)
@@ -270,13 +286,16 @@ static shared_ptr<const State> _initialize() {
     _addAdditiveShifts(*_lessThanReductionState);
     _lessThanReductionState->addReduction(
         END_TOKEN | PUNCTUATOR_TOKEN(
+            Punctuator::LessThan |
             Punctuator::Colon |
             Punctuator::DoubleAnd |
             Punctuator::DoubleEqual |
             Punctuator::DoublePipe |
             Punctuator::Equal |
             Punctuator::ExclamationMarkEqual |
-            Punctuator::QuestionMark
+            Punctuator::QuestionMark |
+            Punctuator::RightBracket |
+            Punctuator::RightParenthesis
         ),
         3, 2,
         bind(_reduceBinary, _1, BinaryExpressionType::LessThan)
@@ -302,6 +321,7 @@ static shared_ptr<const State> _initialize() {
     _addPostfixShifts(*_multiplicationReductionState);
     _multiplicationReductionState->addReduction(
         END_TOKEN | PUNCTUATOR_TOKEN(
+            Punctuator::Asterisk |
             Punctuator::Colon |
             Punctuator::DoubleAnd |
             Punctuator::DoubleEqual |
@@ -312,6 +332,7 @@ static shared_ptr<const State> _initialize() {
             Punctuator::Minus |
             Punctuator::Plus |
             Punctuator::QuestionMark |
+            Punctuator::RightBracket |
             Punctuator::RightParenthesis
         ),
         3, 2,
@@ -338,7 +359,11 @@ static shared_ptr<const State> _initialize() {
 
     _addConditionalShift(*_operatorOrConditionalReduction);
     _operatorOrConditionalReduction->addReduction(
-        END_TOKEN | PUNCTUATOR_TOKEN(Punctuator::Equal),
+        END_TOKEN | PUNCTUATOR_TOKEN(
+            Punctuator::Equal |
+            Punctuator::RightBracket |
+            Punctuator::RightParenthesis
+        ),
         5, 3,
         _reduceConditional
     );
@@ -351,7 +376,9 @@ static shared_ptr<const State> _initialize() {
             Punctuator::Colon |
             Punctuator::DoublePipe |
             Punctuator::Equal |
-            Punctuator::QuestionMark
+            Punctuator::QuestionMark |
+            Punctuator::RightBracket |
+            Punctuator::RightParenthesis
         ),
         3, 2,
         bind(_reduceBinary, _1, BinaryExpressionType::LogicalAnd)
@@ -364,7 +391,9 @@ static shared_ptr<const State> _initialize() {
         END_TOKEN | PUNCTUATOR_TOKEN(
             Punctuator::Colon |
             Punctuator::Equal |
-            Punctuator::QuestionMark
+            Punctuator::QuestionMark |
+            Punctuator::RightBracket |
+            Punctuator::RightParenthesis
         ),
         3, 2,
         bind(_reduceBinary, _1, BinaryExpressionType::LogicalOr)
@@ -421,6 +450,8 @@ static shared_ptr<const State> _initialize() {
     _addMultiplicationShift(*_subtractionReductionState);
     _subtractionReductionState->addReduction(
         END_TOKEN | PUNCTUATOR_TOKEN(
+            Punctuator::Plus |
+            Punctuator::Minus |
             Punctuator::Colon |
             Punctuator::DoubleAnd |
             Punctuator::DoubleEqual |
