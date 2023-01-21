@@ -207,6 +207,9 @@ namespace c4 {
                         // request.
 
                         if (this->eofReached) {
+                            *dst = this->fragments
+                                [this->cursorOffset / this->fragmentCapacity]
+                                [this->cursorOffset % this->fragmentCapacity];
                             return false;
                         }
 
@@ -247,27 +250,37 @@ namespace c4 {
                         // If we read nothing, we cannot serve the read
                         // request.
 
-                        if (readElements == 0) {
-                            if (newFragment) {
-                                DBGOUT_E(
-                                    "stream",
-                                    "I: %p, Deallocating fragment %p (read "
-                                    "eof)",
-                                    this,
-                                    fragment
-                                );
+                        // if (readElements == 0) {
+                        //     if (newFragment) {
+                        //         DBGOUT_E(
+                        //             "stream",
+                        //             "I: %p, Deallocating fragment %p (read "
+                        //             "eof)",
+                        //             this,
+                        //             fragment
+                        //         );
 
-                                delete[] fragment;
-                            }
+                        //         delete[] fragment;
+                        //     }
 
-                            return false;
-                        }
+                        //     return false;
+                        // }
 
                         // If we allocated a new fragment for the data we just
                         // read, we have to add it to the internal stack.
 
                         if (newFragment) {
                             this->fragments.push_back(fragment);
+                        }
+
+                        //Modification: we need to allocate the fragment anyway, because we want to return whatever was returned in the first source->read() that reached EOF
+                        
+                        if(readElements == 0) {
+                            *dst = this->fragments
+                                [this->cursorOffset / this->fragmentCapacity]
+                                [this->cursorOffset % this->fragmentCapacity];
+                            
+                            return false;
                         }
 
                         this->cursorLimit += readElements;
