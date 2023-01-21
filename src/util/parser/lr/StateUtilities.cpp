@@ -373,6 +373,7 @@ static shared_ptr<const State> _initialize() {
     _addComparisonShifts(*_operatorOrLogicalAndReduction);
     _operatorOrLogicalAndReduction->addReduction(
         END_TOKEN | PUNCTUATOR_TOKEN(
+            Punctuator::DoubleAnd |
             Punctuator::Colon |
             Punctuator::DoublePipe |
             Punctuator::Equal |
@@ -389,6 +390,7 @@ static shared_ptr<const State> _initialize() {
     _addLogicalAndShift(*_operatorOrLogicalOrReduction);
     _operatorOrLogicalOrReduction->addReduction(
         END_TOKEN | PUNCTUATOR_TOKEN(
+            Punctuator::DoublePipe |
             Punctuator::Colon |
             Punctuator::Equal |
             Punctuator::QuestionMark |
