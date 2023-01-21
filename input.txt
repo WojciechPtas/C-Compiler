@@ -1,6 +1,7 @@
 int main(){
 	break;
+	int x
 	return;
 	}
 	
-int x(;
+int x();
