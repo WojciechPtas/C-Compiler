@@ -13,6 +13,7 @@
 #include "MemberExpressionUtilities.h"
 #include "PrintVisitor.h"
 #include "UnaryExpressionUtilities.h"
+#include "../../model/expression/CallExpression.h"
 
 using namespace c4::model;
 using namespace c4::model::expression;
@@ -30,9 +31,25 @@ void PrintVisitor::visit(const BinaryExpression &expr) {
     this->outputStream << ")";
 }
 
-void PrintVisitor::visit(const CallExpression &expr) {
-    // TODO
+void PrintVisitor::visit(const CallArguments& ca) {
+    this->outputStream << "(";
+    if (ca.arguments.size() > 0) {
+        for (size_t i=0; i<ca.arguments.size()-1; i++) {
+            ca.arguments[i]->accept(*this);
+            this->outputStream << ", ";
+        }
+        ca.arguments[ca.arguments.size()-1]->accept(*this);
+    }
+    this->outputStream << ")";
 }
+
+void PrintVisitor::visit(const CallExpression &expr) {
+    this->outputStream << "(" 
+        << expr.called; 
+    expr.arguments.accept(*this);
+    this->outputStream << ")";
+}
+
 
 void PrintVisitor::visit(const ConditionalExpression &expr) {
     this->outputStream << "(";
@@ -84,3 +101,4 @@ void PrintVisitor::visit(const UnaryExpression &expr) {
     this->outputStream << stringify(expr.type);
     expr.expression->accept(*this);
 }
+

@@ -16,6 +16,10 @@ namespace c4 {
                 ) override;
 
                 void visit(
+                    const model::expression::CallArguments &expr
+                ) override;
+
+                void visit(
                     const model::expression::CallExpression &expr
                 ) override;
 

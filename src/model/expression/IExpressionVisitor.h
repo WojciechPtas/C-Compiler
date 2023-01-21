@@ -17,6 +17,7 @@ namespace c4 {
                 virtual ~IExpressionVisitor() { }
 
                 virtual void visit(const BinaryExpression &expr) = 0;
+                virtual void visit(const CallArguments &expr) = 0;
                 virtual void visit(const CallExpression &expr) = 0;
                 virtual void visit(const ConditionalExpression &expr) = 0;
                 virtual void visit(const ConstantExpression &expr) = 0;

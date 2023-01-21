@@ -73,6 +73,14 @@ void State::addJump(
         this->gotoAfterCall = nextState;
     }
 
+    if ((typeMask & ExpressionType::CallArguments) == ExpressionType::CallArguments) {
+        if (!this->gotoAfterCall.expired()) {
+            throw logic_error("Goto installed already");
+        }
+
+        this->gotoAfterCallArguments = nextState;
+    }
+
     if ((typeMask & ExpressionType::Conditional) == ExpressionType::Conditional) {
         if (!this->gotoAfterConditional.expired()) {
             throw logic_error("Goto installed already");

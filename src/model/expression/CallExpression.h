@@ -2,17 +2,25 @@
 
 #include <vector>
 #include "IExpression.h"
+#include "CallArguments.h"
+#include <memory>
 
 namespace c4 {
     namespace model {
         namespace expression {
             class CallExpression : public IExpression {
             public:
-                const std::vector<IExpression> arguments;
+                shared_ptr<const IExpression> called;
+                CallArguments arguments;
 
                 CallExpression(
-                    const std::vector<IExpression> &arguments
-                ) : arguments(arguments) { }
+                    shared_ptr<const IExpression>& called
+                ) : called(called) { }
+
+                CallExpression(
+                    shared_ptr<const IExpression>& called,
+                    const CallArguments& arguments
+                ) : called(called), arguments(arguments) { }
                 
                 ~CallExpression() { }
 
