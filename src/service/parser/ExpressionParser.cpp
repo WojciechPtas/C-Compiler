@@ -24,7 +24,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
     do {
         auto isGoto = stateCount > newStateCount;
         stateCount = newStateCount;
-        std::cout<<"Read token\n";
+        //std::cout<<"Read token\n";
         if (readNext) {
             eofReached = !input.read(&token);
         }

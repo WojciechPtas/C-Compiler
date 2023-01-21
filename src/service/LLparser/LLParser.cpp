@@ -389,7 +389,7 @@ bool c4::service::parser::LLParser::parseIdentifierList()
 // DONE
 bool c4::service::parser::LLParser::parseCompoundStatement() // {dasdasd}
 {
-    std::cout<<"parseCompoundStatement()\n";
+    //std::cout<<"parseCompoundStatement()\n";
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))) return 1;
     while(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))){
         if(checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::__Static_assert))){
