@@ -12,8 +12,8 @@
 #include "../io/IBufferedInputStream.h"
 #include "../io/DelimiterInputStream.h"
 #include "../io/ParenthesisDelimiterStream.h"
-
-
+#include "../../model/declaration/Pointer.h"
+#include "../../model/declaration/StaticAssertDeclaration.h"
 #include "../../model/statement/CompoundStatement.h"
 #include "../../model/statement/JumpStatement.h"
 #include "../../model/declaration/FunctionDefinition.h"
@@ -38,10 +38,10 @@ namespace c4::service::parser{
             bool consume(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken(), bool inlookahead=false);
             bool checkLookAhead(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken());
             bool parseDeclaration();
-            bool parseStaticAssertDeclaration();
+            std::shared_ptr<const model::declaration::StaticAssertDeclaration> parseStaticAssertDeclaration();
             bool parseStructorUnionSpecifier();
             bool parseStructDeclarationList();
-            bool parsePointer();
+            std::shared_ptr<const model::declaration::Pointer> parsePointer();
             bool parseDeclarator();
             bool parseDirectDeclarator();
             bool parseDirectDeclarator2();
@@ -49,12 +49,12 @@ namespace c4::service::parser{
             bool parseParameterDeclaration();
             bool parseDeclarationSpecifier();
             bool parseIdentifierList();
-            std::shared_ptr<model::statement::CompoundStatement> parseCompoundStatement();
-            std::shared_ptr<model::statement::SelectionStatement> parseSelectionStatement();
-            std::shared_ptr<model::statement::IterationStatement> parseIterationStatement();
-            std::shared_ptr<model::statement::JumpStatement> parseJumpStatement();
-            std::shared_ptr<model::statement::IStatement> parseStatement();
-            std::shared_ptr<model::statement::LabeledStatement> parseLabeledStatement();
+            std::shared_ptr<const model::statement::CompoundStatement> parseCompoundStatement();
+            std::shared_ptr<const model::statement::SelectionStatement> parseSelectionStatement();
+            std::shared_ptr<const model::statement::IterationStatement> parseIterationStatement();
+            std::shared_ptr<const model::statement::JumpStatement> parseJumpStatement();
+            std::shared_ptr<const model::statement::IStatement> parseStatement();
+            std::shared_ptr<const model::statement::LabeledStatement> parseLabeledStatement();
             bool visit();
     };
 }

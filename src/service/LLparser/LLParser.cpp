@@ -105,12 +105,12 @@ bool LLParser::parseDeclaration()
     }
 }
 
-bool LLParser::parseStaticAssertDeclaration()
+std::shared_ptr<StaticAssertDeclaration> LLParser::parseStaticAssertDeclaration()
 {
    
-    if(this->consume(TokenKind::keyword,SpecifiedToken(Keyword::__Static_assert))) return 1;
+    if(this->consume(TokenKind::keyword,SpecifiedToken(Keyword::__Static_assert))) return nullptr;
 
-    if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 1;
+    if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return nullptr;
     // @TODO INVOKE LR PARSER HERE TO PARSE CONSTANT EXPRESSION
 
     //m_input->read(&token);
@@ -118,30 +118,31 @@ bool LLParser::parseStaticAssertDeclaration()
     //if(visitor.getKind()!=TokenKind::punctuator) return 1;
     //if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Comma) return 1;
 
-    if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma))) return 1;
+    if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma))) return nullptr;
 
     //m_input->read(&token);
     //token->accept(visitor);
     //if(visitor.getKind()!=TokenKind::string_literal) return 1;
 
-    if(this->consume(TokenKind::string_literal)) return 1;
+    if(this->consume(TokenKind::string_literal)) return nullptr;
+     
 
     //m_input->read(&token);
     //token->accept(visitor);
     //if(visitor.getKind()!=TokenKind::punctuator) return 1;
     //if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::RightParenthesis) return 1;
 
-    if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
+    if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return nullptr;
 
     //m_input->read(&token);
     //token->accept(visitor);
     //if(visitor.getKind()!=TokenKind::punctuator) return 1;
     //if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Semicolon) return 1;
     
-    if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return 1;
+    if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return nullptr;
 
 
-    return 0;
+    return nullptr; //TODO
 }
 
 bool LLParser::parseStructorUnionSpecifier(){
@@ -209,41 +210,15 @@ bool LLParser::parseStructDeclarationList(){
     return 1;
 }
 // DONE!
-bool c4::service::parser::LLParser::parsePointer()
+std::shared_ptr<const Pointer> c4::service::parser::LLParser::parsePointer()
 {
-    //Consume asterisk
-    // m_input->read(&token);
-    // token->accept(visitor);
-    // if(visitor.getKind()!=TokenKind::punctuator) return 1;
-    // if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Asterisk) return 1;
-    if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) return 1;
-    //Check if we should parse another pointer;
-    // m_input->pushMark();
-    // m_input->read(&token);
-    // token->accept(visitor);
-    // if(visitor.getKind()!=TokenKind::punctuator) return 0;
-    // if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator!=Punctuator::Asterisk) return 0;
-    // m_input->resetToMark();
-    // m_input->popMark();
-    if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) return 0;
-    return this->parsePointer();
+    if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) return nullptr;
+    if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) return std::make_shared<Pointer>(nullptr);
+    return std::make_shared<Pointer>(parsePointer());
 }
 // DONE!
 bool c4::service::parser::LLParser::parseDeclarator()
 {
-    //std::shared_ptr<const Token> token;
-    //ParserVisitor visitor;
-    // m_input->pushMark();
-    // m_input->read(&token);
-    // token->accept(visitor);
-    // if(visitor.getKind()==TokenKind::punctuator)
-    // {
-    //     if((std::dynamic_pointer_cast<const PunctuatorToken>(token))->punctuator==Punctuator::Asterisk) 
-    //     m_input->resetToMark();
-    //     m_input->popMark();
-    //     this->parsePointer();
-    // }
-    //std::cout<< "parseDeclarator()\n";
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) 
     {
         if(parsePointer()) return 1;
@@ -370,7 +345,7 @@ bool c4::service::parser::LLParser::parseIdentifierList()
     return 0;
 }
 // DONE
-std::shared_ptr<CompoundStatement> c4::service::parser::LLParser::parseCompoundStatement() // {dasdasd}
+std::shared_ptr<const CompoundStatement> c4::service::parser::LLParser::parseCompoundStatement() // {dasdasd}
 {
     // std::cout<<"parseCompoundStatement()\n";
     std::vector<std::shared_ptr<IStatement>> stmt;
@@ -398,11 +373,11 @@ std::shared_ptr<CompoundStatement> c4::service::parser::LLParser::parseCompoundS
         }
     }
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return nullptr;
-    return std::make_shared<CompoundStatement>(stmt);
+    return std::make_shared<const CompoundStatement>(stmt);
 
 }
 // DONE
-std::shared_ptr<SelectionStatement> c4::service::parser::LLParser::parseSelectionStatement()
+std::shared_ptr<const SelectionStatement> c4::service::parser::LLParser::parseSelectionStatement()
 {
     // std::cout << "parseSelectionStatement()\n";
     if(consume(TokenKind::keyword,SpecifiedToken(Keyword::If))) return nullptr;
@@ -418,10 +393,10 @@ std::shared_ptr<SelectionStatement> c4::service::parser::LLParser::parseSelectio
     consume(TokenKind::keyword,SpecifiedToken(Keyword::Else));
     auto elsestmt = parseStatement();
     if(!elsestmt) return nullptr;
-    return std::make_shared<SelectionStatement>(expr,ifstmt,elsestmt);
+    return std::make_shared<const SelectionStatement>(expr,ifstmt,elsestmt);
 }
 // DONE
-std::shared_ptr<IterationStatement> c4::service::parser::LLParser::parseIterationStatement()
+std::shared_ptr<const IterationStatement> c4::service::parser::LLParser::parseIterationStatement()
 {
     if(consume(TokenKind::keyword,SpecifiedToken(Keyword::While))) return nullptr;
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return nullptr;
@@ -432,11 +407,11 @@ std::shared_ptr<IterationStatement> c4::service::parser::LLParser::parseIteratio
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return nullptr;
     auto c = parseStatement();
     if(!c) return nullptr;
-    return std::make_shared<IterationStatement>(b,c);
+    return std::make_shared<const IterationStatement>(b,c);
 
 }
 // DONE
-std::shared_ptr<JumpStatement> c4::service::parser::LLParser::parseJumpStatement()
+std::shared_ptr<const JumpStatement> c4::service::parser::LLParser::parseJumpStatement()
 {
     // std::cout<<"parseJumpStatement()\n";
     visit();
@@ -467,10 +442,10 @@ std::shared_ptr<JumpStatement> c4::service::parser::LLParser::parseJumpStatement
         return nullptr;
     }
     if(consume(TokenKind::punctuator, SpecifiedToken(Punctuator::Semicolon))) return nullptr;
-    return std::make_shared<JumpStatement>(b,IdentifierExpression(""));
+    return std::make_shared<const JumpStatement>(b,IdentifierExpression(""));
 }
 // DONE
-bool c4::service::parser::LLParser::parseStatement()
+std::shared_ptr<const IStatement> c4::service::parser::LLParser::parseStatement()
 {
     // std::cout<<"parseStatement()\n";
     visit();
@@ -511,18 +486,18 @@ bool c4::service::parser::LLParser::parseStatement()
     //auto a = PrintVisitor(std::cout);
     auto a=std::make_shared<State>(INITIAL_STATE);
     auto lrparser = std::make_shared<ExpressionParser>(a);
-    auto a = lrparser->parse(stream);//->accept(a);
+    auto expr = lrparser->parse(stream);//->accept(a);
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return nullptr;
     //}
     //catch (std::logic_error&){};
-    return std::make_shared<IStatement>(a);
+    return expr;
 }
 // TODO
-std::shared_ptr<LabeledStatement> c4::service::parser::LLParser::parseLabeledStatement()
+std::shared_ptr<const LabeledStatement> c4::service::parser::LLParser::parseLabeledStatement()
 {
     if(consume(TokenKind::identifier)) return nullptr;
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Colon))) return nullptr;
-    return std::make_shared<LabeledStatement>(model::expression::IdentifierExpression(""),parseStatement());
+    return std::make_shared<const LabeledStatement>(std::make_shared<IdentifierExpression>(""),parseStatement());
 }
 
 bool c4::service::parser::LLParser::visit()

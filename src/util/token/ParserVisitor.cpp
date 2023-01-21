@@ -34,6 +34,7 @@ void ParserVisitor::visit(const ErrorToken &token) {
 void ParserVisitor::visit(const IdentifierToken &token) {
     this->kind= TokenKind::identifier;
     auto a =token;
+    this->val=token.identifier;
     // std::cout<< "IdentifierToken!\n";
 
 }
