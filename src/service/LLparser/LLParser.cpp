@@ -519,7 +519,12 @@ bool c4::service::parser::LLParser::parseStatement()
     DelimiterStream stream(m_input,TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
     auto a=std::make_shared<State>(INITIAL_STATE);
     auto lrparser = std::make_shared<ExpressionParser>(a);
+    try{
     lrparser->parse(stream);
+    }
+    catch(std::logic_error er){
+        return 1;
+    }
     return  consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
 }
 
