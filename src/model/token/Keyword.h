@@ -52,6 +52,12 @@ namespace c4 {
                 __Thread_local  = 0x0000080000000000L
             };
 
+            inline Keyword operator~ (Keyword k) {
+                return Keyword(
+                    ~std::underlying_type<Keyword>::type(k)
+                );
+            }
+
             inline Keyword operator& (Keyword l, Keyword r) {
                 return Keyword(
                     std::underlying_type<Keyword>::type(l) &

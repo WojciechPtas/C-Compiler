@@ -5,6 +5,7 @@ namespace c4 {
         namespace expression {
             class BinaryExpression;
             class CallExpression;
+            class CallArguments;
             class ConditionalExpression;
             class ConstantExpression;
             class IdentifierExpression;

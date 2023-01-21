@@ -21,6 +21,22 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
     VectorInputStream<shared_ptr<const Token>> input({
+        make_shared<IdentifierToken>(
+            TokenPosition("def.c", 0, 0),
+            "a"
+        ),
+        make_shared<PunctuatorToken>(
+            TokenPosition("def.c", 0, 0),
+            Punctuator::Equal
+        ),
+        make_shared<IdentifierToken>(
+            TokenPosition("def.c", 0, 0),
+            "b"
+        ),
+        make_shared<PunctuatorToken>(
+            TokenPosition("def.c", 0, 0),
+            Punctuator::Equal
+        ),
         make_shared<PunctuatorToken>(
             TokenPosition("def.c", 0, 0),
             Punctuator::Minus
