@@ -44,6 +44,8 @@ namespace c4::service::parser{
             bool parseStructDeclarationList();
             bool parsePointer();
             bool parseDeclarator();
+            bool parseAbstractDeclarator();
+            bool parseDirectAbstractDeclarator();
             bool parseDirectDeclarator();
             bool parseDirectDeclarator2();
             bool parseParameterTypeList();

@@ -1,20 +1,5 @@
-int (f(int x, int y))
-{
-	{
-		struct S
-		{
-			int x;
-		} s;
-		((s.x) = x);
-		struct S (*p);
-		(p = (&s));
-		if (1)
-			return ;
-		else if (1)
-			return 1;
-		else {
-			return 0;
-		}
-	}
+int main(){
+	int "xada
+
 }
 

@@ -270,6 +270,38 @@ bool c4::service::parser::LLParser::parseDeclarator()
     return parseDirectDeclarator();
 }
 
+bool c4::service::parser::LLParser::parseAbstractDeclarator()
+{
+    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) {
+        if(parsePointer()) return 1;
+    }
+    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))){
+        if(parseDirectAbstractDeclarator()) return 1;
+    }
+    else{
+        return 0;
+    }
+
+}
+
+bool c4::service::parser::LLParser::parseDirectAbstractDeclarator()
+{
+    if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 1;
+    if(checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Int))
+    || checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Void))
+    || checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Char))
+    || checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Struct))
+    || checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Union)))
+    {if(parseParameterTypeList()) return 1;}
+    else if(checkLookAhead(TokenKind::punctuator, SpecifiedToken(Punctuator::RightParenthesis))){}
+    else{
+        if(parseAbstractDeclarator()) return 1;
+    }
+    if (consume(TokenKind::punctuator, SpecifiedToken(Punctuator::RightParenthesis))) return 1;
+    
+
+}
+
 bool c4::service::parser::LLParser::parseDirectDeclarator()
 {
     // std::cout<< "parseDirectDeclarator()\n";
@@ -366,6 +398,7 @@ bool c4::service::parser::LLParser::parseParameterDeclaration()
 {
     if(parseDeclarationSpecifier()) return 1;
     // TODO PARSE ABSTRACT DECLARATOR
+    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))||checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma))) return 0;
     if(parseDeclarator()) return 1;
     return 0;
 }
@@ -493,15 +526,13 @@ bool c4::service::parser::LLParser::parseJumpStatement()
             consume(TokenKind::keyword,SpecifiedToken(Keyword::Return));
         if(this->checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) break;
         else{
+            //std::cout <<"Return\n";
             DelimiterStream stream(m_input, TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
             auto a=std::make_shared<State>(INITIAL_STATE);
             auto lrparser = std::make_shared<ExpressionParser>(a);
-            try{
             auto b = lrparser->parse(stream);//->accept(a);
-            }
-            catch(std::logic_error& er){
-                return 1;
-            }
+            if(b==nullptr) return 1;
+            //std::cout<<"works\n";
         }
         break;
         default:
