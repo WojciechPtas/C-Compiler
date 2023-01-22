@@ -35,8 +35,12 @@ bool LLParser::consume(TokenKind k, SpecifiedToken s, bool inlookahead)
         //    std::cout<<"dupa";
         //};
         return 1;
-        }
+    }
     token->accept(visitor);
+        if(token->isError()){
+        errorcode=1;
+        return 1;
+    }
     if(visitor.getKind()!=k) return 1;
     switch(k){
         case TokenKind::keyword:
@@ -51,7 +55,12 @@ bool LLParser::consume(TokenKind k, SpecifiedToken s, bool inlookahead)
 int c4::service::parser::LLParser::run()
 {
     if(this->parse()){
+        if(errorcode==0)
         std::cout<<token->position.file<<":"<<token->position.line<<":"<<token->position.column<<": wrong token\n";
+        else{
+        util::token::PrintVisitor v(std::cout);
+        token->accept(v);
+        }
         return 1;
     }
     else{
@@ -298,7 +307,7 @@ bool c4::service::parser::LLParser::parseDirectAbstractDeclarator()
         if(parseAbstractDeclarator()) return 1;
     }
     if (consume(TokenKind::punctuator, SpecifiedToken(Punctuator::RightParenthesis))) return 1;
-    
+
 
 }
 

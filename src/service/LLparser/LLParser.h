@@ -9,6 +9,8 @@
 #include "../../model/token/PunctuatorToken.h"
 #include "../../model/token/Token.h"
 #include "../../util/token/ParserVisitor.h"
+#include "../../util/token/PrintVisitor.h"
+
 #include "../io/IBufferedInputStream.h"
 #include "../io/DelimiterInputStream.h"
 #include "../io/ParenthesisDelimiterStream.h"
@@ -28,10 +30,12 @@ namespace c4::service::parser{
             std::shared_ptr<io::IBufferedInputStream<std::shared_ptr<model::token::Token>>> m_input;
             util::token::ParserVisitor visitor;
             std::shared_ptr<model::token::Token> token;
+            int errorcode;
         public:
             LLParser(std::shared_ptr<io::IBufferedInputStream<std::shared_ptr<model::token::Token>>> input) : m_input(input){
                 visitor=c4::util::token::ParserVisitor();
                 token=nullptr;
+                errorcode=0;
                 };
             int run();
             bool parse(/* io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input*/);
