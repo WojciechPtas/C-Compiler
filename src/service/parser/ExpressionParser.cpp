@@ -10,7 +10,8 @@ using namespace c4::service::io;
 using namespace c4::service::parser;
 using namespace std;
 
-ExpressionParser::ExpressionParser(weak_ptr<const State> initialState) {
+ExpressionParser::ExpressionParser(weak_ptr<const State> initialState)
+: initialState(initialState) {
     this->states.push_back(initialState);
 }
 
@@ -65,12 +66,11 @@ shared_ptr<const IExpression> ExpressionParser::parse(
             }
 
             if (handler == nullptr) {
-                //resetting
-                std::weak_ptr<const State> initialState = states[0];
                 this->states.clear();
                 this->states.push_back(initialState);
                 this->expressions.clear();
                 this->expressions.push_back(nullptr);
+                break;
             }
 
             ExpressionParserExecutor executor(*this, token);

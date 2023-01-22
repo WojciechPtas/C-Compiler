@@ -27,6 +27,7 @@ namespace c4 {
                 );
 
             private:
+                std::weak_ptr<const model::parser::lr::State> initialState;
                 std::vector<std::shared_ptr<const model::expression::IExpression>> expressions;
                 std::vector<std::weak_ptr<const model::parser::lr::State>> states;
             };
