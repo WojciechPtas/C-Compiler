@@ -1,6 +1,6 @@
-int main(){
+int main(arc, int masda){
 	break;
-	int x
+	int x;
 	return;
 	}
 	

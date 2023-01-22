@@ -169,10 +169,7 @@ bool LLParser::parseStructorUnionSpecifier(){
         if(visitor.getSepcificValue().p!=Punctuator::LeftBrace) return 1;
         m_input->popMark();
         if(this->parseStructDeclarationList()) return 1;
-        m_input->read(&token);
-        token->accept(visitor);
-        if(visitor.getKind()!=TokenKind::punctuator) return 1;
-        if(visitor.getSepcificValue().p!=Punctuator::RightBrace) return 1;
+        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return 1;
         m_input->popMark();
         return 0;
     }
@@ -361,7 +358,10 @@ bool c4::service::parser::LLParser::parseIdentifierList()
 {
     //  std::cout<<"parseIdentifierList()\n";
     if(consume(TokenKind::identifier)) return 1;
-    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma))) return parseIdentifierList();
+    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma))) {
+        consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma));
+        return parseIdentifierList();
+        }
     return 0;
 }
 // DONE
