@@ -7,6 +7,7 @@
 #include "../../../model/expression/IndexExpression.h"
 #include "../../../model/expression/MemberExpression.h"
 #include "../../../model/expression/UnaryExpression.h"
+#include "../../../model/expression/CallExpression.h"
 
 #include "../../../model/token/ConstantToken.h"
 #include "../../../model/token/IdentifierToken.h"
@@ -73,6 +74,16 @@ MAKE_STATE(_unaryLogicNegationState);
 MAKE_STATE(_unarySizeOfReductionState);
 MAKE_STATE(_unarySizeOfState);
 
+//CallExpression states
+MAKE_STATE(_callLeftParenthesis);
+MAKE_STATE(_callEmptyReduction);
+MAKE_STATE(_operatorOrFirstCallArgumentReduction);
+MAKE_STATE(_callArgumentFirstComma);
+MAKE_STATE(_callInsideParenthesis);
+MAKE_STATE (_callNonEmptyReduction);
+MAKE_STATE(_operatorOrNonFirstCallArgumentReduction);
+MAKE_STATE(_callArgumentNonFirstComma);
+
 static const shared_ptr<const State> _initialState = _initialize();
 const State &c4::util::parser::lr::INITIAL_STATE = *_initialState;
 
@@ -105,6 +116,22 @@ static shared_ptr<const IExpression> _reduceParentheses(
 static shared_ptr<const IExpression> _reduceUnary(
     vector<shared_ptr<const IExpression>> consumed,
     UnaryExpressionType type
+);
+
+static shared_ptr<const IExpression> _reduceCallExpressionEmpty(
+    vector<shared_ptr<const IExpression>> consumed
+);
+
+static shared_ptr<const IExpression> _reduceFirstCallArgument(
+    vector<shared_ptr<const IExpression>> consumed
+);
+
+static shared_ptr<const IExpression> _reduceCallExpressionNonEmpty(
+    vector<shared_ptr<const IExpression>> consumed
+);
+
+static shared_ptr<const IExpression> _reduceNonFirstCallArgument(
+    vector<shared_ptr<const IExpression>> consumed
 );
 
 // State initialization helper declarations
@@ -549,6 +576,110 @@ static shared_ptr<const State> _initialize() {
     _addUnaryShifts(*_unarySizeOfState);
     _unarySizeOfState->addJump(ANY_EXPRESSION, _unarySizeOfReductionState);
 
+//CALLEXPRESSION
+
+    //State: _callLeftParenthesis
+
+    _addUnaryShifts(*_callLeftParenthesis); //Start of any expression
+
+    _callLeftParenthesis->addJump(
+        ANY_EXPRESSION,
+        _operatorOrFirstCallArgumentReduction
+    );
+
+    _callLeftParenthesis->addJump(
+        CALL_ARGUMENTS,
+        _callInsideParenthesis
+    );
+
+    _callLeftParenthesis->addShift(
+        PUNCTUATOR_TOKEN(Punctuator::RightParenthesis),
+        _callEmptyReduction
+    );
+
+
+    //State: _callEmptyReduction
+
+    _callEmptyReduction->addReduction(
+        ANY_TOKEN,
+        3, 1,
+        _reduceCallExpressionEmpty
+    );
+
+
+    //State: _operatorOrFirstCallArgumentReduction
+
+    _addAssignmentShift(*_operatorOrFirstCallArgumentReduction);
+
+    _operatorOrFirstCallArgumentReduction->addReduction(
+        PUNCTUATOR_TOKEN(Punctuator::RightParenthesis),
+        1, 1,
+        _reduceFirstCallArgument
+    );
+
+    _operatorOrFirstCallArgumentReduction->addShift(
+        PUNCTUATOR_TOKEN(Punctuator::Comma),
+        _callArgumentFirstComma
+    );
+
+
+    //State: _callArgumentFirstComma
+
+    _callArgumentFirstComma->addReduction(
+        UNARY_EXPRESSION_TOKENS,
+        2, 1,
+        _reduceFirstCallArgument
+    );
+
+
+    //State: _callInsideParenthesis
+
+    _addUnaryShifts(*_callInsideParenthesis);
+
+    _callInsideParenthesis->addShift(
+        PUNCTUATOR_TOKEN(Punctuator::RightParenthesis),
+        _callNonEmptyReduction
+    );
+
+    _callInsideParenthesis->addJump(
+        ANY_EXPRESSION,
+        _operatorOrNonFirstCallArgumentReduction
+    );
+
+
+    //State: _callNonEmptyReduction
+
+    _callNonEmptyReduction->addReduction(
+        ANY_TOKEN,
+        4, 2,
+        _reduceCallExpressionNonEmpty
+    );
+
+
+    //State: _operatorOrNonFirstCallArgumentReduction
+
+    _addAssignmentShift(*_operatorOrNonFirstCallArgumentReduction);
+
+    _operatorOrNonFirstCallArgumentReduction->addReduction(
+        PUNCTUATOR_TOKEN(Punctuator::RightParenthesis),
+        2, 2,
+        _reduceNonFirstCallArgument
+    );
+
+    _operatorOrNonFirstCallArgumentReduction->addShift(
+        PUNCTUATOR_TOKEN(Punctuator::Comma),
+        _callArgumentNonFirstComma
+    );
+    
+
+    //State: _callArgumentNonFirstComma
+
+    _callArgumentNonFirstComma->addReduction(
+        UNARY_EXPRESSION_TOKENS,
+        3, 2,
+        _reduceNonFirstCallArgument
+    );
+
     return _initial;
 }
 
@@ -646,6 +777,41 @@ static shared_ptr<const IExpression> _reduceUnary(
     return make_unique<UnaryExpression>(type, consumed[0]);
 }
 
+//Invariant: consumed.size() == 1
+static shared_ptr<const IExpression> _reduceCallExpressionEmpty(
+    vector<shared_ptr<const IExpression>> consumed
+) {
+    return make_shared<CallExpression>(consumed[0]);
+}
+
+//Invariant: consumed.size() == 1
+static shared_ptr<const IExpression> _reduceFirstCallArgument(
+    vector<shared_ptr<const IExpression>> consumed
+) {
+    return make_shared<CallArguments>(consumed[0]);
+}
+
+//Invariant: consumed.size() == 2
+static shared_ptr<const IExpression> _reduceCallExpressionNonEmpty(
+    vector<shared_ptr<const IExpression>> consumed
+) {
+    return make_shared<CallExpression>(
+        consumed[0], 
+        dynamic_pointer_cast<const CallArguments, const IExpression>(consumed[1])
+    );
+}
+
+//Invariant: consumed.size() == 2
+static shared_ptr<const IExpression> _reduceNonFirstCallArgument(
+    vector<shared_ptr<const IExpression>> consumed
+) {
+    return make_shared<CallArguments>(
+        dynamic_pointer_cast<const CallArguments, const IExpression>(consumed[0]),
+        consumed[1]
+    );
+}
+
+
 //
 
 static inline void _addAdditiveShifts(State &state) {
@@ -736,6 +902,11 @@ static inline void _addPostfixShifts(State &state) {
         PUNCTUATOR_TOKEN(Punctuator::DashGreaterThan),
         _pointerMemberAccessState
     );
+
+    state.addShift(
+        PUNCTUATOR_TOKEN(Punctuator::LeftParenthesis),
+        _callLeftParenthesis
+    );
 }
 
 static inline void _addPrimaryShifts(State &state) {
@@ -765,6 +936,7 @@ static inline void _addUnaryShifts(State &state) {
     _addPrimaryShifts(state);
 
     state.addShift(PUNCTUATOR_TOKEN(Punctuator::And), _unaryAddressOfState);
+    
     state.addShift(
         PUNCTUATOR_TOKEN(Punctuator::Minus),
         _unaryArithmeticNegationState

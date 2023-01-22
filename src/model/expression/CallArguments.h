@@ -17,10 +17,15 @@ class CallArguments : public IExpression {
 
         CallArguments() = default;
 
-        CallArguments (vector<shared_ptr<const IExpression>> arguments) 
-        : arguments(arguments)
-        { }
+        CallArguments(shared_ptr<const IExpression> singleArgument) : CallArguments() {
+            addArgument(singleArgument);
+        }
 
+        CallArguments(shared_ptr<const CallArguments> args, shared_ptr<const IExpression> nextArg) 
+        : CallArguments(*args) {
+            addArgument(nextArg);
+        }
+        
         ~CallArguments() { }
         
         void addArgument(const shared_ptr<const IExpression> &expr) {

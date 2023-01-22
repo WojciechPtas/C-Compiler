@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../../../model/parser/lr/LookaheadCondition.h"
+#include "../../../model/token/Keyword.h"
+#include "../../../model/token/Punctuator.h"
 
 namespace c4 {
     namespace util {
@@ -39,6 +41,21 @@ namespace c4 {
                     model::parser::lr::TokenType::Identifier,
                     model::token::Keyword(0),
                     model::token::Punctuator(0)
+                };
+
+                const model::parser::lr::LookaheadCondition UNARY_EXPRESSION_TOKENS = {
+                    model::parser::lr::TokenType::Punctuator | 
+                        model::parser::lr::TokenType::Constant |
+                        model::parser::lr::TokenType::Identifier |
+                        model::parser::lr::TokenType::Keyword,
+
+                    model::token::Keyword::Sizeof,
+                        
+                    model::token::Punctuator::And |
+                        model::token::Punctuator::Asterisk |
+                        model::token::Punctuator::ExclamationMark |
+                        model::token::Punctuator::Minus |
+                        model::token::Punctuator::LeftParenthesis
                 };
 
                 inline model::parser::lr::LookaheadCondition KEYWORD_TOKEN(

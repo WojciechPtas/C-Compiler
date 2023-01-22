@@ -44,8 +44,8 @@ void PrintVisitor::visit(const CallArguments& ca) {
 }
 
 void PrintVisitor::visit(const CallExpression &expr) {
-    this->outputStream << "(" 
-        << expr.called; 
+    this->outputStream << "(";
+    expr.called->accept(*this);
     expr.arguments.accept(*this);
     this->outputStream << ")";
 }

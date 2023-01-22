@@ -18,9 +18,9 @@ namespace c4 {
                 ) : called(called) { }
 
                 CallExpression(
-                    shared_ptr<const IExpression>& called,
-                    const CallArguments& arguments
-                ) : called(called), arguments(arguments) { }
+                    const shared_ptr<const IExpression>& called,
+                    const shared_ptr<const CallArguments>& arguments
+                ) : called(called), arguments(*arguments) { }
                 
                 ~CallExpression() { }
 

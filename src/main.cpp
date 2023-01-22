@@ -37,9 +37,9 @@ int main(int argc, char* argv[]) {
             TokenPosition("def.c", 0, 0),
             Punctuator::Equal
         ),
-        make_shared<PunctuatorToken>(
+        make_shared<IdentifierToken>(
             TokenPosition("def.c", 0, 0),
-            Punctuator::Minus
+            "function"
         ),
         make_shared<PunctuatorToken>(
             TokenPosition("def.c", 0, 0),
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
         ),
         make_shared<PunctuatorToken>(
             TokenPosition("def.c", 0, 0),
-            Punctuator::Asterisk
+            Punctuator::Comma
         ),
         make_shared<ConstantToken>(
             TokenPosition("abc.c", 0, 0),
@@ -76,10 +76,6 @@ int main(int argc, char* argv[]) {
             TokenPosition("ghi.c", 0, 0),
             ConstantType::Decimal,
             "47"
-        ),
-        make_shared<PunctuatorToken>(
-            TokenPosition("def.c", 0, 0),
-            Punctuator::RightParenthesis
         ),
         make_shared<PunctuatorToken>(
             TokenPosition("def.c", 0, 0),
@@ -110,7 +106,29 @@ int main(int argc, char* argv[]) {
             TokenPosition("ghi.c", 0, 0),
             ConstantType::Decimal,
             "42"
-        )
+        ),
+        make_shared<PunctuatorToken>(
+            TokenPosition("def.c", 0, 0),
+            Punctuator::RightParenthesis
+        ),
+        make_shared<PunctuatorToken>(
+            TokenPosition("def.c", 0, 0),
+            Punctuator::Plus
+        ),
+        make_shared<ConstantToken>(
+            TokenPosition("ghi.c", 0, 0),
+            ConstantType::Decimal,
+            "42"
+        ),
+        make_shared<PunctuatorToken>(
+            TokenPosition("def.c", 0, 0),
+            Punctuator::Asterisk
+        ),
+        make_shared<ConstantToken>(
+            TokenPosition("ghi.c", 0, 0),
+            ConstantType::Decimal,
+            "69"
+        ),
     });
 
     auto ptr = make_shared<const State>(INITIAL_STATE); 

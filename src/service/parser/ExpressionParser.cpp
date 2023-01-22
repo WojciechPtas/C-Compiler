@@ -22,7 +22,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
     size_t stateCount = 0, newStateCount = this->states.size();
 
     do {
-        bool isGoto = stateCount > newStateCount; //we reduced last iteration? No confirmation yet.
+        bool isGoto = stateCount > newStateCount; //we reduced last iteration
         stateCount = newStateCount;
 
         if (readNext) {

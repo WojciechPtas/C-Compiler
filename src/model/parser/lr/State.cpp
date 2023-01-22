@@ -74,7 +74,7 @@ void State::addJump(
     }
 
     if ((typeMask & ExpressionType::CallArguments) == ExpressionType::CallArguments) {
-        if (!this->gotoAfterCall.expired()) {
+        if (!this->gotoAfterCallArguments.expired()) {
             throw logic_error("Goto installed already");
         }
 
