@@ -6,6 +6,7 @@ namespace c4 {
     namespace util {
         namespace parser {
             namespace lr {
+                //Note: CallArguments is not an expression
                 const model::parser::lr::ExpressionCondition ANY_EXPRESSION = {
                     model::parser::lr::ExpressionType(0xFF),
                     model::expression::BinaryExpressionType(0x1FF),
@@ -24,6 +25,13 @@ namespace c4 {
 
                     return condition;
                 }
+
+                const model::parser::lr::ExpressionCondition CALL_ARGUMENTS = {
+                    model::parser::lr::ExpressionType::CallArguments,
+                    model::expression::BinaryExpressionType(0),
+                    model::expression::MemberExpressionType(0),
+                    model::expression::UnaryExpressionType(0)
+                };
             }
         }
     }

@@ -24,6 +24,12 @@ namespace c4 {
                     token::Punctuator punctuatorMask;
                 };
 
+                inline TokenType operator~ (TokenType t) {
+                    return TokenType(
+                        ~std::underlying_type<TokenType>::type(t)
+                    );
+                }
+
                 inline TokenType operator& (TokenType l, TokenType r) {
                     return TokenType(
                         std::underlying_type<TokenType>::type(l) &
@@ -36,6 +42,15 @@ namespace c4 {
                         std::underlying_type<TokenType>::type(l) |
                         std::underlying_type<TokenType>::type(r)
                     );
+                }
+                
+                inline LookaheadCondition operator~ (
+                    LookaheadCondition l) {
+                    return {
+                        ~l.typeMask,
+                        ~l.keywordMask,
+                        ~l.punctuatorMask,
+                    };
                 }
 
                 inline LookaheadCondition operator| (

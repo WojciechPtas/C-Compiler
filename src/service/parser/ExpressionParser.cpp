@@ -22,7 +22,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
     size_t stateCount = 0, newStateCount = this->states.size();
     ////std::cout<<"Parsing\n";
     do {
-        auto isGoto = stateCount > newStateCount;
+        bool isGoto = stateCount > newStateCount; //we reduced last iteration
         stateCount = newStateCount;
         //std::cout<<"Read token\n";
         if (readNext) {
@@ -31,7 +31,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
         //std::cout<<"Parsing\n";
 
         if (this->states.empty()) {
-            throw logic_error("No state left!");
+            throw logic_error("No state left!"); //should never happen
         }
         //std::cout<<"Parsing\n" <<this->states.size();
         //std::cout<<"Parsing\n";
@@ -74,7 +74,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
         }
 
         newStateCount = this->states.size();
-    } while (!eofReached || !accepting);
+    } while (!eofReached || !accepting); //terminates when eofReached && accepting
 
     if (this->expressions.empty()) {
         throw logic_error("No expression available!");

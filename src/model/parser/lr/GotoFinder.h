@@ -7,6 +7,7 @@
 #include "../../expression/IExpressionVisitor.h"
 #include "../../expression/MemberExpression.h"
 #include "../../expression/UnaryExpression.h"
+#include "../../expression/CallExpression.h"
 
 #include "State.h"
 #include "StateHandler.h"
@@ -41,6 +42,15 @@ namespace c4 {
                         if (entry != this->state.gotoAfterBinary.end()) {
                             this->determinedState = (*entry).second;
                         }
+                    }
+
+                    void visit(
+                        const expression::CallArguments &expr
+                    ) override {
+                        (void) expr;
+
+                        this->checkAndSetExecuted();
+                        this->determinedState = this->state.gotoAfterCallArguments;
                     }
 
                     void visit(

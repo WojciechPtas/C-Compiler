@@ -10,15 +10,16 @@ namespace c4 {
     namespace model {
         namespace parser {
             namespace lr {
-                enum class ExpressionType : unsigned char {
-                    Binary      = 0x01,
-                    Call        = 0x02,
-                    Conditional = 0x04,
-                    Constant    = 0x08,
-                    Identifier  = 0x10,
-                    Index       = 0x20,
-                    Member      = 0x40,
-                    Unary       = 0x80
+                enum class ExpressionType : unsigned short {
+                    Binary        = 0x01,
+                    Call          = 0x02,
+                    CallArguments = 0x100,
+                    Conditional   = 0x04,
+                    Constant      = 0x08,
+                    Identifier    = 0x10,
+                    Index         = 0x20,
+                    Member        = 0x40,
+                    Unary         = 0x80
                 };
 
                 struct ExpressionCondition {

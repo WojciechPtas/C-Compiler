@@ -98,6 +98,7 @@ namespace c4 {
                     // Jump-based stuff
 
                     std::weak_ptr<const State> gotoAfterCall;
+                    std::weak_ptr<const State> gotoAfterCallArguments;
                     std::weak_ptr<const State> gotoAfterConditional;
                     std::weak_ptr<const State> gotoAfterConstant;
                     std::weak_ptr<const State> gotoAfterIdentifier;

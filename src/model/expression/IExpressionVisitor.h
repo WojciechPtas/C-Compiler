@@ -5,6 +5,7 @@ namespace c4 {
         namespace expression {
             class BinaryExpression;
             class CallExpression;
+            class CallArguments;
             class ConditionalExpression;
             class ConstantExpression;
             class IdentifierExpression;
@@ -17,6 +18,7 @@ namespace c4 {
                 virtual ~IExpressionVisitor() { }
 
                 virtual void visit(const BinaryExpression &expr) = 0;
+                virtual void visit(const CallArguments &expr) = 0;
                 virtual void visit(const CallExpression &expr) = 0;
                 virtual void visit(const ConditionalExpression &expr) = 0;
                 virtual void visit(const ConstantExpression &expr) = 0;
