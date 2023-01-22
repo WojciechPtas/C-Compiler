@@ -19,24 +19,18 @@ ExpressionParser::ExpressionParser(weak_ptr<const State> initialState)
 shared_ptr<const IExpression> ExpressionParser::parse(
     IInputStream<shared_ptr<Token>> &input
 ) {
-    shared_ptr<Token> token;
     bool accepting, eofReached, readNext = true;
     size_t stateCount = 0, newStateCount = this->states.size();
-    ////std::cout<<"Parsing\n";
     do {
         bool isGoto = stateCount > newStateCount; //we reduced last iteration
         stateCount = newStateCount;
-        //std::cout<<"Read token\n";
         if (readNext) {
-            eofReached = !input.read(&token);
+            eofReached = !input.read(&_lastTokenRead);
         }
-        //std::cout<<"Parsing\n";
 
         if (this->states.empty()) {
             throw logic_error("No state left!"); //should never happen
         }
-        //std::cout<<"Parsing\n" <<this->states.size();
-        //std::cout<<"Parsing\n";
         auto currentState = this->states.back().lock();
 
         DBGOUT_E(
@@ -44,7 +38,6 @@ shared_ptr<const IExpression> ExpressionParser::parse(
             "Parser in state: '%s'",
             currentState->name.c_str()
         );
-        //std::cout<<"Parsing\n";
 
         if (isGoto) {
             if (this->expressions.empty()) {
@@ -62,7 +55,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
             if (eofReached) {
                 handler = currentState->getEndHandler();
             } else {
-                handler = currentState->getHandler(*token);
+                handler = currentState->getHandler(*_lastTokenRead);
             }
 
             if (handler == nullptr) {
@@ -73,7 +66,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
                 break;
             }
 
-            ExpressionParserExecutor executor(*this, token);
+            ExpressionParserExecutor executor(*this, _lastTokenRead);
             handler->accept(executor);
             readNext = executor.hasShifted();
             accepting = executor.isAccepting();
