@@ -81,7 +81,7 @@ bool LLParser::parse()
         if(parseCompoundStatement()) return 1;
     }
     else{
-        return consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
+        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return 1;
     }
     }
     m_input->pushMark();
