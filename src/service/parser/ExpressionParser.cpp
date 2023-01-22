@@ -14,6 +14,7 @@ ExpressionParser::ExpressionParser(weak_ptr<const State> initialState) {
     this->states.push_back(initialState);
 }
 
+//Returns nullptr in case of failure
 shared_ptr<const IExpression> ExpressionParser::parse(
     IInputStream<shared_ptr<Token>> &input
 ) {
@@ -64,7 +65,12 @@ shared_ptr<const IExpression> ExpressionParser::parse(
             }
 
             if (handler == nullptr) {
-                throw logic_error("No handler!");
+                //resetting
+                std::weak_ptr<const State> initialState = states[0];
+                this->states.clear();
+                this->states.push_back(initialState);
+                this->expressions.clear();
+                this->expressions.push_back(nullptr);
             }
 
             ExpressionParserExecutor executor(*this, token);
@@ -80,5 +86,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
         throw logic_error("No expression available!");
     }
 
-    return this->expressions.back();
+    shared_ptr<const IExpression> finalExpression = this->expressions.back();
+    expressions.pop_back();
+    return finalExpression;
 }
