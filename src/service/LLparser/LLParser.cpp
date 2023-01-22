@@ -290,6 +290,9 @@ bool c4::service::parser::LLParser::parseDirectDeclarator2()
     visit();
     if(visitor.getKind()==TokenKind::punctuator && visitor.getSepcificValue().p==Punctuator::LeftParenthesis){
         consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis));
+        if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))){
+            return consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis));
+        }
         if(parseParameterTypeList()) return 1;
         return consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis));
     }
