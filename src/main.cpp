@@ -1,9 +1,7 @@
-#include <cstdio>
 #include <iostream>
 #include <memory>
 #include "model/token/Token.h"
 #include "util/token/PrintVisitor.h"
-// #include "model/token/ErrorToken.h"
 #include "service/automata/NodeAutomaton.h"
 
 #include "service/io/FileInputStream.h"
@@ -12,28 +10,25 @@
 #include "service/io/MosaicInputStream.h"
 #include "service/io/DelimiterInputStream.h"
 
+#include "model/parser/lr/State.h"
+#include "model/expression/IExpression.h"
 #include "util/node/NodeUtilities.h"
 #include "util/token/KeywordUtilities.h"
 #include "util/token/PunctuatorUtilities.h"
-#include "service/parser/ExpressionParser.h"
 #include "util/parser/lr/StateUtilities.h"
-#include "model/parser/lr/State.h"
 #include "service/parser/ExpressionParser.h"
+#include "util/expression/PrintVisitor.h"
 #include "service/LLparser/LLParser.h"
-#include "util/parser/lr/StateUtilities.h"
-using namespace c4::model;
-using namespace c4::model::parser::lr;
+
 using namespace c4::service::parser;
 using namespace c4::model::token;
+using namespace c4::model::parser::lr;
+using namespace c4::util::parser::lr;
 using namespace c4::service::io;
 using namespace c4::service::automata;
-using namespace c4::service::parser;
-//using namespace c4::util::expression;
-using namespace c4::util::parser::lr;
 using namespace c4::util::token;
 using namespace std;
-using namespace c4::service::parser;
-using namespace c4::model::parser::lr;
+
 enum RetCode {
     OK=0, ERR=1
 };
@@ -46,26 +41,23 @@ enum Action{
 };
 
 
-bool tokenize(std::string input) {
-    ///cout << "dupa\n";
-    RetCode retval=OK;
-    
-
-    auto fileSrc = make_shared<FileInputStream>(input);
-    //cout << "File stream\n";
+shared_ptr<LexingInputStream> initializeLexer(const std::string& input) {
+     auto fileSrc = make_shared<FileInputStream>(input);
 
     auto bufferedSrc = make_shared<MosaicInputStream<char>>(fileSrc, 1024);
-    //cout << "mosaic stream\n";
 
     auto metricSrc = make_shared<MetricInputStream>(bufferedSrc, input);
-    //cout << "metric\n";
 
     auto keywordAutomata = make_shared<NodeAutomaton<char, Keyword>>(KEYWORD_TREE);
     auto punctuatorAutomata = make_shared<NodeAutomaton<char, Punctuator>>(PUNCTUATOR_TREE);
-    //cout << "automaton\n";
 
-    auto lexer =LexingInputStream(metricSrc, keywordAutomata, punctuatorAutomata);
-    //cout << "lexer\n";
+    return make_shared<LexingInputStream>(metricSrc, keywordAutomata, punctuatorAutomata);
+}
+
+bool tokenize(const std::string &input) {
+    RetCode retval=OK;
+
+    auto lexer = initializeLexer(input);
 
     shared_ptr<Token> token;
     
@@ -82,9 +74,8 @@ bool tokenize(std::string input) {
     //    system.
 
     setvbuf(stdout, nullptr, _IOFBF, 4096);
-
     
-    while(lexer.read(&token) && !token->isError()) {
+    while(lexer->read(&token) && !token->isError()) {
         token->accept(pt);
     }
 
@@ -95,26 +86,8 @@ bool tokenize(std::string input) {
     return retval;
 }
 
-bool parse(std::string input) {
-        ///cout << "dupa\n";
-    //RetCode retval=OK;
-    //string input="input.txt";
-
-    auto fileSrc = make_shared<FileInputStream>(input);
-    //cout << "File stream\n";
-
-    auto bufferedSrc = make_shared<MosaicInputStream<char>>(fileSrc, 1024);
-    //cout << "mosaic stream\n";
-
-    auto metricSrc = make_shared<MetricInputStream>(bufferedSrc, input);
-    //cout << "metric\n";
-
-    auto keywordAutomata = make_shared<NodeAutomaton<char, Keyword>>(KEYWORD_TREE);
-    auto punctuatorAutomata = make_shared<NodeAutomaton<char, Punctuator>>(PUNCTUATOR_TREE);
-    //cout << "automaton\n";
-
-    auto lexer =make_shared<LexingInputStream>(metricSrc, keywordAutomata, punctuatorAutomata);
-    //cout << "lexer\n";
+bool parse(const std::string& input) {
+    auto lexer = initializeLexer(input);
 
     shared_ptr<Token> token;
     
@@ -134,6 +107,22 @@ bool parse(std::string input) {
     return parser.run();
 }
 
+bool LRparse(const std::string& input) {
+    auto lexer = initializeLexer(input);
+    auto a=make_shared<State>(INITIAL_STATE);
+    auto lrparser = make_shared<ExpressionParser>(a);
+    
+    auto expr = lrparser->parse(*lexer);
+    
+    if(expr == nullptr) {
+        return ERR;
+    }
+
+    c4::util::expression::PrintVisitor pt(std::cout);
+    expr->accept(pt);
+    return OK;
+}
+
 int main(int argc, char* argv[]) {
     string input="input.txt";
     for(int i=0; i<argc;i++){
@@ -146,15 +135,10 @@ int main(int argc, char* argv[]) {
             input= argv[i+1];
             return parse(input);
         }
+        else if(in =="--lrparse" && i < argc-1){
+            input= argv[i+1];
+            return LRparse(input);
+        }
     }
-    //cout<<input<<endl;
-    
-
-    /*
-      auto ptr = make_shared<const State>(INITIAL_STATE); 
-    
-    ExpressionParser parser(ptr);
-    PrintVisitor visitor(cout);
-    parser.parse(input)->accept(visitor);
-    */
+    cerr << "No command given\n";
 }
