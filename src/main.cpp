@@ -131,7 +131,7 @@ bool parse(std::string input) {
 
     //auto re =parser.parse();
     //cout<< "Returned with:!" << re << "\n";
-    return parser.run("add");
+    return parser.run();
 }
 
 int main(int argc, char* argv[]) {

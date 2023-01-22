@@ -48,7 +48,7 @@ bool LLParser::consume(TokenKind k, SpecifiedToken s, bool inlookahead)
     }
 }
 
-int c4::service::parser::LLParser::run(std::string input)
+int c4::service::parser::LLParser::run()
 {
     if(this->parse()){
         std::cout<<token->position.file<<":"<<token->position.line<<":"<<token->position.column<<": wrong token\n";
@@ -59,25 +59,9 @@ int c4::service::parser::LLParser::run(std::string input)
     }
 }
 
-bool LLParser::parse(/*io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input*/)
+bool LLParser::parse()
 {
     visit();
-    //std::cout << " parsing \n";
-    //switch(visitor.getKind()){
-    //    case TokenKind::keyword:
-    //    switch(visitor.getSepcificValue().k){
-    //        case Keyword::__Static_assert:
-    //        if(this->parseStaticAssertDeclaration()) return 1;
-    //        break;
-    //        default:
-    //        if(parseDeclarationSpecifier()) return 1;
-    //        if(parseDeclarator()) return 1;
-    //    }
-    //    break;
-    //    default:
-    //    return 1;
-    //}
-    //std::cout<<"Keep going!\n";
     if(visitor.getKind()!=TokenKind::keyword) return 1;
     if(visitor.getSepcificValue().k==Keyword::__Static_assert){
         parseStaticAssertDeclaration();
@@ -141,39 +125,61 @@ bool LLParser::parseStaticAssertDeclaration()
 bool LLParser::parseStructorUnionSpecifier(){
     m_input->read(&token);
     token->accept(visitor);
+    //std::cout<<"Struct!\n";
     if(visitor.getKind()!=TokenKind::keyword) return 1;
-    if(visitor.getSepcificValue().k!=Keyword::Struct || visitor.getSepcificValue().k!=Keyword::Union) return 1;
+    //std::cout<<"Struct!\n";
 
-    
-    m_input->read(&token);
-    token->accept(visitor);
-    if(visitor.getKind()==TokenKind::identifier){
-        m_input->pushMark();
-        m_input->read(&token);
-        token->accept(visitor);
-        if(visitor.getKind()==TokenKind::punctuator){ 
-        if(visitor.getSepcificValue().p!=Punctuator::LeftBrace) {
-             m_input->popMark();
+    if((visitor.getSepcificValue().k!=Keyword::Struct) && (visitor.getSepcificValue().k!=Keyword::Union)) return 1;
+    //std::cout<<"Struct!\n";
+    if(checkLookAhead(TokenKind::identifier)){
+        consume(TokenKind::identifier);
+        if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))){
+            consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace));
+            if(parseStructDeclarationList()) return 1;
+            if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return 1;
             return 0;
         }
-        if(this->parseStructDeclarationList()) return 1;
-        m_input->read(&token);
-        token->accept(visitor);
-        if(visitor.getKind()!=TokenKind::punctuator) return 1;
-        if(visitor.getSepcificValue().p!=Punctuator::RightBrace) return 1;
-        m_input->popMark();
-        return 0;
+        else{
+            return 0;
+        }
     }
+    else{
+            if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))) return 1;
+            if(parseStructDeclarationList()) return 1;
+            if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return 1;
+            return 0;
     }
-    else if(visitor.getKind()==TokenKind::punctuator){ 
-        if(visitor.getSepcificValue().p!=Punctuator::LeftBrace) return 1;
-        m_input->popMark();
-        if(this->parseStructDeclarationList()) return 1;
-        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return 1;
-        m_input->popMark();
-        return 0;
-    }
-   return 1;
+
+    
+//     m_input->read(&token);
+//     token->accept(visitor);
+//     if(visitor.getKind()==TokenKind::identifier){
+//         m_input->pushMark();
+//         m_input->read(&token);
+//         token->accept(visitor);
+//         if(visitor.getKind()==TokenKind::punctuator){ 
+//         if(visitor.getSepcificValue().p!=Punctuator::LeftBrace) {
+//              m_input->popMark();
+//             return 0;
+//         }
+//         if(this->parseStructDeclarationList()) return 1;
+//         m_input->read(&token);
+//         token->accept(visitor);
+//         if(visitor.getKind()!=TokenKind::punctuator) return 1;
+//         if(visitor.getSepcificValue().p!=Punctuator::RightBrace) return 1;
+//         m_input->popMark();
+//         return 0;
+//     }
+//     }
+//     else if(visitor.getKind()==TokenKind::punctuator){ 
+//         if(visitor.getSepcificValue().p!=Punctuator::LeftBrace) return 1;
+//         m_input->popMark();
+//         if(this->parseStructDeclarationList()) return 1;
+//         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return 1;
+//         m_input->popMark();
+//         return 0;
+//     }
+//    return 1;
 }
 // TODO PARSE STRUCT DECLARATION
 bool LLParser::parseStructDeclarationList(){
@@ -181,23 +187,44 @@ bool LLParser::parseStructDeclarationList(){
 
     // TODO PARSE STRUCT DECLARATION
     //std::shared_ptr<const Token> token;
-    m_input->pushMark();
-    m_input->read(&token);
-    token->accept(visitor);
-    if(visitor.getKind()==TokenKind::punctuator){
-        if(visitor.getSepcificValue().p==Punctuator::RightBrace){
-            m_input->resetToMark();
-            m_input->popMark();
-            return 0;
-        }
-        return 1;
+    // m_input->pushMark();
+    // m_input->read(&token);
+    // token->accept(visitor);
+    // if(visitor.getKind()==TokenKind::punctuator){
+    //     if(visitor.getSepcificValue().p==Punctuator::RightBrace){
+    //         m_input->resetToMark();
+    //         m_input->popMark();
+    //         return 0;
+    //     }
+    //     return 1;
+    // }
+    // else{
+    //     m_input->resetToMark();
+    //     m_input->popMark();
+    //      return this->parseStructDeclarationList();
+    // }
+    // return 1;
+    do{
+    if(parseDeclarationSpecifier()) return 1;
+    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))){
+        consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
     }
     else{
-        m_input->resetToMark();
-        m_input->popMark();
-         return this->parseStructDeclarationList();
+        bool comma=true;
+        while(comma){
+        if(parseDeclarator()) return 1;
+        if(checkLookAhead(TokenKind::punctuator, SpecifiedToken(Punctuator::Comma))){
+            consume(TokenKind::punctuator, SpecifiedToken(Punctuator::Comma));
+        }
+        else{
+            comma=false;
+        }
+        }
+        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon)))return 1;
     }
-    return 1;
+    }while(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace)));
+    return 0;
+
 }
 // DONE!
 bool c4::service::parser::LLParser::parsePointer()
@@ -253,7 +280,7 @@ bool c4::service::parser::LLParser::parseDirectDeclarator()
     }
     else{
         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 1;
-        parseDeclarator();
+        if(parseDeclarator()) return 1;;
         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
     }
    return parseDirectDeclarator2(); 
@@ -263,59 +290,66 @@ bool c4::service::parser::LLParser::parseDirectDeclarator2()
     visit();
     if(visitor.getKind()==TokenKind::punctuator && visitor.getSepcificValue().p==Punctuator::LeftParenthesis){
         consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis));
-        if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis)))
-        {
-            consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis));
-        }
-        else if(visitor.getKind()==TokenKind::identifier){
-            if(parseIdentifierList()) return 1;
-            if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
-        }
-        else{
-            if(parseParameterTypeList()) return 1;
-            if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
-        }
+        if(parseParameterTypeList()) return 1;
+        return consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis));
     }
-    else if(visitor.getKind()==TokenKind::punctuator && visitor.getSepcificValue().p==Punctuator::LeftBracket){
-        consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBracket));
-        if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBracket))){
-            consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBracket));
-        }
-        else if(checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Static))){
-            consume(TokenKind::keyword,SpecifiedToken(Keyword::Static));
-            visit();
-            if(visitor.getKind()==TokenKind::keyword){
-                if(visitor.getSepcificValue().k==Keyword::Void || visitor.getSepcificValue().k==Keyword::Int || visitor.getSepcificValue().k==Keyword::Char ||visitor.getSepcificValue().k==Keyword::Struct)
-                {
-                    if(parseDeclarationSpecifier()) return 1;
-                }
-                // TODO PARSE ASSIGNMENT EXPR
-            }
-        }
-        else if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))){
-            consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk));
-        }
-        else if(visitor.getKind()==TokenKind::punctuator){
-            // TODO PARSE ASSIGNMENT EXPR
-        }
-        else{
-            if(parseDeclarationSpecifier()) return 1;
-            if(checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Static))){
-                consume(TokenKind::keyword,SpecifiedToken(Keyword::Static));
-                // TODO PARSE ASSIGNMENT EXPR
-            }
-            else if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))){
-                consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk));
-            }
-            else{
-                // TODO PARSE ASSIGNMENT EXPR
-            }
-        }
-        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBracket))) return 1;
+    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))){
+        return parseDirectDeclarator2();
     }
     return 0;
+        // if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis)))
+        // {
+        //     consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis));
+        // }
+        // else if(visitor.getKind()==TokenKind::identifier){
+        //     if(parseIdentifierList()) return 1;
+        //     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
+        // }
+        // else{
+        //     if(parseParameterTypeList()) return 1;
+        //     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
+        // }
+   // }
+   // else if(visitor.getKind()==TokenKind::punctuator && visitor.getSepcificValue().p==Punctuator::LeftBracket){
+   //     consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBracket));
+   //     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBracket))){
+   //         consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBracket));
+   //     }
+   //     else if(checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Static))){
+   //         consume(TokenKind::keyword,SpecifiedToken(Keyword::Static));
+   //         visit();
+   //         if(visitor.getKind()==TokenKind::keyword){
+   //             if(visitor.getSepcificValue().k==Keyword::Void || visitor.getSepcificValue().k==Keyword::Int || visitor.getSepcificValue().k==Keyword::Char ||visitor.getSepcificValue().k==Keyword::Struct)
+   //             {
+   //                 if(parseDeclarationSpecifier()) return 1;
+   //             }
+   //             // TODO PARSE ASSIGNMENT EXPR
+   //         }
+   //     }
+   //     else if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))){
+   //         consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk));
+   //     }
+   //     else if(visitor.getKind()==TokenKind::punctuator){
+   //         // TODO PARSE ASSIGNMENT EXPR
+   //     }
+   //     else{
+   //         if(parseDeclarationSpecifier()) return 1;
+   //         if(checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Static))){
+   //             consume(TokenKind::keyword,SpecifiedToken(Keyword::Static));
+   //             // TODO PARSE ASSIGNMENT EXPR
+   //         }
+   //         else if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))){
+   //             consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk));
+   //         }
+   //         else{
+   //             // TODO PARSE ASSIGNMENT EXPR
+   //         }
+   //     }
+   //     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBracket))) return 1;
+   // }
+   // return 0;
 }
-// DONE
+// //DONE
 bool c4::service::parser::LLParser::parseParameterTypeList()
 {
     if(parseParameterDeclaration()) return 1;
@@ -349,6 +383,7 @@ bool c4::service::parser::LLParser::parseDeclarationSpecifier()
         consume(TokenKind::keyword,SpecifiedToken(Keyword::Char));
     }
     else{
+        //std::cout<<"Dupa\n";
         if(parseStructorUnionSpecifier()) return 1;
     }
     return 0;
@@ -375,7 +410,7 @@ bool c4::service::parser::LLParser::parseCompoundStatement() // {dasdasd}
             if(a) return 1;
 
         }
-        else if(checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Int))||checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Void))||checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Char))){
+        else if(checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Int))||checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Void))||checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Char))||checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Struct))||checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Union))){
 
             if(parseDeclaration()) return 1;
 

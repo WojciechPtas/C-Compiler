@@ -33,7 +33,7 @@ namespace c4::service::parser{
                 visitor=c4::util::token::ParserVisitor();
                 token=nullptr;
                 };
-            int run(std::string input);
+            int run();
             bool parse(/* io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input*/);
         private:
             bool consume(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken(), bool inlookahead=false);
