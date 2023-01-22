@@ -314,6 +314,7 @@ static shared_ptr<const State> _initialize() {
     _lessThanReductionState->addReduction(
         END_TOKEN | PUNCTUATOR_TOKEN(
             Punctuator::LessThan |
+            Punctuator::GreaterThan |
             Punctuator::Colon |
             Punctuator::DoubleAnd |
             Punctuator::DoubleEqual |
@@ -488,7 +489,9 @@ static shared_ptr<const State> _initialize() {
             Punctuator::Equal |
             Punctuator::ExclamationMarkEqual |
             Punctuator::LessThan |
-            Punctuator::QuestionMark
+            Punctuator::QuestionMark |
+            Punctuator::RightBracket |
+            Punctuator::RightParenthesis
         ),
         3, 2,
         bind(_reduceBinary, _1, BinaryExpressionType::Subtraction)
