@@ -86,20 +86,26 @@ void PrintVisitor::visit(const IdentifierExpression &expr) {
 }
 
 void PrintVisitor::visit(const IndexExpression &expr) {
+    this->outputStream << "(";
     expr.container->accept(*this);
     this->outputStream << "[";
     expr.index->accept(*this);
     this->outputStream << "]";
+    this->outputStream << ")";
 }
 
 void PrintVisitor::visit(const MemberExpression &expr) {
+    this->outputStream << "(";
     expr.container->accept(*this);
     this->outputStream << stringify(expr.type);
     expr.member->accept(*this);
+    this->outputStream << ")";
 }
 
 void PrintVisitor::visit(const UnaryExpression &expr) {
-    this->outputStream << stringify(expr.type);
+    this->outputStream << "(" 
+        << stringify(expr.type);
     expr.expression->accept(*this);
+    this->outputStream << ")";
 }
 
