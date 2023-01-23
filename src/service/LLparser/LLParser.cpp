@@ -477,7 +477,7 @@ bool c4::service::parser::LLParser::parseSelectionStatement()
 
     auto lrparser = std::make_shared<ExpressionParser>(a);
     auto b = lrparser->parse(stream);
-    if(b==nullptr && lrparser->lastTokenRead()->isError()){
+    if(b==nullptr || lrparser->lastTokenRead()->isError()){
                 token=lrparser->lastTokenRead();
                 return 1;
                 }
@@ -499,7 +499,7 @@ bool c4::service::parser::LLParser::parseIterationStatement()
     auto a=std::make_shared<State>(INITIAL_STATE);
     auto lrparser = std::make_shared<ExpressionParser>(a);
     auto b = lrparser->parse(stream);
-    if(b==nullptr && lrparser->lastTokenRead()->isError()){
+    if(b==nullptr || lrparser->lastTokenRead()->isError()){
                 token=lrparser->lastTokenRead();
                 return 1;
                 }
@@ -535,7 +535,7 @@ bool c4::service::parser::LLParser::parseJumpStatement()
             auto a=std::make_shared<State>(INITIAL_STATE);
             auto lrparser = std::make_shared<ExpressionParser>(a);
             auto b = lrparser->parse(stream);//->accept(a);
-            if(b==nullptr && lrparser->lastTokenRead()->isError()){
+            if(b==nullptr || lrparser->lastTokenRead()->isError()){
                 token=lrparser->lastTokenRead();
                 return 1;
             }
@@ -590,7 +590,7 @@ bool c4::service::parser::LLParser::parseStatement()
     auto lrparser = std::make_shared<ExpressionParser>(a);
     auto b = lrparser->parse(stream);
     //std::cout<<"dupa\n";
-    if(b==nullptr && lrparser->lastTokenRead()->isError()){
+    if(b==nullptr || lrparser->lastTokenRead()->isError()){
         token=lrparser->lastTokenRead();
         //std::cout<<"parsed\n";
         return 1;
