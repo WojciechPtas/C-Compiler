@@ -19,6 +19,7 @@ ExpressionParser::ExpressionParser(weak_ptr<const State> initialState)
 shared_ptr<const IExpression> ExpressionParser::parse(
     IInputStream<shared_ptr<Token>> &input
 ) {
+    shared_ptr<Token> convertedToken; //Will store token->convertDigraph() here
     bool accepting, eofReached, readNext = true;
     size_t stateCount = 0, newStateCount = this->states.size();
     do {
@@ -26,6 +27,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
         stateCount = newStateCount;
         if (readNext) {
             eofReached = !input.read(&_lastTokenRead);
+            convertedToken = _lastTokenRead->convertDigraph();
         }
 
         if (this->states.empty()) {
@@ -55,7 +57,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
             if (eofReached) {
                 handler = currentState->getEndHandler();
             } else {
-                handler = currentState->getHandler(*_lastTokenRead);
+                handler = currentState->getHandler(*convertedToken);
             }
 
             if (handler == nullptr) {
@@ -66,7 +68,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
                 break;
             }
 
-            ExpressionParserExecutor executor(*this, _lastTokenRead);
+            ExpressionParserExecutor executor(*this, convertedToken);
             handler->accept(executor);
             readNext = executor.hasShifted();
             accepting = executor.isAccepting();
