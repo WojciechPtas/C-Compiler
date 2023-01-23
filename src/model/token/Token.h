@@ -17,6 +17,10 @@ namespace c4 {
                     return false;
                 }
 
+                virtual std::shared_ptr<Token> convertDigraph() const {
+                    return make_shared<Token>(*this);
+                }
+
             protected:
                 Token(TokenPosition position) : position(position) { }
             };
