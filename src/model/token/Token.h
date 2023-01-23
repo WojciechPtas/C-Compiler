@@ -2,6 +2,7 @@
 
 #include "ITokenVisitor.h"
 #include "TokenPosition.h"
+#include <memory>
 
 namespace c4 {
     namespace model {
@@ -17,9 +18,7 @@ namespace c4 {
                     return false;
                 }
 
-                virtual std::shared_ptr<Token> convertDigraph() const {
-                    return make_shared<Token>(*this);
-                }
+                virtual std::shared_ptr<Token> convertDigraph() const = 0;
 
             protected:
                 Token(TokenPosition position) : position(position) { }

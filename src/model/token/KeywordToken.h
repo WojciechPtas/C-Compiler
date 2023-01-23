@@ -20,6 +20,10 @@ namespace c4 {
                 void accept(ITokenVisitor &visitor) const override {
                     visitor.visit(*this);
                 }
+
+                virtual std::shared_ptr<Token> convertDigraph() const override {
+                    return std::make_shared<KeywordToken>(*this);
+                }
             };
         }
     }

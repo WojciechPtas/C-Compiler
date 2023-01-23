@@ -24,6 +24,10 @@ namespace c4 {
                 bool isError() const override {
                     return true;
                 }
+
+                virtual std::shared_ptr<Token> convertDigraph() const override {
+                    return std::make_shared<ErrorToken>(*this);
+                }
             };
         }
     }
