@@ -27,7 +27,7 @@ namespace c4 {
                 );
 
                 //Guaranteed to be non-garbage only in case of parsing failure
-                std::shared_ptr<const model::token::Token> lastTokenRead() {
+                std::shared_ptr<model::token::Token> lastTokenRead() {
                     return _lastTokenRead;
                 }
 

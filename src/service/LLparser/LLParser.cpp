@@ -55,12 +55,8 @@ bool LLParser::consume(TokenKind k, SpecifiedToken s, bool inlookahead)
 int c4::service::parser::LLParser::run()
 {
     if(this->parse()){
-        if(errorcode==0)
-        std::cout<<token->position.file<<":"<<token->position.line<<":"<<token->position.column<<": wrong token\n";
-        else{
         util::token::PrintVisitor v(std::cout);
         token->accept(v);
-        }
         return 1;
     }
     else{
@@ -478,13 +474,13 @@ bool c4::service::parser::LLParser::parseSelectionStatement()
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 1;
     ParenthesisDelimiterStream stream(m_input);
     auto a=std::make_shared<State>(INITIAL_STATE);
-    try{
+
     auto lrparser = std::make_shared<ExpressionParser>(a);
-    auto expr=lrparser->parse(stream);//->accept(a);
-    }
-    catch(std::logic_error& er){
-        return 1;
-    }
+    auto b = lrparser->parse(stream);
+    if(b==nullptr && lrparser->lastTokenRead()->isError()){
+                token=lrparser->lastTokenRead();
+                return 1;
+                }
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
     auto ifstmt= parseStatement();
     if(ifstmt) return 1;
@@ -502,12 +498,11 @@ bool c4::service::parser::LLParser::parseIterationStatement()
     ParenthesisDelimiterStream stream(m_input);
     auto a=std::make_shared<State>(INITIAL_STATE);
     auto lrparser = std::make_shared<ExpressionParser>(a);
-    try{
-    auto b=lrparser->parse(stream);//->accept(a);
-    }
-    catch(std::logic_error& er){
-        return 1;
-    }
+    auto b = lrparser->parse(stream);
+    if(b==nullptr && lrparser->lastTokenRead()->isError()){
+                token=lrparser->lastTokenRead();
+                return 1;
+                }
     if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
     auto c = parseStatement();
     if(c) return 1;
@@ -540,7 +535,10 @@ bool c4::service::parser::LLParser::parseJumpStatement()
             auto a=std::make_shared<State>(INITIAL_STATE);
             auto lrparser = std::make_shared<ExpressionParser>(a);
             auto b = lrparser->parse(stream);//->accept(a);
-            if(b==nullptr) return 1;
+            if(b==nullptr && lrparser->lastTokenRead()->isError()){
+                token=lrparser->lastTokenRead();
+                return 1;
+            }
             //std::cout<<"works\n";
         }
         break;
@@ -590,10 +588,11 @@ bool c4::service::parser::LLParser::parseStatement()
     DelimiterStream stream(m_input,TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
     auto a=std::make_shared<State>(INITIAL_STATE);
     auto lrparser = std::make_shared<ExpressionParser>(a);
-    try{
-    lrparser->parse(stream);
-    }
-    catch(std::logic_error& er){
+    auto b = lrparser->parse(stream);
+    //std::cout<<"dupa\n";
+    if(b==nullptr && lrparser->lastTokenRead()->isError()){
+        token=lrparser->lastTokenRead();
+        //std::cout<<"parsed\n";
         return 1;
     }
     return  consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
