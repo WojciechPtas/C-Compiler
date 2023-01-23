@@ -1,7 +1,8 @@
-int (f(int x,int))
+int (f(int **x,int))
 {
+	int **x;
 	{
-		struct S
+		struct S asds
 		{
 			int x;
 		} s;

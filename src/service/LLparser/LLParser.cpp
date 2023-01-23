@@ -419,7 +419,17 @@ bool c4::service::parser::LLParser::parseParameterDeclaration()
 {
     if(parseDeclarationSpecifier()) return 1;
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))||checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma))) return 0;
-    if(parseDeclarator()) return 1;
+    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) 
+    {
+        if(parsePointer()) return 1;
+    }
+    if(checkLookAhead(TokenKind::identifier)){
+        if(parseDeclarator()) return 1;
+    }
+    else{
+        if(parseAbstractDeclarator()) return 1;
+    }
+    
     return 0;
 }
 bool c4::service::parser::LLParser::parseDeclarationSpecifier()
