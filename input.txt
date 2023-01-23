@@ -1,4 +1,4 @@
-int (f(int x, int y))
+int (f(int x,int))
 {
 	{
 		struct S
@@ -23,7 +23,7 @@ void (*((*(*p))(int)));
 int (main(void))
 {
 	int a;
-	int b; asdas
+	int b;
 	{
 		(a = 1);
 	}

@@ -50,6 +50,7 @@ namespace c4::service::parser{
             bool parseDeclarator();
             bool parseAbstractDeclarator();
             bool parseDirectAbstractDeclarator();
+            bool parseDirectAbstractDeclarator2();
             bool parseDirectDeclarator();
             bool parseDirectDeclarator2();
             bool parseParameterTypeList();

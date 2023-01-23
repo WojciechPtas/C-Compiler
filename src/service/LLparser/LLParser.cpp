@@ -286,7 +286,7 @@ bool c4::service::parser::LLParser::parseAbstractDeclarator()
     else{
         return 0;
     }
-
+    return 0;
 }
 
 bool c4::service::parser::LLParser::parseDirectAbstractDeclarator()
@@ -303,7 +303,23 @@ bool c4::service::parser::LLParser::parseDirectAbstractDeclarator()
         if(parseAbstractDeclarator()) return 1;
     }
     if (consume(TokenKind::punctuator, SpecifiedToken(Punctuator::RightParenthesis))) return 1;
+    if(parseDirectAbstractDeclarator2()) return 1;
+    return 0;
 
+}
+
+bool c4::service::parser::LLParser::parseDirectAbstractDeclarator2()
+{
+    if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 0;
+    consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis));
+    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))){
+        consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis));
+    }
+    else{
+        if(parseParameterTypeList()) return 1;
+        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
+    }
+    return parseDirectAbstractDeclarator2();
 
 }
 
@@ -311,16 +327,16 @@ bool c4::service::parser::LLParser::parseDirectDeclarator()
 {
     // std::cout<< "parseDirectDeclarator()\n";
     // std::cout<< "parseDirectDeclarator()\n";
-    visit();
-    if(visitor.getKind()==TokenKind::identifier){
+    //visit();
+    if(checkLookAhead(TokenKind::identifier)){
         if(consume(TokenKind::identifier)) return 1;
     }
-    else{
+    else if (checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))){
         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 1;
         if(parseDeclarator()) return 1;;
         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
     }
-   return parseDirectDeclarator2(); 
+    return parseDirectDeclarator2(); 
 }
 bool c4::service::parser::LLParser::parseDirectDeclarator2()
 {
@@ -402,7 +418,6 @@ bool c4::service::parser::LLParser::parseParameterTypeList()
 bool c4::service::parser::LLParser::parseParameterDeclaration()
 {
     if(parseDeclarationSpecifier()) return 1;
-    // TODO PARSE ABSTRACT DECLARATOR
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))||checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma))) return 0;
     if(parseDeclarator()) return 1;
     return 0;
