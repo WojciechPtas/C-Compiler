@@ -61,9 +61,10 @@ bool LLParser::consume(TokenKind k, SpecifiedToken s, bool inlookahead)
 int c4::service::parser::LLParser::run()
 {
     if(this->parse()){
-        //util::token::PrintVisitor v(std::cout);
+        util::token::PrintVisitor v(std::cout);
         //token->accept(v);
-        std::cout<<token->position.file<<":"<<token->position.line<<":"<<token->position.column<<": error: Wrong token!\n";
+        v.printPosition(*token);
+        std::cout<<"error: wrong token\n";
         return 1;
     }
     else{

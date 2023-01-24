@@ -26,12 +26,12 @@ namespace c4 {
                 ) override;
                 
                 void visit(const model::token::EOFToken &token) override;
-                
+                void printPosition(const model::token::Token &token);
 
             private:
                 std::ostream &outputStream;
 
-                void printPosition(const model::token::Token &token);
+                
             };
         }
     }
