@@ -72,11 +72,10 @@ int c4::service::parser::LLParser::run()
 
 bool LLParser::parse()
 {
-    visit();
-    if(visitor.getKind()!=TokenKind::keyword) return 1;
-    if(visitor.getSepcificValue().k==Keyword::__Static_assert){
-        parseStaticAssertDeclaration();
-    }else{
+    m_input->pushMark();
+    auto a = m_input->read(&token);
+    m_input->resetAndPopMark();
+    while(a){
     if(parseDeclarationSpecifier()) return 1;
     if(parseDeclarator()) return 1;    
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))){
@@ -85,11 +84,10 @@ bool LLParser::parse()
     else{
         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return 1;
     }
+        m_input->pushMark();
+        a = m_input->read(&token);
+        m_input->resetAndPopMark();
     }
-    m_input->pushMark();
-    auto a = m_input->read(&token);
-    m_input->resetAndPopMark();
-    if(a) return parse();
     return 0;
 }
 

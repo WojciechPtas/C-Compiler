@@ -6,11 +6,11 @@ namespace c4 {
         namespace statement {
             class LabeledStatement : IStatement {
                 private:
-                    std::shared_ptr<expression::IdentifierExpression> identifier;
+                    std::string identifier;
                     std::shared_ptr<IStatement> statement;
                 public:
-                    LabeledStatement(std::shared_ptr<expression::IdentifierExpression> i, std::shared_ptr<IStatement> s) : identifier(i), statement(s){};
-                    std::shared_ptr<expression::IdentifierExpression> getIdentifier(){return identifier;}
+                    LabeledStatement(std::string i, std::shared_ptr<IStatement> s) : identifier(i), statement(s){};
+                    std::string getIdentifier(){return identifier;}
                     std::shared_ptr<IStatement> getStatement(){return statement;}                
             };
         }

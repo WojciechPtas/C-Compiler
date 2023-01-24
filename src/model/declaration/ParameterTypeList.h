@@ -1,14 +1,18 @@
 #pragma once
-#include "IDeclaration.h"
+#include <vector>
+#include "ParameterDeclaration.h"
 namespace c4 {
     namespace model {
         namespace declaration {
-            class ParameterDeclaration : IDeclaration{};
+            class ParameterTypeList : IDeclaration{;
             private:
                
-                std::shared_ptr<Declarator> dec;
+               std::vector<std::shared_ptr<ParameterDeclaration>> params;
+
             public:
-                //InitDeclartor(std::shared_ptr<InitDeclaratorList> a)
-            }
+                ParameterTypeList(std::vector<std::shared_ptr<ParameterDeclaration>>& params) : params(params) {};
+                std::vector<std::shared_ptr<ParameterDeclaration>> getParams(){return params;}
+                };
         }
     }
+}
