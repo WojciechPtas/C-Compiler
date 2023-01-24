@@ -40,6 +40,6 @@ int (main(void))
 		goto end;
 bar:
 end: 
-	return 0;a sd
+	return 0; "a
 }
 
