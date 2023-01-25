@@ -22,6 +22,9 @@
 #include "../../model/statement/LabeledStatement.h"
 #include "../../model/statement/SelectionStatement.h"
 
+#include "../../model/declaration/DeclarationSpecifier.h"
+#include "../../model/declaration/StructUnionSpecifier.h"
+#include "../../model/declaration/FunctionDefinition.h"
 #include "../../model/declaration/FunctionDefinition.h"
 #include "../../model/declaration/DirectDeclarator.h"
 
@@ -46,9 +49,9 @@ namespace c4::service::parser{
             bool consume(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken(), bool inlookahead=false);
             bool checkLookAhead(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken());
             std::shared_ptr<model::declaration::Declaration> parseDeclaration();
-            std::shared_ptr<> parseStaticAssertDeclaration();
-            std::shared_ptr<> parseStructorUnionSpecifier();
-            std::shared_ptr<model::declaration::> parseStructDeclarationList();
+            //std::shared_ptr<> parseStaticAssertDeclaration();
+            std::shared_ptr<model::declaration::StructUnionSpecifier> parseStructorUnionSpecifier();
+            std::shared_ptr<model::declaration::StructDeclarationList> parseStructDeclarationList();
             std::shared_ptr<model::declaration::Pointer> parsePointer();
             std::shared_ptr<model::declaration::Declarator> parseDeclarator();
             std::shared_ptr<> parseAbstractDeclarator();
@@ -58,7 +61,7 @@ namespace c4::service::parser{
             std::shared_ptr<> parseDirectDeclarator2();
             std::shared_ptr<model::declaration::ParameterTypeList> parseParameterTypeList();
             std::shared_ptr<model::declaration::ParameterDeclaration> parseParameterDeclaration();
-            std::shared_ptr<> parseDeclarationSpecifier();
+            std::shared_ptr<model::declaration::DeclarationSpecifier> parseDeclarationSpecifier();
             //std::shared_ptr<> parseIdentifierList();
             std::shared_ptr<model::statement::CompoundStatement> parseCompoundStatement();
             std::shared_ptr<model::statement::SelectionStatement> parseSelectionStatement();
