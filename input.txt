@@ -1,4 +1,4 @@
-int (f(int x, int y))
+int (f(int x, ,int y))
 {
 	{
 		struct S
@@ -40,6 +40,6 @@ int (main(void))
 		goto end;
 bar:
 end: 
-	return 0; "a
+	return 0;
 }
 
