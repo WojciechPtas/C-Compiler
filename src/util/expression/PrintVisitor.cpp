@@ -1,20 +1,4 @@
-#include <stdexcept>
-
-#include "../../model/ConstantType.h"
-#include "../../model/expression/BinaryExpression.h"
-#include "../../model/expression/ConditionalExpression.h"
-#include "../../model/expression/ConstantExpression.h"
-#include "../../model/expression/IdentifierExpression.h"
-#include "../../model/expression/IndexExpression.h"
-#include "../../model/expression/MemberExpression.h"
-#include "../../model/expression/UnaryExpression.h"
-#include "../../model/expression/CallExpression.h"
-
-#include "BinaryExpressionUtilities.h"
-#include "MemberExpressionUtilities.h"
 #include "PrintVisitor.h"
-#include "UnaryExpressionUtilities.h"
-#include "../../model/expression/CallExpression.h"
 
 using namespace c4::model;
 using namespace c4::model::expression;
@@ -102,10 +86,23 @@ void PrintVisitor::visit(const MemberExpression &expr) {
     this->outputStream << ")";
 }
 
+void PrintVisitor::visit(const SizeOfType &expr) {
+    this->outputStream << "(sizeof ("
+        << token::stringify(expr.type)
+        << "))";
+}
+
+void PrintVisitor::visit(const TypeInSizeof &expr) {
+    (void) expr;
+
+    this->outputStream << "(should never print)";
+}
+
 void PrintVisitor::visit(const UnaryExpression &expr) {
     this->outputStream << "(" 
         << stringify(expr.type);
     expr.expression->accept(*this);
     this->outputStream << ")";
 }
+
 

@@ -115,11 +115,13 @@ bool LRparse(const std::string& input) {
     auto expr = lrparser->parse(*lexer);
     
     if(expr == nullptr) {
+        c4::util::token::PrintVisitor pt(std::cerr);
+        lrparser->lastTokenRead()->accept(pt);
         return ERR;
     }
 
-    c4::util::expression::PrintVisitor pt(std::cout);
-    expr->accept(pt);
+    c4::util::expression::PrintVisitor pe(std::cout);
+    expr->accept(pe);
     return OK;
 }
 

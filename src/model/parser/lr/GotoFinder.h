@@ -8,6 +8,7 @@
 #include "../../expression/MemberExpression.h"
 #include "../../expression/UnaryExpression.h"
 #include "../../expression/CallExpression.h"
+#include "../../expression/SizeOfType.h"
 
 #include "State.h"
 #include "StateHandler.h"
@@ -126,6 +127,29 @@ namespace c4 {
                         if (entry != this->state.gotoAfterUnary.end()) {
                             this->determinedState = (*entry).second;
                         }
+                    }
+
+                    void visit(
+                        const expression::SizeOfType &expr
+                    ) override {
+                        (void) expr;
+
+                        this->checkAndSetExecuted();
+
+                        auto sizeOf = expression::UnaryExpressionType::Sizeof;
+                        this->determinedState =
+                            this->state.gotoAfterUnary.find(sizeOf)->second;
+                    }
+
+                    void visit(
+                        const expression::TypeInSizeof &expr
+                    ) override {
+                        (void) expr;
+
+                        this->checkAndSetExecuted();
+
+                        this->determinedState = 
+                            this->state.gotoAfterType;
                     }
 
                 private:

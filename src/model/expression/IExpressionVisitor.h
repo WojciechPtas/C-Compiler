@@ -11,6 +11,8 @@ namespace c4 {
             class IdentifierExpression;
             class IndexExpression;
             class MemberExpression;
+            class SizeOfType;
+            class TypeInSizeof;
             class UnaryExpression;
 
             class IExpressionVisitor {
@@ -25,6 +27,8 @@ namespace c4 {
                 virtual void visit(const IdentifierExpression &expr) = 0;
                 virtual void visit(const IndexExpression &expr) = 0;
                 virtual void visit(const MemberExpression &expr) = 0;
+                virtual void visit(const TypeInSizeof &expr) = 0;
+                virtual void visit(const SizeOfType &expr) = 0;
                 virtual void visit(const UnaryExpression &expr) = 0;
             };
         }

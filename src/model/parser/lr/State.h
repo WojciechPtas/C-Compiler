@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <functional>
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -87,8 +87,8 @@ namespace c4 {
                     std::shared_ptr<StateHandler> encounterEnd;
                     std::shared_ptr<StateHandler> encounterError;
                     std::shared_ptr<StateHandler> encounterIdentifier;
-                    std::map<token::Keyword, std::shared_ptr<StateHandler>> encounterKeyword;
-                    std::map<token::Punctuator, std::shared_ptr<StateHandler>> encounterPunctuator;
+                    std::unordered_map<token::Keyword, std::shared_ptr<StateHandler>> encounterKeyword;
+                    std::unordered_map<token::Punctuator, std::shared_ptr<StateHandler>> encounterPunctuator;
 
                     void installLookaheadHandler(
                         LookaheadCondition condition,
@@ -103,9 +103,10 @@ namespace c4 {
                     std::weak_ptr<const State> gotoAfterConstant;
                     std::weak_ptr<const State> gotoAfterIdentifier;
                     std::weak_ptr<const State> gotoAfterIndex;
-                    std::map<expression::BinaryExpressionType, std::weak_ptr<const State>> gotoAfterBinary;
-                    std::map<expression::MemberExpressionType, std::weak_ptr<const State>> gotoAfterMember;
-                    std::map<expression::UnaryExpressionType, std::weak_ptr<const State>> gotoAfterUnary;
+                    std::weak_ptr<const State> gotoAfterType;
+                    std::unordered_map<expression::BinaryExpressionType, std::weak_ptr<const State>> gotoAfterBinary;
+                    std::unordered_map<expression::MemberExpressionType, std::weak_ptr<const State>> gotoAfterMember;
+                    std::unordered_map<expression::UnaryExpressionType, std::weak_ptr<const State>> gotoAfterUnary;
                 };
             }
         }
