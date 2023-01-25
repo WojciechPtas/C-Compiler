@@ -15,14 +15,17 @@
 #include "../io/DelimiterInputStream.h"
 #include "../io/ParenthesisDelimiterStream.h"
 
+#include "../../model/statement/ExpressionStatement.h"
+#include "../../model/statement/CompoundStatement.h"
+#include "../../model/statement/JumpStatement.h"
+#include "../../model/statement/IterationStatement.h"
+#include "../../model/statement/LabeledStatement.h"
+#include "../../model/statement/SelectionStatement.h"
 
-//#include "../../model/statement/CompoundStatement.h"
-//#include "../../model/statement/JumpStatement.h"
-//#include "../../model/declaration/IDeclaration.h"
-//#include "../../model/statement/IterationStatement.h"
-//#include "../../model/statement/LabeledStatement.h"
-//#include "../../model/statement/SelectionStatement.h"
+#include "../../model/declaration/FunctionDefinition.h"
+#include "../../model/declaration/DirectDeclarator.h"
 
+#include "../../model/declaration/Declaration.h"
 namespace c4::service::parser{
     
     class LLParser{
@@ -42,27 +45,27 @@ namespace c4::service::parser{
         private:
             bool consume(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken(), bool inlookahead=false);
             bool checkLookAhead(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken());
-            bool parseDeclaration();
-            bool parseStaticAssertDeclaration();
-            bool parseStructorUnionSpecifier();
-            bool parseStructDeclarationList();
-            bool parsePointer();
-            bool parseDeclarator();
-            bool parseAbstractDeclarator();
-            bool parseDirectAbstractDeclarator();
-            bool parseDirectAbstractDeclarator2();
-            bool parseDirectDeclarator();
-            bool parseDirectDeclarator2();
-            bool parseParameterTypeList();
-            bool parseParameterDeclaration();
-            bool parseDeclarationSpecifier();
-            bool parseIdentifierList();
-            bool parseCompoundStatement();
-            bool parseSelectionStatement();
-            bool parseIterationStatement();
-            bool parseJumpStatement();
-            bool parseStatement();
-            bool parseLabeledStatement();
+            std::shared_ptr<model::declaration::Declaration> parseDeclaration();
+            std::shared_ptr<> parseStaticAssertDeclaration();
+            std::shared_ptr<> parseStructorUnionSpecifier();
+            std::shared_ptr<model::declaration::> parseStructDeclarationList();
+            std::shared_ptr<model::declaration::Pointer> parsePointer();
+            std::shared_ptr<model::declaration::Declarator> parseDeclarator();
+            std::shared_ptr<> parseAbstractDeclarator();
+            std::shared_ptr<> parseDirectAbstractDeclarator();
+            std::shared_ptr<> parseDirectAbstractDeclarator2();
+            std::shared_ptr<model::declaration::DirectDeclarator> parseDirectDeclarator();
+            std::shared_ptr<> parseDirectDeclarator2();
+            std::shared_ptr<model::declaration::ParameterTypeList> parseParameterTypeList();
+            std::shared_ptr<model::declaration::ParameterDeclaration> parseParameterDeclaration();
+            std::shared_ptr<> parseDeclarationSpecifier();
+            //std::shared_ptr<> parseIdentifierList();
+            std::shared_ptr<model::statement::CompoundStatement> parseCompoundStatement();
+            std::shared_ptr<model::statement::SelectionStatement> parseSelectionStatement();
+            std::shared_ptr<model::statement::IterationStatement> parseIterationStatement();
+            std::shared_ptr<model::statement::JumpStatement> parseJumpStatement();
+            std::shared_ptr<model::statement::IStatement> parseStatement();
+            std::shared_ptr<model::statement::LabeledStatement> parseLabeledStatement();
             bool visit();
     };
 }

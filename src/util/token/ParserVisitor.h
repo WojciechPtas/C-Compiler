@@ -1,5 +1,5 @@
 #pragma once
-
+#include <string>
 #include <ostream>
 #include "../../model/token/ITokenVisitor.h"
 #include "TokenKind.h"
@@ -7,7 +7,7 @@ namespace c4::util::token{
     class ParserVisitor : public model::token::ITokenVisitor {
         TokenKind kind;
         SpecifiedToken specifed;
-
+        std::string val;
         public:
         ParserVisitor(){}
 
@@ -27,5 +27,6 @@ namespace c4::util::token{
         ) override;
         TokenKind getKind(){return kind;}
         SpecifiedToken getSepcificValue() {return specifed;}
+        std::string getVal(){return val;}
     };
 }
