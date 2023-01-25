@@ -1,1 +1,1 @@
-(-((*(&(s.x))) = ((sizeof (s.x)) * ((p->x) - y))))
+(-((*(&(s.x))) = ((sizeof (s.x)) * ((p->x) - sizeof(int))))) * sizeof(sizeof(int))

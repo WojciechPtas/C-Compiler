@@ -8,9 +8,13 @@
 #include "../../../model/expression/MemberExpression.h"
 #include "../../../model/expression/UnaryExpression.h"
 #include "../../../model/expression/CallExpression.h"
+#include "../../../model/expression/TypeInSizeof.h"
+#include "../../../model/expression/SizeOfType.h"
+
 
 #include "../../../model/token/ConstantToken.h"
 #include "../../../model/token/IdentifierToken.h"
+#include "../../../model/token/KeywordToken.h"
 
 #include "ExpressionConditionUtilities.h"
 #include "LookaheadConditionUtilities.h"
@@ -73,6 +77,10 @@ MAKE_STATE(_unaryLogicNegationReductionState);
 MAKE_STATE(_unaryLogicNegationState);
 MAKE_STATE(_unarySizeOfReductionState);
 MAKE_STATE(_unarySizeOfState);
+MAKE_STATE(_parenthesesExpressionOrType);
+MAKE_STATE(_typeInSizeofReduction);
+MAKE_STATE(_sizeOfType);
+MAKE_STATE(_sizeOfTypeReduction);
 
 //CallExpression states
 MAKE_STATE(_callLeftParenthesis);
@@ -100,6 +108,7 @@ static shared_ptr<const IExpression> _reduceConditional(
 
 static unique_ptr<const IExpression> _reduceConstant(const Token &token);
 static unique_ptr<const IExpression> _reduceIdentifier(const Token &token);
+static unique_ptr<const IExpression> _reduceType(const Token &token);
 static shared_ptr<const IExpression> _reduceIndex(
     vector<shared_ptr<const IExpression>> consumed
 );
@@ -117,6 +126,11 @@ static shared_ptr<const IExpression> _reduceUnary(
     vector<shared_ptr<const IExpression>> consumed,
     UnaryExpressionType type
 );
+
+static shared_ptr<const IExpression> _reduceSizeofType(
+    vector<shared_ptr<const IExpression>> consumed
+);
+
 
 static shared_ptr<const IExpression> _reduceCallExpressionEmpty(
     vector<shared_ptr<const IExpression>> consumed
@@ -145,8 +159,10 @@ static inline void _addLogicalOrShift(State &state);
 static inline void _addMultiplicationShift(State &state);
 static inline void _addPostfixShifts(State &state);
 static inline void _addPrimaryShifts(State &state);
+static inline void _addPrimaryShiftsNoParenthesis(State &state);
 static inline void _addRelationalShift(State &state);
 static inline void _addUnaryShifts(State &state);
+static inline void _addUnaryShiftsNoParenthesis(State &state);
 
 // States initializer
 
@@ -183,6 +199,7 @@ static shared_ptr<const State> _initialize() {
     // State: _assignmentReductionState
 
     _addAssignmentShift(*_assignmentReductionState);
+    
     _assignmentReductionState->addReduction(
         END_TOKEN | PUNCTUATOR_TOKEN(
             Punctuator::Colon |
@@ -576,8 +593,68 @@ static shared_ptr<const State> _initialize() {
 
     // State: _unarySizeOfState
 
-    _addUnaryShifts(*_unarySizeOfState);
+    _addUnaryShiftsNoParenthesis(*_unarySizeOfState);
+    _unarySizeOfState->addShift(
+        PUNCTUATOR_TOKEN(Punctuator::LeftParenthesis),
+        _parenthesesExpressionOrType
+    );
     _unarySizeOfState->addJump(ANY_EXPRESSION, _unarySizeOfReductionState);
+
+    //State: _parenthesesExpressionOrType
+
+    //Just like leftParenthesisState
+    _addUnaryShifts(*_parenthesesExpressionOrType);
+    _parenthesesExpressionOrType->addJump(
+        ANY_EXPRESSION,
+        _operatorOrRightParenthesisState
+    );
+
+    //Possibility of reading a type
+    
+    _parenthesesExpressionOrType->addShift(
+        KEYWORD_TOKEN(
+            Keyword::Char |
+            Keyword::Double |
+            Keyword::Float | 
+            Keyword::Int |
+            Keyword::Long |
+            Keyword::Short |
+            Keyword::Void |
+            Keyword::__Bool
+        ),
+        _typeInSizeofReduction,
+        _reduceType
+    );
+
+    _parenthesesExpressionOrType->addJump(
+        TYPE_IN_SIZEOF,
+        _sizeOfType
+    );
+    
+
+    //State: _typeInSizeofReduction
+    //This trick allows us to portray any kind of Keyword word
+
+    _typeInSizeofReduction->addReduction(
+        ANY_TOKEN,
+        1
+    );
+
+    //State: _sizeOfType
+
+    _sizeOfType->addShift(
+        PUNCTUATOR_TOKEN(Punctuator::RightParenthesis),
+        _sizeOfTypeReduction
+    );
+
+    //State: _sizeOfTypeReduction
+
+    _sizeOfTypeReduction->addReduction(
+        ANY_TOKEN,
+        4, 1,
+        _reduceSizeofType
+    );
+
 
 //CALLEXPRESSION
 
@@ -730,6 +807,13 @@ static unique_ptr<const IExpression> _reduceIdentifier(const Token &token) {
     return make_unique<IdentifierExpression>(identifierToken.identifier);
 }
 
+static unique_ptr<const IExpression> _reduceType(const Token &token) {
+    // Invariant:   The token argument (aka lookahead) is an KeywordToken.
+
+    auto typeToken = dynamic_cast<const KeywordToken&>(token);
+    return make_unique<TypeInSizeof>(typeToken.keyword);
+}
+
 static shared_ptr<const IExpression> _reduceIndex(
     vector<shared_ptr<const IExpression>> consumed
 ) {
@@ -778,6 +862,14 @@ static shared_ptr<const IExpression> _reduceUnary(
     // Invariant:   consumed constains exactly one expression.
 
     return make_unique<UnaryExpression>(type, consumed[0]);
+}
+
+static shared_ptr<const IExpression> _reduceSizeofType(
+    vector<shared_ptr<const IExpression>> consumed
+) {
+    // Invariant:   consumed constains exactly one TypeInSizeof
+    auto typeInSizeof = dynamic_pointer_cast<const TypeInSizeof, const IExpression>(consumed[0]);
+    return make_unique<SizeOfType>(typeInSizeof->type);
 }
 
 //Invariant: consumed.size() == 1
@@ -913,16 +1005,25 @@ static inline void _addPostfixShifts(State &state) {
 }
 
 static inline void _addPrimaryShifts(State &state) {
-    state.addShift(CONSTANT_TOKEN, _constantReducedState, _reduceConstant);
-    state.addShift(
-        IDENTIFIER_TOKEN,
-        _identifierReducedState,
-        _reduceIdentifier
-    );
+    _addPrimaryShiftsNoParenthesis(state);
 
     state.addShift(
         PUNCTUATOR_TOKEN(Punctuator::LeftParenthesis),
         _leftParenthesisState
+    );
+}
+
+static inline void _addPrimaryShiftsNoParenthesis(State &state) {
+    state.addShift(
+        CONSTANT_TOKEN,
+        _constantReducedState, 
+        _reduceConstant
+    );
+
+    state.addShift(
+        IDENTIFIER_TOKEN,
+        _identifierReducedState,
+        _reduceIdentifier
     );
 }
 
@@ -937,6 +1038,29 @@ static inline void _addRelationalShift(State &state) {
 
 static inline void _addUnaryShifts(State &state) {
     _addPrimaryShifts(state);
+
+    state.addShift(PUNCTUATOR_TOKEN(Punctuator::And), _unaryAddressOfState);
+    
+    state.addShift(
+        PUNCTUATOR_TOKEN(Punctuator::Minus),
+        _unaryArithmeticNegationState
+    );
+
+    state.addShift(
+        PUNCTUATOR_TOKEN(Punctuator::Asterisk),
+        _unaryDereferenceState
+    );
+
+    state.addShift(
+        PUNCTUATOR_TOKEN(Punctuator::ExclamationMark),
+        _unaryLogicNegationState
+    );
+
+    state.addShift(KEYWORD_TOKEN(Keyword::Sizeof), _unarySizeOfState);
+}
+
+static inline void _addUnaryShiftsNoParenthesis(State &state) {
+    _addPrimaryShiftsNoParenthesis(state);
 
     state.addShift(PUNCTUATOR_TOKEN(Punctuator::And), _unaryAddressOfState);
     

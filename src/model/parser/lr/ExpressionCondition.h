@@ -13,13 +13,14 @@ namespace c4 {
                 enum class ExpressionType : unsigned short {
                     Binary        = 0x01,
                     Call          = 0x02,
-                    CallArguments = 0x100,
                     Conditional   = 0x04,
                     Constant      = 0x08,
                     Identifier    = 0x10,
                     Index         = 0x20,
                     Member        = 0x40,
-                    Unary         = 0x80
+                    Unary         = 0x80,
+                    CallArguments = 0x100,
+                    TypeInSizeof = 0x200
                 };
 
                 struct ExpressionCondition {
