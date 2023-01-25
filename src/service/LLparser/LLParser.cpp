@@ -77,7 +77,7 @@ bool LLParser::parse()
     m_input->pushMark();
     auto a = m_input->read(&token);
     m_input->resetAndPopMark();
-    while(a){
+    do{
     if(parseDeclarationSpecifier()) return 1;
     if(parseDeclarator()) return 1;    
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))){
@@ -89,7 +89,7 @@ bool LLParser::parse()
         m_input->pushMark();
         a = m_input->read(&token);
         m_input->resetAndPopMark();
-    }
+    }while(a);
     return 0;
 }
 
