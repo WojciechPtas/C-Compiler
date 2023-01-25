@@ -27,6 +27,7 @@
 #include "../../model/declaration/FunctionDefinition.h"
 #include "../../model/declaration/FunctionDefinition.h"
 #include "../../model/declaration/DirectDeclarator.h"
+#include "../../model/declaration/DirectDeclarator2.h"
 
 #include "../../model/declaration/Declaration.h"
 namespace c4::service::parser{
@@ -58,7 +59,7 @@ namespace c4::service::parser{
             std::shared_ptr<> parseDirectAbstractDeclarator();
             std::shared_ptr<> parseDirectAbstractDeclarator2();
             std::shared_ptr<model::declaration::DirectDeclarator> parseDirectDeclarator();
-            std::shared_ptr<> parseDirectDeclarator2();
+            std::shared_ptr<model::declaration::DirectDeclarator2> parseDirectDeclarator2();
             std::shared_ptr<model::declaration::ParameterTypeList> parseParameterTypeList();
             std::shared_ptr<model::declaration::ParameterDeclaration> parseParameterDeclaration();
             std::shared_ptr<model::declaration::DeclarationSpecifier> parseDeclarationSpecifier();
