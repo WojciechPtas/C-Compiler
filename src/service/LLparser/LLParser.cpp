@@ -272,13 +272,8 @@ bool c4::service::parser::LLParser::parseAbstractDeclarator()
 {
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) {
         if(parsePointer()) return 1;
-        if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))){
-        if(parseDirectAbstractDeclarator()) return 1;
-        }
-        return 0;
     }
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))){
-        //std::cout<<"HERE\n";
         if(parseDirectAbstractDeclarator()) return 1;
     }
     else{
@@ -296,10 +291,7 @@ bool c4::service::parser::LLParser::parseDirectAbstractDeclarator()
     || checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Struct))
     || checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Union)))
     {if(parseParameterTypeList()) return 1;}
-    else if(checkLookAhead(TokenKind::punctuator, SpecifiedToken(Punctuator::RightParenthesis)))
-    {
-        //consume(TokenKind::punctuator, SpecifiedToken(Punctuator::RightParenthesis));
-    }
+    else if(checkLookAhead(TokenKind::punctuator, SpecifiedToken(Punctuator::RightParenthesis))){}
     else{
         if(parseAbstractDeclarator()) return 1;
     }
@@ -336,9 +328,6 @@ bool c4::service::parser::LLParser::parseDirectDeclarator()
         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 1;
         if(parseDeclarator()) return 1;;
         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
-    }
-    else{
-        return 1;
     }
     return parseDirectDeclarator2(); 
 }
@@ -413,7 +402,6 @@ bool c4::service::parser::LLParser::parseDirectDeclarator2()
 // //DONE
 bool c4::service::parser::LLParser::parseParameterTypeList()
 {
-    //std::cout<<"parameter\n";
     if(parseParameterDeclaration()) return 1;
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma)))  {
         consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma));
@@ -424,8 +412,7 @@ bool c4::service::parser::LLParser::parseParameterTypeList()
 bool c4::service::parser::LLParser::parseParameterDeclaration()
 {
     if(parseDeclarationSpecifier()) return 1;
-    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))
-    ||checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma))) return 0;
+    if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))||checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma))) return 0;
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) 
     {
         if(parsePointer()) return 1;
