@@ -1,7 +1,6 @@
 #pragma once
 #include "IDeclaration.h"
 #include "Pointer.h"
-#include
 namespace c4 {
     namespace model {
         namespace declaration {

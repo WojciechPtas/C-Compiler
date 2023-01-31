@@ -61,7 +61,7 @@ bool LLParser::consume(TokenKind k, SpecifiedToken s, bool inlookahead)
 
 int c4::service::parser::LLParser::run()
 {
-    if(this->parse()){
+    if(this->parse()==nullptr){
         util::token::PrintVisitor v(std::cerr);
         //token->accept(v);
         v.printPosition(*token);
@@ -73,25 +73,35 @@ int c4::service::parser::LLParser::run()
     }
 }
 
-bool LLParser::parse()
+std::shared_ptr<Root> LLParser::parse()
 {
     m_input->pushMark();
     auto a = m_input->read(&token);
     m_input->resetAndPopMark();
+    std::vector<std::shared_ptr<IDeclaration>> decs;
+    std::shared_ptr<DeclarationSpecifier> ds=nullptr;
+    std::shared_ptr<Declarator> dec=nullptr;
+    std::shared_ptr<CompoundStatement> cs=nullptr;
+
     do{
-    if(parseDeclarationSpecifier()) return 1;
-    if(parseDeclarator()) return 1;    
+    ds=parseDeclarationSpecifier();
+    if(ds==nullptr) return nullptr;
+    dec=parseDeclarator();
+    if(dec==nullptr) return nullptr;    
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))){
-        if(parseCompoundStatement()) return 1;
+        cs=parseCompoundStatement();
+        if(cs==nullptr) return nullptr;
+        decs.push_back(std::make_shared<IDeclaration>(std::make_shared<FunctionDefinition>(ds,dec,cs)));
     }
     else{
-        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return 1;
+        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return  nullptr;
+        decs.push_back(std::make_shared<IDeclaration>(std::make_shared<Declaration>(ds,dec)));
     }
         m_input->pushMark();
         a = m_input->read(&token);
         m_input->resetAndPopMark();
     }while(a);
-    return 0;
+    return std::make_shared<Root>(decs);
 }
 
 std::shared_ptr<Declaration> LLParser::parseDeclaration()
@@ -99,14 +109,16 @@ std::shared_ptr<Declaration> LLParser::parseDeclaration()
 
     //First lets parse the type specifier
     //std::cout << "parseDeclaration()\n";
-
-        if(parseDeclarationSpecifier()) return nullptr; //TODO
+        auto a =parseDeclarationSpecifier();
+        std::shared_ptr<Declarator> p =nullptr;
+        if(a==nullptr) return nullptr; //TODO
         if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon)))
         {
-            if(parseDeclarator()) return nullptr;
+            p=parseDeclarator();
+            if(p==nullptr) return nullptr;
         }
         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return nullptr;
-        return std::make_shared<Declaration>(); //TODO
+        return std::make_shared<Declaration>(a,p); //TODO
 }
 
 // bool LLParser::parseStaticAssertDeclaration()
@@ -133,17 +145,18 @@ std::shared_ptr<StructUnionSpecifier> LLParser::parseStructorUnionSpecifier(){
     m_input->read(&token);
     token->accept(visitor);
     //std::cout<<"Struct!\n";
-    if(visitor.getKind()!=TokenKind::keyword) return 1;
+    if(visitor.getKind()!=TokenKind::keyword) return nullptr;
     //std::cout<<"Struct!\n";
 
-    if((visitor.getSepcificValue().k!=Keyword::Struct) && (visitor.getSepcificValue().k!=Keyword::Union)) return 1;
+    if((visitor.getSepcificValue().k!=Keyword::Struct) 
+    && (visitor.getSepcificValue().k!=Keyword::Union)) return nullptr;
     //std::cout<<"Struct!\n";
     if(checkLookAhead(TokenKind::identifier)){
         consume(TokenKind::identifier);
         if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))){
             consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace));
-            if(parseStructDeclarationList()) return 1;
-            if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return 1;
+            if(parseStructDeclarationList()) return nullptr;
+            if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return nullptr;
             return 0;
         }
         else{
@@ -151,75 +164,25 @@ std::shared_ptr<StructUnionSpecifier> LLParser::parseStructorUnionSpecifier(){
         }
     }
     else{
-            if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))) return 1;
-            if(parseStructDeclarationList()) return 1;
-            if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return 1;
+            if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftBrace))) return nullptr;
+            if(parseStructDeclarationList()) return nullptr;
+            if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return nullptr;
             return 0;
     }
 
-    
-//     m_input->read(&token);
-//     token->accept(visitor);
-//     if(visitor.getKind()==TokenKind::identifier){
-//         m_input->pushMark();
-//         m_input->read(&token);
-//         token->accept(visitor);
-//         if(visitor.getKind()==TokenKind::punctuator){ 
-//         if(visitor.getSepcificValue().p!=Punctuator::LeftBrace) {
-//              m_input->popMark();
-//             return 0;
-//         }
-//         if(this->parseStructDeclarationList()) return 1;
-//         m_input->read(&token);
-//         token->accept(visitor);
-//         if(visitor.getKind()!=TokenKind::punctuator) return 1;
-//         if(visitor.getSepcificValue().p!=Punctuator::RightBrace) return 1;
-//         m_input->popMark();
-//         return 0;
-//     }
-//     }
-//     else if(visitor.getKind()==TokenKind::punctuator){ 
-//         if(visitor.getSepcificValue().p!=Punctuator::LeftBrace) return 1;
-//         m_input->popMark();
-//         if(this->parseStructDeclarationList()) return 1;
-//         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return 1;
-//         m_input->popMark();
-//         return 0;
-//     }
-//    return 1;
 }
 // TODO PARSE STRUCT DECLARATION
 std::shared_ptr<StructDeclarationList> LLParser::parseStructDeclarationList(){
-    //ParserVisitor visitor;
 
-    // TODO PARSE STRUCT DECLARATION
-    //std::shared_ptr<const Token> token;
-    // m_input->pushMark();
-    // m_input->read(&token);
-    // token->accept(visitor);
-    // if(visitor.getKind()==TokenKind::punctuator){
-    //     if(visitor.getSepcificValue().p==Punctuator::RightBrace){
-    //         m_input->resetToMark();
-    //         m_input->popMark();
-    //         return 0;
-    //     }
-    //     return 1;
-    // }
-    // else{
-    //     m_input->resetToMark();
-    //     m_input->popMark();
-    //      return this->parseStructDeclarationList();
-    // }
-    // return 1;
     do{
-    if(parseDeclarationSpecifier()) return 1;
+    if(parseDeclarationSpecifier()) return nullptr;
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))){
         consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
     }
     else{
         bool comma=true;
         while(comma){
-        if(parseDeclarator()) return 1;
+        if(parseDeclarator()) return nullptr;
         if(checkLookAhead(TokenKind::punctuator, SpecifiedToken(Punctuator::Comma))){
             consume(TokenKind::punctuator, SpecifiedToken(Punctuator::Comma));
         }
@@ -227,7 +190,7 @@ std::shared_ptr<StructDeclarationList> LLParser::parseStructDeclarationList(){
             comma=false;
         }
         }
-        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon)))return 1;
+        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon)))return nullptr;
     }
     }while(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace)));
     return 0;
@@ -270,51 +233,65 @@ std::shared_ptr<Declarator> c4::service::parser::LLParser::parseDeclarator()
     return std::make_shared<Declarator>(ptr,decl);
 }
 
-bool c4::service::parser::LLParser::parseAbstractDeclarator()
+std::shared_ptr<Declarator> c4::service::parser::LLParser::parseAbstractDeclarator()
 {
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) {
-        if(parsePointer()) return 1;
+        if(parsePointer()) return nullptr;
     }
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))){
-        if(parseDirectAbstractDeclarator()) return 1;
+        if(parseDirectAbstractDeclarator()) return nullptr;
     }
     else{
         return 0;
     }
     return 0;
 }
-
-bool c4::service::parser::LLParser::parseDirectAbstractDeclarator()
+// TODO
+std::shared_ptr<DirectDeclarator> c4::service::parser::LLParser::parseDirectAbstractDeclarator()
 {
-    if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 1;
+    if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) 
+    return nullptr;
+    std::shared_ptr<ParameterTypeList> p =nullptr;
+    std::shared_ptr<Declarator> d =nullptr;
+
     if(checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Int))
     || checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Void))
     || checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Char))
     || checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Struct))
     || checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Union)))
-    {if(parseParameterTypeList()) return 1;}
+    {
+        p=parseParameterTypeList();
+        if(p==nullptr) return nullptr;
+    }
     else if(checkLookAhead(TokenKind::punctuator, SpecifiedToken(Punctuator::RightParenthesis))){}
     else{
-        if(parseAbstractDeclarator()) return 1;
+        d=parseAbstractDeclarator();
+        if(d==nullptr) return nullptr;
     }
-    if (consume(TokenKind::punctuator, SpecifiedToken(Punctuator::RightParenthesis))) return 1;
-    if(parseDirectAbstractDeclarator2()) return 1;
-    return 0;
+    if (consume(TokenKind::punctuator, SpecifiedToken(Punctuator::RightParenthesis))) return nullptr;
+    auto b = parseDirectAbstractDeclarator2();
+    if(b==nullptr) return nullptr;
+    return std::make_shared<DirectDeclarator>("",d,b);
 
 }
 
-bool c4::service::parser::LLParser::parseDirectAbstractDeclarator2()
+std::shared_ptr<DirectDeclarator2> c4::service::parser::LLParser::parseDirectAbstractDeclarator2()
 {
-    if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) return 0;
+    if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis))) 
+    return std::make_shared<DirectDeclarator2>(nullptr,nullptr);
     consume(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis));
+    std::shared_ptr<ParameterTypeList>p=nullptr;
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))){
         consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis));
     }
     else{
-        if(parseParameterTypeList()) return 1;
-        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return 1;
+        p = parseParameterTypeList();
+        if(p==nullptr) return nullptr;
+        if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return nullptr;
     }
-    return parseDirectAbstractDeclarator2();
+    auto b = parseDirectAbstractDeclarator2();
+    if(b==nullptr) return nullptr;
+    return std::make_shared<DirectDeclarator2>(p,b);
 
 }
 

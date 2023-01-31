@@ -10,5 +10,5 @@ namespace c4::model::declaration{
         public:
         DeclarationSpecifier(token::Keyword keyword,
         std::shared_ptr<StructUnionSpecifier> structorunion) : keyword(keyword), structorunion(structorunion){};
-    }
+    };
 }

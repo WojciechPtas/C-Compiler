@@ -22,14 +22,9 @@
 #include "../../model/statement/LabeledStatement.h"
 #include "../../model/statement/SelectionStatement.h"
 
-#include "../../model/declaration/DeclarationSpecifier.h"
-#include "../../model/declaration/StructUnionSpecifier.h"
 #include "../../model/declaration/FunctionDefinition.h"
-#include "../../model/declaration/FunctionDefinition.h"
-#include "../../model/declaration/DirectDeclarator.h"
-#include "../../model/declaration/DirectDeclarator2.h"
+#include "../../model/declaration/Root.h"
 
-#include "../../model/declaration/Declaration.h"
 namespace c4::service::parser{
     
     class LLParser{
@@ -45,7 +40,7 @@ namespace c4::service::parser{
                 errorcode=0;
                 };
             int run();
-            bool parse(/* io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input*/);
+            std::shared_ptr<model::declaration::Root> parse(/* io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input*/);
         private:
             bool consume(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken(), bool inlookahead=false);
             bool checkLookAhead(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken());
@@ -55,15 +50,14 @@ namespace c4::service::parser{
             std::shared_ptr<model::declaration::StructDeclarationList> parseStructDeclarationList();
             std::shared_ptr<model::declaration::Pointer> parsePointer();
             std::shared_ptr<model::declaration::Declarator> parseDeclarator();
-            std::shared_ptr<> parseAbstractDeclarator();
-            std::shared_ptr<> parseDirectAbstractDeclarator();
-            std::shared_ptr<> parseDirectAbstractDeclarator2();
+            std::shared_ptr<model::declaration::Declarator> parseAbstractDeclarator();
+            std::shared_ptr<model::declaration::DirectDeclarator> parseDirectAbstractDeclarator();
+            std::shared_ptr<model::declaration::DirectDeclarator2> parseDirectAbstractDeclarator2();
             std::shared_ptr<model::declaration::DirectDeclarator> parseDirectDeclarator();
             std::shared_ptr<model::declaration::DirectDeclarator2> parseDirectDeclarator2();
             std::shared_ptr<model::declaration::ParameterTypeList> parseParameterTypeList();
             std::shared_ptr<model::declaration::ParameterDeclaration> parseParameterDeclaration();
             std::shared_ptr<model::declaration::DeclarationSpecifier> parseDeclarationSpecifier();
-            //std::shared_ptr<> parseIdentifierList();
             std::shared_ptr<model::statement::CompoundStatement> parseCompoundStatement();
             std::shared_ptr<model::statement::SelectionStatement> parseSelectionStatement();
             std::shared_ptr<model::statement::IterationStatement> parseIterationStatement();

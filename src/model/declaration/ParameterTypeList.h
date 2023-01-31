@@ -4,7 +4,7 @@
 namespace c4 {
     namespace model {
         namespace declaration {
-            class ParameterTypeList : IDeclaration{;
+            class ParameterTypeList : IDeclaration{
             private:
                
                std::vector<std::shared_ptr<ParameterDeclaration>> params;

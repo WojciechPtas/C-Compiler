@@ -10,7 +10,7 @@ namespace c4 {
             public:
                 Pointer(std::shared_ptr<Pointer> ptr) : ptr(ptr){};
                 std::shared_ptr<Pointer> getPointer(){return ptr;}
-            }
+            };
         }
     }
 }
