@@ -22,7 +22,18 @@
 #include "../../model/statement/LabeledStatement.h"
 #include "../../model/statement/SelectionStatement.h"
 
+#include "../../model/declaration/Declaration.h"
+#include "../../model/declaration/DeclarationSpecifier.h"
+#include "../../model/declaration/Declarator.h"
+#include "../../model/declaration/DirectDeclarator.h"
+#include "../../model/declaration/DirectDeclarator2.h"
 #include "../../model/declaration/FunctionDefinition.h"
+#include "../../model/declaration/ParameterDeclaration.h"
+#include "../../model/declaration/ParameterTypeList.h"
+#include "../../model/declaration/Pointer.h"
+#include "../../model/declaration/StructDeclarationList.h"
+#include "../../model/declaration/StructUnionSpecifier.h"
+
 #include "../../model/declaration/Root.h"
 
 namespace c4::service::parser{
@@ -40,24 +51,24 @@ namespace c4::service::parser{
                 errorcode=0;
                 };
             int run();
-            std::shared_ptr<model::declaration::Root> parse(/* io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input*/);
+            std::shared_ptr<model::declaration::IDeclaration> parse(/* io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input*/);
         private:
             bool consume(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken(), bool inlookahead=false);
             bool checkLookAhead(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken());
-            std::shared_ptr<model::declaration::Declaration> parseDeclaration();
+            std::shared_ptr<model::declaration::IDeclaration> parseDeclaration();
             //std::shared_ptr<> parseStaticAssertDeclaration();
-            std::shared_ptr<model::declaration::StructUnionSpecifier> parseStructorUnionSpecifier();
-            std::shared_ptr<model::declaration::StructDeclarationList> parseStructDeclarationList();
-            std::shared_ptr<model::declaration::Pointer> parsePointer();
-            std::shared_ptr<model::declaration::Declarator> parseDeclarator();
-            std::shared_ptr<model::declaration::Declarator> parseAbstractDeclarator();
-            std::shared_ptr<model::declaration::DirectDeclarator> parseDirectAbstractDeclarator();
-            std::shared_ptr<model::declaration::DirectDeclarator2> parseDirectAbstractDeclarator2();
-            std::shared_ptr<model::declaration::DirectDeclarator> parseDirectDeclarator();
-            std::shared_ptr<model::declaration::DirectDeclarator2> parseDirectDeclarator2();
-            std::shared_ptr<model::declaration::ParameterTypeList> parseParameterTypeList();
-            std::shared_ptr<model::declaration::ParameterDeclaration> parseParameterDeclaration();
-            std::shared_ptr<model::declaration::DeclarationSpecifier> parseDeclarationSpecifier();
+            std::shared_ptr<model::declaration::IDeclaration> parseStructorUnionSpecifier();
+            std::shared_ptr<model::declaration::IDeclaration> parseStructDeclarationList();
+            std::shared_ptr<model::declaration::IDeclaration> parsePointer();
+            std::shared_ptr<model::declaration::IDeclaration> parseDeclarator(bool abstract=false);
+            //std::shared_ptr<model::declaration::IDeclaration> parseAbstractDeclarator();
+            //std::shared_ptr<model::declaration::IDeclaration> parseDirectAbstractDeclarator();
+            //std::shared_ptr<model::declaration::IDeclaration> parseDirectAbstractDeclarator2();
+            std::shared_ptr<model::declaration::IDeclaration> parseDirectDeclarator(bool abstract=false);
+            std::shared_ptr<model::declaration::IDeclaration> parseDirectDeclarator2();
+            std::shared_ptr<model::declaration::IDeclaration> parseParameterTypeList();
+            std::shared_ptr<model::declaration::IDeclaration> parseParameterDeclaration();
+            std::shared_ptr<model::declaration::IDeclaration> parseDeclarationSpecifier();
             std::shared_ptr<model::statement::CompoundStatement> parseCompoundStatement();
             std::shared_ptr<model::statement::SelectionStatement> parseSelectionStatement();
             std::shared_ptr<model::statement::IterationStatement> parseIterationStatement();

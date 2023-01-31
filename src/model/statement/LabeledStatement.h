@@ -4,7 +4,7 @@
 namespace c4 {
     namespace model {
         namespace statement {
-            class LabeledStatement : IStatement {
+            class LabeledStatement : public IStatement {
                 private:
                     std::string identifier;
                     std::shared_ptr<IStatement> statement;

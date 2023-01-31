@@ -3,8 +3,8 @@
 namespace c4::model::declaration{
     class Root: public IDeclaration{
         private:
-        std::vector<IDeclaration> definitions;
+        std::vector<std::shared_ptr<IDeclaration>> definitions;
         public:
-        Root(std::vector<IDeclaration> definitions) :definitions(definitions) {}
+        Root(std::vector<std::shared_ptr<IDeclaration>> definitions) :definitions(definitions) {}
     };
 }

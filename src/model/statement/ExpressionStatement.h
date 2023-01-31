@@ -5,7 +5,7 @@
 namespace c4 {
     namespace model {
         namespace statement {
-            class ExpressionStatement : IStatement {
+            class ExpressionStatement :public IStatement {
                             private:
                                 std::shared_ptr<const expression::IExpression> expr;
                             public:
