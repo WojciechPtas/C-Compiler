@@ -4,7 +4,7 @@
 namespace c4 {
     namespace model {
         namespace statement {
-            class CompoundStatement : IStatement {
+            class CompoundStatement : public IStatement {
                 private:
                    std::vector<std::shared_ptr<IStatement>> block_of_statements;
                 public:

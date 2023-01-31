@@ -1,19 +1,25 @@
 #pragma once
 
 #include "IDeclaration.h"
-#include "Declarator.h"
-#include "Pointer.h"
+// #include "Declarator.h"
+// #include "Pointer.h"
+// #include "DeclarationSpecifier.h"
 #include "../statement/CompoundStatement.h"
 namespace c4 {
     namespace model {
         namespace declaration {
-            class FunctionDefinition : IDeclaration{;
+            class FunctionDefinition :public IDeclaration{;
             private:
-                std::shared_ptr<Declarator> declarator;
+                std::shared_ptr<IDeclaration> ds;
+                std::shared_ptr<IDeclaration> declarator;
                 std::shared_ptr<statement::CompoundStatement> statement;
             public:
-                FunctionDefinition(std::shared_ptr<Declarator> dec,std::shared_ptr<statement::CompoundStatement> statement ):declarator(dec), statement(statement){};
-                std::shared_ptr<Declarator> getDeclaration(){return declarator;}
+                FunctionDefinition(
+                    std::shared_ptr<IDeclaration> ds,
+                    std::shared_ptr<IDeclaration> dec,
+                    std::shared_ptr<statement::CompoundStatement> statement 
+                    ):ds(ds), declarator(dec), statement(statement) {};
+                std::shared_ptr<IDeclaration> getDeclaration(){return declarator;}
                 std::shared_ptr<statement::CompoundStatement>  getCompoundStatement(){return statement;}
             };
         }

@@ -1,15 +1,15 @@
 #pragma once
+//class DeclarationSpecifier;
+//class Declarator;
 #include "IDeclaration.h"
-#include "../token/Keyword.h"
-#include "Declarator.h"
 namespace c4::model::declaration{
     class Declaration : public IDeclaration{
         private:
-            token::Keyword type;
-            std::shared_ptr<Declarator> declarator;
+            std::shared_ptr<IDeclaration> ds;
+            std::shared_ptr<IDeclaration> declarator;
         public:
-            Declaration(token::Keyword type,
-            std::shared_ptr<Declarator> declarator) : type(type), declarator(declarator) {};
+            Declaration(std::shared_ptr<IDeclaration> ds,
+            std::shared_ptr<IDeclaration> declarator) : ds(ds), declarator(declarator) {};
             
     };
 }

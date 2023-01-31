@@ -4,13 +4,13 @@
 namespace c4 {
     namespace model {
         namespace declaration {
-            class Pointer : IDeclaration{
+            class Pointer : public IDeclaration{
             private:
-                std::shared_ptr<Pointer> ptr;                
+                std::shared_ptr<IDeclaration> ptr;                
             public:
-                Pointer(std::shared_ptr<Pointer> ptr) : ptr(ptr){};
-                std::shared_ptr<Pointer> getPointer(){return ptr;}
-            }
+                Pointer(std::shared_ptr<IDeclaration> ptr) : ptr(ptr){};
+                std::shared_ptr<IDeclaration> getPointer(){return ptr;}
+            };
         }
     }
 }
