@@ -27,13 +27,15 @@ namespace c4::model::statement
         void printIndentation();
         std::ostream& os;
         int indentation;
+        bool ahead;
         bool afterWhile;
         bool afterIf;
         bool exitingCompound;
         bool afterElse;
+        int ptr;
         public:
-        PrettyPrintinVisitor(std::ostream& os) : os(os),  indentation(0), 
-         afterWhile(false), afterIf(false),exitingCompound(false), afterElse(false)
+        PrettyPrintinVisitor(std::ostream& os) : os(os),  indentation(0), ahead(false),
+         afterWhile(false), afterIf(false),exitingCompound(false), afterElse(false), ptr(0)
         {}
         void visit(const CompoundStatement& s)override;
         void visit(const ExpressionStatement& s)override;

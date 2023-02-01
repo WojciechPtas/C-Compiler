@@ -1,4 +1,4 @@
-int (f(int x, int y))
+int f(int x, int y)
 {
 	{
 		struct S
@@ -18,9 +18,9 @@ int (f(int x, int y))
 	}
 }
 
-void (*((*(*p))(int)));
+void *(**p)(int);
 
-int (main(void))
+int main(void)
 {
 	int a;
 	int b;
@@ -33,7 +33,7 @@ int (main(void))
 foo:
 			break;
 	} else if (0) {
-		char (*c);
+		char *c;
 		while (1) {
 			(c = "bla");
 			continue;

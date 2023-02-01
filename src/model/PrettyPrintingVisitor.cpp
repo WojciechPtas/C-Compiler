@@ -240,30 +240,52 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Declar
 
 void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Declarator &s)
 {
+    bool complex=false;
     if(s.ptr!=nullptr){
+        os<<"(";
         s.ptr->accept(*this);
+        complex=true;
     }
     if(s.dec!=nullptr){
         s.dec->accept(*this);
     }
+    for(int i=0;i<ptr;i++){
+        os<<")";
+    }
+    ptr=0;
+    if(complex){
+        os<<")";
+    }
 }
-
 void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::DirectDeclarator &s)
 {
+    ahead=true;
+    s.direct_declarator->accept(*this);
+    bool complex=ahead;
+    ahead=false;
+    if(complex){
+        os<<"(";
+    }
     if(s.declarator==nullptr){
         os<<s.identifier;
     }
     else{
-        os<<"(";
+        //os<<"(";
         s.declarator->accept(*this);
-        os<<")";
+        //os<<")";
     }
     s.direct_declarator->accept(*this);
-
+    if(complex){
+        os<<")";
+    }
 }
 
 void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::DirectDeclarator2 &s)
 {
+    if(ahead){
+        ahead = s.list!=nullptr || s.declarator!=nullptr;
+        return;
+    }
     if(s.list!=nullptr){
         os<<"(";
         s.list->accept(*this);
@@ -307,6 +329,8 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Pointe
 {
     os<<"*";
     if(s.ptr!=nullptr){
+        os<<"(";
+        ptr++;
         s.ptr->accept(*this);
     }
 }
