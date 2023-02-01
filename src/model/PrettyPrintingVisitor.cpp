@@ -209,8 +209,11 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Declar
     afterIf=false;
     printIndentation();
     s.ds->accept(*this);
-    os<<" ";
-    s.declarator->accept(*this);
+    
+    if(s.declarator!=nullptr){
+        os<<" ";
+        s.declarator->accept(*this);
+    }
     os<<";\n";
 }
 

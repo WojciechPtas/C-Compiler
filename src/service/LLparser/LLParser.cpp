@@ -31,6 +31,8 @@ bool LLParser::consume(TokenKind k, SpecifiedToken s, bool inlookahead)
     (void) inlookahead;  
     auto a = m_input->read(&token);
     if(!a) {
+        if(token!=nullptr)
+        token->accept(visitor);
         return 1;
     }
     token->accept(visitor);
@@ -100,6 +102,10 @@ std::shared_ptr<IDeclaration> LLParser::parse()
         ds=parseDeclarationSpecifier();
         if(ds==nullptr) 
             return nullptr;
+        if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))){
+            consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
+             decs.push_back(std::static_pointer_cast<IDeclaration>(std::make_shared<Declaration>(ds,nullptr)));
+        }else{
         dec=parseDeclarator();
         if(dec==nullptr) 
             return nullptr;    
@@ -111,7 +117,7 @@ std::shared_ptr<IDeclaration> LLParser::parse()
         else{
             if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return  nullptr;
             decs.push_back(std::static_pointer_cast<IDeclaration>(std::make_shared<Declaration>(ds,dec)));
-        }
+        }}
             m_input->pushMark();
             a = m_input->read(&token);
             m_input->resetAndPopMark();
@@ -181,19 +187,12 @@ std::shared_ptr<IDeclaration> LLParser::parseStructDeclarationList(){
         if(ds==nullptr) return nullptr;
         if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))){
             consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
+            vec.push_back(std::static_pointer_cast<IDeclaration>
+            (std::make_shared<Declaration>(ds,nullptr)));
         }
         else{
-            bool comma=true;
-            while(comma){
-                declarator=parseDeclarator();
-                if(declarator==nullptr) return nullptr;
-            if(checkLookAhead(TokenKind::punctuator, SpecifiedToken(Punctuator::Comma))){
-                consume(TokenKind::punctuator, SpecifiedToken(Punctuator::Comma));
-            }
-            else{
-                comma=false;
-            }
-            }
+            declarator=parseDeclarator();
+            if(declarator==nullptr) return nullptr;
             if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon)))return nullptr;
             vec.push_back(std::static_pointer_cast<IDeclaration>
             (std::make_shared<Declaration>(ds,declarator)));
