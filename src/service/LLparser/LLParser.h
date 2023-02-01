@@ -51,6 +51,7 @@ namespace c4::service::parser{
                 errorcode=0;
                 };
             int run();
+            int print();
             std::shared_ptr<model::declaration::IDeclaration> parse(/* io::IBufferedInputStream<std::shared_ptr<const model::token::Token>> &input*/);
         private:
             bool consume(util::token::TokenKind k, util::token::SpecifiedToken s=util::token::SpecifiedToken(), bool inlookahead=false);

@@ -1,6 +1,7 @@
 #include "LLParser.h"
 #include "../../util/expression/PrintVisitor.h"
 #include "../../util/parser/lr/StateUtilities.h"
+#include "../../model/PrettyPrintingVisitor.h"
 #include <iostream>
 using namespace c4::service::io;
 using namespace c4::util::token;
@@ -64,6 +65,23 @@ int c4::service::parser::LLParser::run()
         return 1;
     }
     else{
+        return 0;
+    }
+}
+
+int c4::service::parser::LLParser::print()
+{
+    auto a=this->parse();
+    if(a==nullptr){
+        util::token::PrintVisitor v(std::cerr);
+        //token->accept(v);
+        v.printPosition(*token);
+        std::cerr<<"error: wrong token\n";
+        return 1;
+    }
+    else{
+        PrettyPrintinVisitor p(std::cout);
+        a->accept(p);
         return 0;
     }
 }
@@ -497,21 +515,26 @@ std::shared_ptr<JumpStatement> c4::service::parser::LLParser::parseJumpStatement
     visit();
     std::string val="";
     std::shared_ptr<const IExpression> expr=nullptr;
+    kind k;
     if(visitor.getKind()!=TokenKind::keyword) return nullptr;
     switch(visitor.getSepcificValue().k){
         case Keyword::Goto:
             consume(TokenKind::keyword,SpecifiedToken(Keyword::Goto));
             if(consume(TokenKind::identifier)) return nullptr;
             val=visitor.getVal();
+            k=kind::_goto;
             break;
         case Keyword::Continue:
             consume(TokenKind::keyword,SpecifiedToken(Keyword::Continue));
+            k=kind::_continue;
             break;
         case Keyword::Break:
             consume(TokenKind::keyword,SpecifiedToken(Keyword::Break));
+            k=kind::_break;
             break;
         case Keyword::Return:
             consume(TokenKind::keyword,SpecifiedToken(Keyword::Return));
+            k=kind::_return;
         if(this->checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) break;
         else{
             //std::cout <<"Return\n";
@@ -531,7 +554,7 @@ std::shared_ptr<JumpStatement> c4::service::parser::LLParser::parseJumpStatement
         return nullptr;
     }
     if(consume(TokenKind::punctuator, SpecifiedToken(Punctuator::Semicolon))) return nullptr;
-    return std::make_shared<JumpStatement>(expr,val);
+    return std::make_shared<JumpStatement>(expr,val,k);
 }
 // DONE
 std::shared_ptr<IStatement> c4::service::parser::LLParser::parseStatement()

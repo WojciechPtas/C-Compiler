@@ -5,15 +5,18 @@
 // #include "DirectDeclarator2.h"
 namespace c4::model::declaration{
     class DirectDeclarator : public IDeclaration{
-        private:
+        public:
             std::string identifier;
             std::shared_ptr<IDeclaration> declarator;
             std::shared_ptr<IDeclaration> direct_declarator; 
-        public:
+        
             DirectDeclarator(std::string identifier, //REDO
                 std::shared_ptr<IDeclaration> declarator,
                 std::shared_ptr<IDeclaration> direct_declarator
              ) : identifier(identifier), 
                 declarator(declarator), direct_declarator(direct_declarator){};
+            void accept(statement::IASTVisitor &visitor) const override {
+                        visitor.visit(*this);
+                    }
     };
 }
