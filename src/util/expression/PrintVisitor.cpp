@@ -87,7 +87,7 @@ void PrintVisitor::visit(const MemberExpression &expr) {
 }
 
 void PrintVisitor::visit(const SizeOfType &expr) {
-    this->outputStream << "(sizeof ("
+    this->outputStream << "(sizeof("
         << token::stringify(expr.type)
         << "))";
 }
@@ -101,6 +101,8 @@ void PrintVisitor::visit(const TypeInSizeof &expr) {
 void PrintVisitor::visit(const UnaryExpression &expr) {
     this->outputStream << "(" 
         << stringify(expr.type);
+    if(expr.type == UnaryExpressionType::Sizeof)
+        this->outputStream << " ";
     expr.expression->accept(*this);
     this->outputStream << ")";
 }
