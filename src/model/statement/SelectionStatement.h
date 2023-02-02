@@ -10,11 +10,11 @@ namespace c4 {
                     std::shared_ptr<IStatement> thenStatement;
                     std::shared_ptr<IStatement> elseStatement;
                 
-                    SelectionStatement(
+                    SelectionStatement(std::shared_ptr<token::Token> token,
                         std::shared_ptr<const c4::model::expression::IExpression> ifExpr,
                         std::shared_ptr<IStatement> thenStatement,
                         std::shared_ptr<IStatement> elseStatement=nullptr
-                    ) : ifExpr(ifExpr), thenStatement(thenStatement), elseStatement(elseStatement) {};
+                    ) : IStatement(token), ifExpr(ifExpr), thenStatement(thenStatement), elseStatement(elseStatement) {};
                     void accept(IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }

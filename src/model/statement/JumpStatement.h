@@ -13,8 +13,11 @@ namespace c4 {
                     JumpStatement(
                         std::shared_ptr<const c4::model::expression::IExpression> returnExpression,
                         std::string gotoIdentifier,
-                        kind k
-                    ) : returnExpression(returnExpression),  gotoIdentifier(gotoIdentifier), k(k){};
+                        kind k,
+                        std::shared_ptr<token::Token> token
+                    ) : IStatement(token),returnExpression(returnExpression),  gotoIdentifier(gotoIdentifier), 
+                    k(k)
+                    {};
                     void accept(IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }

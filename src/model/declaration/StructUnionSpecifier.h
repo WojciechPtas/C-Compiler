@@ -9,7 +9,8 @@ namespace c4::model::declaration{
         std::shared_ptr<IDeclaration> declarations;
        
         StructUnionSpecifier(std::string name,
-        std::shared_ptr<IDeclaration> declarations) : name(name), declarations(declarations){}
+        std::shared_ptr<IDeclaration> declarations,
+        std::shared_ptr<token::Token> token) :  IDeclaration(token), name(name), declarations(declarations){}
         void accept(statement::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }

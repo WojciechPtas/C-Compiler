@@ -12,8 +12,9 @@ namespace c4 {
                 
                     IterationStatement(
                         std::shared_ptr<const model::expression::IExpression> expr,
-                        std::shared_ptr<IStatement> statement
-                    ) : expr(expr), statement(statement){};
+                        std::shared_ptr<IStatement> statement,
+                        std::shared_ptr<token::Token> token
+                    ) : IStatement(token),expr(expr), statement(statement){};
                     void accept(IASTVisitor &visitor) const override {
                     visitor.visit(*this);
                 }

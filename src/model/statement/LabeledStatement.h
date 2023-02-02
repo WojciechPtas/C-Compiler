@@ -9,7 +9,9 @@ namespace c4 {
                     std::string identifier;
                     std::shared_ptr<IStatement> statement;
                 
-                    LabeledStatement(std::string i, std::shared_ptr<IStatement> s) : identifier(i), statement(s){};
+                    LabeledStatement(std::string i, std::shared_ptr<IStatement> s,
+                    std::shared_ptr<token::Token> token
+                    ) :  IStatement(token), identifier(i), statement(s){};
                     std::string getIdentifier(){return identifier;}
                     std::shared_ptr<IStatement> getStatement(){return statement;}
                     void accept(IASTVisitor &visitor) const override {
