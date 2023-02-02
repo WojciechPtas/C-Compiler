@@ -1,4 +1,5 @@
 #include "PrettyPrintingVisitor.h"
+#include <iostream>
 #include "../util/expression/PrintVisitor.h"
 using namespace c4::model::statement;
 using namespace c4::util::expression;
@@ -74,6 +75,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const ExpressionStatement
     afterIf=false;
     printIndentation();
     PrintVisitor p(os);
+    if(s.expr!=nullptr)
     s.expr->accept(p);
     os << ";\n";
 }
@@ -91,6 +93,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const IterationStatement 
     os<<")";
     afterWhile=true;
     indentation++;
+    if(s.statement!=nullptr)
     s.statement->accept(*this);
     indentation--;
 }
@@ -113,9 +116,13 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const JumpStatement &s)
         os <<"goto "<< s.gotoIdentifier <<";\n";
         break;
         case kind::_return:
-        os << "return "; 
+        os << "return"; 
         PrintVisitor p(os);
-        s.returnExpression->accept(p);
+        if(s.returnExpression!=nullptr){
+            os<<" ";
+            s.returnExpression->accept(p);
+        }
+        
         os << ";\n";
     }
 }
@@ -127,39 +134,14 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const LabeledStatement &s
     afterWhile=false;
     afterIf=false;
     os << s.identifier << ":\n";
+    if(s.statement!=nullptr)
     s.statement->accept(*this);
     
 }
 
 void c4::model::statement::PrettyPrintinVisitor::visit(const SelectionStatement &s)
 {
-    // if(!afterElse)
-    // printIndentation();
-    // os<<"if (";
-    // PrintVisitor p(os);
-    // s.ifExpr->accept(p);
-    // os <<") ";
-    // afterIf=true;
-    // if(!afterElse)
-    // indentation++;
-    // s.thenStatement->accept(*this);
-    // if(!afterElse)
-    // indentation--;
-    // if(s.elseStatement!=nullptr){
-    // if(exitingCompound){
-    //     os<<" else ";
-    // }
-    // else{
-    //     printIndentation();
-    //     os<<"else ";
-    // }
-    // afterElse=true;
-    // indentation++;
-    // afterIf=true;
-    // s.elseStatement->accept(*this);
-    // indentation--;
-    // afterElse=false;
-    // }
+
     auto a=afterElse;
     if(!a)
     printIndentation();
@@ -174,6 +156,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const SelectionStatement 
     if(!a){
         indentation++;
     }
+    if(s.thenStatement!=nullptr)
     s.thenStatement->accept(*this);
     afterIf=false;
 
@@ -263,7 +246,12 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Declar
 void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::DirectDeclarator &s)
 {
     ahead=true;
-    s.direct_declarator->accept(*this);
+    if(s.direct_declarator!=nullptr){
+        s.direct_declarator->accept(*this); 
+    }
+    else{
+        ahead=false;
+    }
     bool complex=ahead;
     ahead=false;
     if(complex){
@@ -277,6 +265,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Direct
         s.declarator->accept(*this);
         //os<<")";
     }
+    if(s.direct_declarator!=nullptr)
     s.direct_declarator->accept(*this);
     if(complex){
         os<<")";
@@ -312,6 +301,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Functi
 void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::ParameterDeclaration &s)
 {
     s.type->accept(*this);
+    //std::cout<<"parameter\n";
     if(s.dec!=nullptr){
         os<<" ";
         s.dec->accept(*this);
