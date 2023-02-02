@@ -79,7 +79,7 @@ void c4::util::sema::SemanticalAnalyser::visit(const model::declaration::Declara
     being_built.ptr_num=0;
     s.ds->accept(*this);
     if(s.declarator!=nullptr) s.declarator->accept(*this);
-    else{
+    else if(being_built.simple!=simple_type::_STRUCT){
         reportError(s.first_token,"Declarations without declarators are not valid.");
     }
     if(isVar){
