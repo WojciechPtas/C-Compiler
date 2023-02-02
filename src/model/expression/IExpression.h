@@ -8,6 +8,9 @@ namespace c4 {
             public:
                 virtual ~IExpression() { }
                 virtual void accept(IExpressionVisitor &visitor) const = 0;
+                virtual bool isTerminal() const {
+                    return false;
+                }
             };
         }
     }

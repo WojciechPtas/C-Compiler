@@ -18,6 +18,10 @@ namespace c4 {
                 void accept(IExpressionVisitor &visitor) const override {
                     visitor.visit(*this);
                 }
+                
+                bool isTerminal() const override {
+                    return true;
+                }
             };
         }
     }
