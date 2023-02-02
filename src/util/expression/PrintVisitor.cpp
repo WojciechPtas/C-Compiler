@@ -101,7 +101,7 @@ void PrintVisitor::visit(const TypeInSizeof &expr) {
 void PrintVisitor::visit(const UnaryExpression &expr) {
     this->outputStream << "(" 
         << stringify(expr.type);
-    if(expr.type == UnaryExpressionType::Sizeof && expr.expression->isTerminal())
+    if(expr.type == UnaryExpressionType::Sizeof)
         this->outputStream << " ";
     expr.expression->accept(*this);
     this->outputStream << ")";
