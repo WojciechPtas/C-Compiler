@@ -10,6 +10,7 @@ void c4::util::sema::SemanticalAnalyser::reportError(std::shared_ptr<model::toke
     util::token::PrintVisitor v(os);
     v.printPosition(*t);
     os<<"error: " <<msg<<"\n";
+    errorFound=true;
 }
 // DONE!
 void c4::util::sema::SemanticalAnalyser::visit(const model::statement::CompoundStatement &s)

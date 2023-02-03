@@ -71,7 +71,8 @@ int c4::service::parser::LLParser::run()
     else{
         util::sema::SemanticalAnalyser sem(std::cerr);
         a->accept(sem);
-        return 0;
+        return sem.isErrorFound();
+        //return 0;
     }
 }
 
@@ -86,6 +87,9 @@ int c4::service::parser::LLParser::print()
         return 1;
     }
     else{
+        util::sema::SemanticalAnalyser sem(std::cerr);
+        a->accept(sem);
+        if(sem.isErrorFound()) return 1;
         PrettyPrintinVisitor p(std::cout);
         a->accept(p);
         return 0;
@@ -284,6 +288,11 @@ std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseDirectDeclarat
         {   
             params=parseParameterTypeList();
             if(params==nullptr) return nullptr;
+        }
+        else{
+            std::vector<std::shared_ptr<IDeclaration>> a;
+            params=std::static_pointer_cast<IDeclaration>(std::make_shared<ParameterTypeList>
+            ((a)));
         }
         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return nullptr;
     }

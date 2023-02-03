@@ -310,6 +310,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Parame
 
 void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::ParameterTypeList &s)
 {
+    if(s.params.size()==0) return;
     for(size_t i=0;i<s.params.size()-1;i++)
     {
         s.params[i]->accept(*this);

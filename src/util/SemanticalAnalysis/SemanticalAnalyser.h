@@ -30,9 +30,11 @@ namespace c4::util::sema
     struct type{
         simple_type simple;
         int ptr_num=0;
+        //
     };
     class SemanticalAnalyser : public model::statement::IASTVisitor{
         std::ostream& os;
+        bool errorFound;
         int inLoop;
         bool inParameter;
         std::map<std::string,bool> labels;
@@ -45,11 +47,12 @@ namespace c4::util::sema
         bool ahead;
         void reportError(std::shared_ptr<model::token::Token> t, std::string msg="wrong token");
         public:
-        SemanticalAnalyser(std::ostream& os) : os(os), inLoop(0), inParameter(false), isVar(true), name(""),ahead(false)
+        SemanticalAnalyser(std::ostream& os) : os(os),  errorFound(false), inLoop(0), inParameter(false), isVar(true), name(""),ahead(false)
         {
             declared_vars.push_back(std::set<std::string>());
             variables_type.push_back(std::map<std::string,type>());
         } //global range
+        bool isErrorFound(){return errorFound;}
         void visit(const model::statement::CompoundStatement& s)override;
         void visit(const model::statement::ExpressionStatement& s)override;
         void visit(const model::statement::IterationStatement& s)override;

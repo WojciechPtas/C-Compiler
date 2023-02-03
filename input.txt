@@ -1,10 +1,10 @@
-int (f(int x, int y))
+int (f())
 {
 	{
 		struct S
 		{
 			int x;
-		};
+		} s;
 		((s.x) = x);
 		struct S (*p);
 		(p = (&s));
@@ -20,10 +20,7 @@ int (f(int x, int y))
 
 void (*((*(*p))(int)));
 
-struct S
-		{
-			int x;
-		} (main(void))
+int (main(void))
 {
 	int a;
 	int b;
@@ -32,8 +29,11 @@ struct S
 	}
 	(b = (a * 2));
 	if ((a < b)) {
-		while (((a < (sizeof b)) || (!(b == (f(23, (sizeof(int))))))))
+		while (((a < (sizeof b)) || (!(b == (f(23, (sizeof(int)))))))){
 foo:
+			a=sizeof f(x);
+			break;
+			}
 			break;
 	} else if (0) {
 		char (*c);
