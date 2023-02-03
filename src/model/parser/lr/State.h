@@ -25,10 +25,10 @@ namespace c4 {
 
                 // Real declarations.
 
-                typedef std::function<std::shared_ptr<const expression::IExpression>(std::vector<std::shared_ptr<const expression::IExpression>>&)> Reduction;
+                typedef std::function<std::shared_ptr<const expression::IExpression>(std::vector<std::shared_ptr<const expression::IExpression>>&, std::vector<std::shared_ptr<const token::Token>>&)> Reduction;
                 //Reduction is now type "Function taking (reference of) vector of pointers of Expression, returns pointer to Expression"
                 
-                typedef std::function<std::unique_ptr<const expression::IExpression>(const token::Token&)> TokenReduction;
+                typedef std::function<std::shared_ptr<const expression::IExpression>(const token::Token&)> TokenReduction;
                 //TokenReduction is now type "Function taking (reference of) Token, returns (unique) pointer to Expression"
 
                 class State {

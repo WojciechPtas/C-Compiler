@@ -22,11 +22,13 @@ shared_ptr<const IExpression> ExpressionParser::parse(
     shared_ptr<Token> convertedToken; //Will store token->convertDigraph() here
     bool accepting, eofReached, readNext = true;
     size_t stateCount = 0, newStateCount = this->states.size();
+    
     do {
         bool isGoto = stateCount > newStateCount; //we reduced last iteration
         stateCount = newStateCount;
         if (readNext) {
             eofReached = !input.read(&_lastTokenRead);
+            tokens.push_back(_lastTokenRead);
             convertedToken = _lastTokenRead->convertDigraph();
         }
 

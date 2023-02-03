@@ -99,53 +99,64 @@ const State &c4::util::parser::lr::INITIAL_STATE = *_initialState;
 
 static shared_ptr<const IExpression> _reduceBinary(
     vector<shared_ptr<const IExpression>> consumed,
-    BinaryExpressionType type
+    BinaryExpressionType type,
+    std::vector<std::shared_ptr<const Token>>& tokens
 );
 
 static shared_ptr<const IExpression> _reduceConditional(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 );
 
 static unique_ptr<const IExpression> _reduceConstant(const Token &token);
 static unique_ptr<const IExpression> _reduceIdentifier(const Token &token);
 static unique_ptr<const IExpression> _reduceType(const Token &token);
 static shared_ptr<const IExpression> _reduceIndex(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 );
 
 static shared_ptr<const IExpression> _reduceMember(
     vector<shared_ptr<const IExpression>> consumed,
-    MemberExpressionType type
+    MemberExpressionType type,
+    std::vector<std::shared_ptr<const Token>>& tokens
 );
 
 static shared_ptr<const IExpression> _reduceParentheses(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 );
 
 static shared_ptr<const IExpression> _reduceUnary(
     vector<shared_ptr<const IExpression>> consumed,
-    UnaryExpressionType type
+    UnaryExpressionType type,
+    std::vector<std::shared_ptr<const Token>>& tokens
 );
 
 static shared_ptr<const IExpression> _reduceSizeofType(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 );
 
 
 static shared_ptr<const IExpression> _reduceCallExpressionEmpty(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 );
 
 static shared_ptr<const IExpression> _reduceFirstCallArgument(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 );
 
 static shared_ptr<const IExpression> _reduceCallExpressionNonEmpty(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 );
 
 static shared_ptr<const IExpression> _reduceNonFirstCallArgument(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 );
 
 // State initialization helper declarations
@@ -188,7 +199,7 @@ static shared_ptr<const State> _initialize() {
             Punctuator::RightParenthesis
         ),
         3, 2,
-        bind(_reduceBinary, _1, BinaryExpressionType::Sum)
+        bind(_reduceBinary, _1, BinaryExpressionType::Sum, _2)
     );
 
     // State: _additionState
@@ -207,7 +218,7 @@ static shared_ptr<const State> _initialize() {
             Punctuator::RightParenthesis
         ),
         3, 2,
-        bind(_reduceBinary, _1, BinaryExpressionType::Assignment)
+        bind(_reduceBinary, _1, BinaryExpressionType::Assignment, _2)
     );
 
     // State: _assignmentState
@@ -235,7 +246,7 @@ static shared_ptr<const State> _initialize() {
             Punctuator::RightParenthesis
         ),
         3, 2,
-        bind(_reduceBinary, _1, BinaryExpressionType::Equal)
+        bind(_reduceBinary, _1, BinaryExpressionType::Equal, _2)
     );
 
     // State: _compareEqualState
@@ -259,7 +270,7 @@ static shared_ptr<const State> _initialize() {
             Punctuator::RightParenthesis
         ),
         3, 2,
-        bind(_reduceBinary, _1, BinaryExpressionType::Unequal)
+        bind(_reduceBinary, _1, BinaryExpressionType::Unequal, _2)
     );
 
     // State: _compareUnequalState
@@ -292,7 +303,7 @@ static shared_ptr<const State> _initialize() {
     _directMemberAccessReductionState->addReduction(
         ANY_TOKEN,
         3, 2,
-        bind(_reduceMember, _1, MemberExpressionType::Direct)
+        bind(_reduceMember, _1, MemberExpressionType::Direct, _2)
     );
 
     // State: _directMemberAccessState
@@ -343,7 +354,7 @@ static shared_ptr<const State> _initialize() {
             Punctuator::RightParenthesis
         ),
         3, 2,
-        bind(_reduceBinary, _1, BinaryExpressionType::LessThan)
+        bind(_reduceBinary, _1, BinaryExpressionType::LessThan, _2)
     );
 
     // State: _lessThanState
@@ -381,7 +392,7 @@ static shared_ptr<const State> _initialize() {
             Punctuator::RightParenthesis
         ),
         3, 2,
-        bind(_reduceBinary, _1, BinaryExpressionType::Multiplication)
+        bind(_reduceBinary, _1, BinaryExpressionType::Multiplication, _2)
     );
 
     // State: _multiplicationState
@@ -427,7 +438,7 @@ static shared_ptr<const State> _initialize() {
             Punctuator::RightParenthesis
         ),
         3, 2,
-        bind(_reduceBinary, _1, BinaryExpressionType::LogicalAnd)
+        bind(_reduceBinary, _1, BinaryExpressionType::LogicalAnd, _2)
     );
 
     // State: _operatorOrLogicalOrReduction
@@ -443,7 +454,7 @@ static shared_ptr<const State> _initialize() {
             Punctuator::RightParenthesis
         ),
         3, 2,
-        bind(_reduceBinary, _1, BinaryExpressionType::LogicalOr)
+        bind(_reduceBinary, _1, BinaryExpressionType::LogicalOr, _2)
     );
 
     // State: _operatorOrRightBracketState
@@ -481,7 +492,7 @@ static shared_ptr<const State> _initialize() {
     _pointerMemberAccessReductionState->addReduction(
         ANY_TOKEN,
         3, 2,
-        bind(_reduceMember, _1, MemberExpressionType::Pointer)
+        bind(_reduceMember, _1, MemberExpressionType::Pointer, _2)
     );
 
     // State: _pointerMemberAccessState
@@ -511,7 +522,7 @@ static shared_ptr<const State> _initialize() {
             Punctuator::RightParenthesis
         ),
         3, 2,
-        bind(_reduceBinary, _1, BinaryExpressionType::Subtraction)
+        bind(_reduceBinary, _1, BinaryExpressionType::Subtraction, _2)
     );
 
     // State: _subtractionState
@@ -524,7 +535,7 @@ static shared_ptr<const State> _initialize() {
     _unaryAddressOfReductionState->addReduction(
         ANY_TOKEN,
         2, 1,
-        bind(_reduceUnary, _1, UnaryExpressionType::AddressOf)
+        bind(_reduceUnary, _1, UnaryExpressionType::AddressOf, _2)
     );
 
     // State: _unaryAddressOfState
@@ -540,7 +551,7 @@ static shared_ptr<const State> _initialize() {
     _unaryArithmeticNegationReductionState->addReduction(
         ANY_TOKEN,
         2, 1,
-        bind(_reduceUnary, _1, UnaryExpressionType::AdditiveInverse)
+        bind(_reduceUnary, _1, UnaryExpressionType::AdditiveInverse, _2)
     );
 
     // State: _unaryArithmeticNegationState
@@ -556,7 +567,7 @@ static shared_ptr<const State> _initialize() {
     _unaryDereferenceReductionState->addReduction(
         ANY_TOKEN,
         2, 1,
-        bind(_reduceUnary, _1, UnaryExpressionType::Indirection)
+        bind(_reduceUnary, _1, UnaryExpressionType::Indirection, _2)
     );
 
     // State: _unaryDereferenceState
@@ -572,7 +583,7 @@ static shared_ptr<const State> _initialize() {
     _unaryLogicNegationReductionState->addReduction(
         ANY_TOKEN,
         2, 1,
-        bind(_reduceUnary, _1, UnaryExpressionType::LogicalInverse)
+        bind(_reduceUnary, _1, UnaryExpressionType::LogicalInverse, _2)
     );
 
     // State: _unaryLogicNegationState
@@ -588,7 +599,7 @@ static shared_ptr<const State> _initialize() {
     _unarySizeOfReductionState->addReduction(
         ANY_TOKEN,
         2, 1,
-        bind(_reduceUnary, _1, UnaryExpressionType::Sizeof)
+        bind(_reduceUnary, _1, UnaryExpressionType::Sizeof, _2)
     );
 
     // State: _unarySizeOfState
@@ -767,16 +778,18 @@ static shared_ptr<const State> _initialize() {
 
 static shared_ptr<const IExpression> _reduceBinary(
     vector<shared_ptr<const IExpression>> consumed,
-    BinaryExpressionType type
+    BinaryExpressionType type,
+    std::vector<std::shared_ptr<const Token>>& tokens
 ) {
     // Invariant:   First element of consumed is left expression, second
     //              element is right expression.
 
-    return make_shared<BinaryExpression>(type, consumed[0], consumed[1]);
+    return make_shared<BinaryExpression>(type, consumed[0], consumed[1], tokens.front());
 }
 
 static shared_ptr<const IExpression> _reduceConditional(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 ) {
     // Invariant:   First element of consumed is condition, second is then
     //              case, third is else case.
@@ -784,7 +797,8 @@ static shared_ptr<const IExpression> _reduceConditional(
     return make_shared<ConditionalExpression>(
         consumed[0],
         consumed[1],
-        consumed[2]
+        consumed[2],
+        tokens.front()
     );
 }
 
@@ -795,7 +809,8 @@ static unique_ptr<const IExpression> _reduceConstant(const Token &token) {
     auto constantToken = dynamic_cast<const ConstantToken&>(token);
     return make_unique<ConstantExpression>(
         constantToken.type,
-        constantToken.value
+        constantToken.value,
+        make_shared<const ConstantToken>(constantToken)
     );
 }
 
@@ -804,28 +819,33 @@ static unique_ptr<const IExpression> _reduceIdentifier(const Token &token) {
     //              Hence, the following dynamic_cast is safe.
 
     auto identifierToken = dynamic_cast<const IdentifierToken&>(token);
-    return make_unique<IdentifierExpression>(identifierToken.identifier);
+    return make_unique<IdentifierExpression>(
+        identifierToken.identifier, 
+        make_shared<const IdentifierToken>(identifierToken)
+    );
 }
 
 static unique_ptr<const IExpression> _reduceType(const Token &token) {
-    // Invariant:   The token argument (aka lookahead) is an KeywordToken.
+    // Invariant:   The token argument (aka lookahead) is a KeywordToken.
 
     auto typeToken = dynamic_cast<const KeywordToken&>(token);
     return make_unique<TypeInSizeof>(typeToken.keyword);
 }
 
 static shared_ptr<const IExpression> _reduceIndex(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 ) {
     // Invariant:   The first element of consumed is the container, the second
     //              one is the index.
 
-    return make_shared<IndexExpression>(consumed[0], consumed[1]);
+    return make_shared<IndexExpression>(consumed[0], consumed[1], tokens.front());
 }
 
 static shared_ptr<const IExpression> _reduceMember(
     vector<shared_ptr<const IExpression>> consumed,
-    MemberExpressionType type
+    MemberExpressionType type,
+    std::vector<std::shared_ptr<const Token>>& tokens
 ) {
     // Invariant:   The first element of consumed is the container, the second
     //              one is the member.
@@ -840,11 +860,12 @@ static shared_ptr<const IExpression> _reduceMember(
         throw logic_error("Unexpected member expression");
     }
 
-    return make_shared<MemberExpression>(type, container, member);
+    return make_shared<MemberExpression>(type, container, member, tokens.front());
 }
 
 static shared_ptr<const IExpression> _reduceParentheses(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 ) {
     // Invariant:   consumed contains exactly one expression.
     //
@@ -852,54 +873,67 @@ static shared_ptr<const IExpression> _reduceParentheses(
     //          for the "linear" source code representation, we can simply
     //          forward the consumed expression without adjustments.
 
+    (void) tokens;
+
     return consumed[0];
 }
 
 static shared_ptr<const IExpression> _reduceUnary(
     vector<shared_ptr<const IExpression>> consumed,
-    UnaryExpressionType type
+    UnaryExpressionType type,
+    std::vector<std::shared_ptr<const Token>>& tokens
 ) {
     // Invariant:   consumed constains exactly one expression.
 
-    return make_unique<UnaryExpression>(type, consumed[0]);
+    return make_unique<UnaryExpression>(type, consumed[0], tokens.front());
 }
 
 static shared_ptr<const IExpression> _reduceSizeofType(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 ) {
     // Invariant:   consumed constains exactly one TypeInSizeof
     auto typeInSizeof = dynamic_pointer_cast<const TypeInSizeof, const IExpression>(consumed[0]);
-    return make_unique<SizeOfType>(typeInSizeof->type);
+    return make_unique<SizeOfType>(typeInSizeof->type, tokens.front());
 }
 
 //Invariant: consumed.size() == 1
 static shared_ptr<const IExpression> _reduceCallExpressionEmpty(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 ) {
-    return make_shared<CallExpression>(consumed[0]);
+    return make_shared<CallExpression>(consumed[0], tokens.front());
 }
 
 //Invariant: consumed.size() == 1
 static shared_ptr<const IExpression> _reduceFirstCallArgument(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 ) {
+    (void) tokens;
+
     return make_shared<CallArguments>(consumed[0]);
 }
 
 //Invariant: consumed.size() == 2
 static shared_ptr<const IExpression> _reduceCallExpressionNonEmpty(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 ) {
     return make_shared<CallExpression>(
         consumed[0], 
-        dynamic_pointer_cast<const CallArguments, const IExpression>(consumed[1])
+        dynamic_pointer_cast<const CallArguments, const IExpression>(consumed[1]),
+        tokens.front()
     );
 }
 
 //Invariant: consumed.size() == 2
 static shared_ptr<const IExpression> _reduceNonFirstCallArgument(
-    vector<shared_ptr<const IExpression>> consumed
+    vector<shared_ptr<const IExpression>> consumed,
+    std::vector<std::shared_ptr<const Token>>& tokens
 ) {
+    (void) tokens;
+
     return make_shared<CallArguments>(
         dynamic_pointer_cast<const CallArguments, const IExpression>(consumed[0]),
         consumed[1]

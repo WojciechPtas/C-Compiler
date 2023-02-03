@@ -15,13 +15,15 @@ namespace c4 {
                 CallArguments arguments;
 
                 CallExpression(
-                    shared_ptr<const IExpression>& called
-                ) : called(called) { }
+                    shared_ptr<const IExpression>& called,
+                    const std::shared_ptr<const model::token::Token> firstTerminal
+                ) : IExpression(firstTerminal), called(called) { }
 
                 CallExpression(
                     const shared_ptr<const IExpression>& called,
-                    const shared_ptr<const CallArguments>& arguments
-                ) : called(called), arguments(*arguments) { }
+                    const shared_ptr<const CallArguments>& arguments,
+                    const std::shared_ptr<const model::token::Token>& firstTerminal
+                ) : IExpression(firstTerminal), called(called), arguments(*arguments) { }
                 
                 ~CallExpression() { }
 

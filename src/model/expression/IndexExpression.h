@@ -13,8 +13,9 @@ namespace c4 {
 
                 IndexExpression(
                     std::shared_ptr<const IExpression> container,
-                    std::shared_ptr<const IExpression> index
-                ) : container(container), index(index) { }
+                    std::shared_ptr<const IExpression> index,
+                    const std::shared_ptr<const model::token::Token>& firstTerminal
+                ) : IExpression(firstTerminal), container(container), index(index) { }
 
                 ~IndexExpression() { }
 

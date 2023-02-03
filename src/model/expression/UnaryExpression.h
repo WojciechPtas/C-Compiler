@@ -15,8 +15,9 @@ namespace c4 {
 
                 UnaryExpression(
                     UnaryExpressionType type,
-                    const std::shared_ptr<const IExpression> expression
-                ) : expression(expression), type(type) { }
+                    const std::shared_ptr<const IExpression> expression,
+                    const std::shared_ptr<const model::token::Token>& firstTerminal
+                ) : IExpression(firstTerminal), expression(expression), type(type) { }
 
                 ~UnaryExpression() { }
 

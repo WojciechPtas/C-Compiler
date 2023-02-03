@@ -18,8 +18,9 @@ namespace c4 {
                 MemberExpression(
                     MemberExpressionType type,
                     const std::shared_ptr<const IExpression> container,
-                    const std::shared_ptr<const IdentifierExpression> member
-                ) : container(container), member(member), type(type) { }
+                    const std::shared_ptr<const IdentifierExpression> member,
+                    const std::shared_ptr<const model::token::Token>& firstTerminal
+                ) : IExpression(firstTerminal), container(container), member(member), type(type) { }
 
                 ~MemberExpression() { }
 

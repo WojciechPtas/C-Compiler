@@ -13,8 +13,11 @@ namespace c4 {
                 const ConstantType type;
                 const std::string value;
 
-                ConstantExpression(ConstantType type, const std::string &value) :
-                    type(type),
+                ConstantExpression(
+                    ConstantType type, 
+                    const std::string &value,
+                    const std::shared_ptr<const model::token::Token>& firstTerminal
+                ) : IExpression(firstTerminal), type(type),
                     value(value) { }
 
                 ~ConstantExpression() { }

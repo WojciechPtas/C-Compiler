@@ -15,7 +15,9 @@ class CallArguments : public IExpression {
     public:
         vector<shared_ptr<const IExpression>> arguments;
 
-        CallArguments() = default;
+        CallArguments() 
+        : IExpression(nullptr)
+        {}
 
         CallArguments(shared_ptr<const IExpression> singleArgument) : CallArguments() {
             addArgument(singleArgument);

@@ -13,8 +13,9 @@ namespace c4 {
                 const token::Keyword type;
 
                 SizeOfType(
-                    const token::Keyword type
-                ) : type(type) {
+                    const token::Keyword type,
+                    const std::shared_ptr<const model::token::Token>& firstTerminal
+                ) : IExpression(firstTerminal), type(type) {
                     //must make sure it is a type!
                 }
 

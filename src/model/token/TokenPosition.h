@@ -12,6 +12,8 @@ namespace c4 {
                 const std::size_t line;
                 const std::size_t column;
 
+                TokenPosition(const TokenPosition&) = default;
+
                 TokenPosition(
                     const std::string_view &file,
                     std::size_t line,
@@ -19,7 +21,9 @@ namespace c4 {
                 ) : file(file), line(line), column(column) { }
 
                 virtual ~TokenPosition() { }
+
             };
+            static const TokenPosition TOKENPOSITION_UNSET = TokenPosition("Position not set", 0, 0);
         }
     }
 }

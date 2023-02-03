@@ -15,8 +15,9 @@ namespace c4 {
                 ConditionalExpression(
                     const std::shared_ptr<const IExpression> condition,
                     const std::shared_ptr<const IExpression> thenCase,
-                    const std::shared_ptr<const IExpression> elseCase
-                ) : condition(condition),
+                    const std::shared_ptr<const IExpression> elseCase,
+                    const std::shared_ptr<const model::token::Token>& firstTerminal
+                ) : IExpression(firstTerminal), condition(condition),
                     elseCase(elseCase),
                     thenCase(thenCase) { }
 

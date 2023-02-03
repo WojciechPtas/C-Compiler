@@ -10,8 +10,10 @@ namespace c4 {
             public:
                 const std::string identifier;
 
-                IdentifierExpression(const std::string &identifier) :
-                    identifier(identifier) { }
+                IdentifierExpression(
+                    const std::string &identifier,
+                    const std::shared_ptr<const model::token::Token>& firstTerminal
+                ) : IExpression(firstTerminal), identifier(identifier) { }
 
                 ~IdentifierExpression() { }
 

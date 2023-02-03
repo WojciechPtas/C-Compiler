@@ -11,7 +11,7 @@ namespace c4 {
                 token::Keyword type;
 
                 TypeInSizeof(const token::Keyword type) :
-                    type(type) { }
+                    IExpression(nullptr), type(type) { }
 
                 ~TypeInSizeof() { }
 

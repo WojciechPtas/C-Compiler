@@ -17,8 +17,9 @@ namespace c4 {
                 BinaryExpression(
                     BinaryExpressionType type,
                     const std::shared_ptr<const IExpression> left,
-                    const std::shared_ptr<const IExpression> right
-                ) : left(left), right(right), type(type) { }
+                    const std::shared_ptr<const IExpression> right,
+                    const std::shared_ptr<const model::token::Token>& firstTerminal
+                ) : IExpression(firstTerminal), left(left), right(right), type(type) { }
 
                 ~BinaryExpression() { }
 

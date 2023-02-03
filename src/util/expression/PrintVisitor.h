@@ -20,6 +20,10 @@
 #include "../../model/expression/CallExpression.h"
 #include "../../model/expression/TypeInSizeof.h"
 
+//perhaps useless now
+#include "../token/PrintVisitor.h"
+#include <iostream>
+
 namespace c4 {
     namespace util {
         namespace expression {

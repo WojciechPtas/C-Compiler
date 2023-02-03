@@ -36,6 +36,7 @@ namespace c4 {
                 std::shared_ptr<model::token::Token> _lastTokenRead;
                 std::vector<std::shared_ptr<const model::expression::IExpression>> expressions;
                 std::vector<std::weak_ptr<const model::parser::lr::State>> states;
+                std::vector<std::shared_ptr<const model::token::Token>> tokens;
             };
         }
     }
