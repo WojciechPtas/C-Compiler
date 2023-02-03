@@ -58,6 +58,17 @@ namespace c4 {
                         model::token::Punctuator::LeftParenthesis
                 };
 
+                const model::parser::lr::LookaheadCondition POSTFIX_EXPRESSION_TOKENS = {
+                    model::parser::lr::TokenType::Punctuator,
+
+                    model::token::Keyword(0),
+                        
+                    model::token::Punctuator::LeftParenthesis |
+                        model::token::Punctuator::LeftBracket |
+                        model::token::Punctuator::Dot |
+                        model::token::Punctuator::DashGreaterThan
+                };
+
                 inline model::parser::lr::LookaheadCondition KEYWORD_TOKEN(
                     model::token::Keyword keyword
                 ) {

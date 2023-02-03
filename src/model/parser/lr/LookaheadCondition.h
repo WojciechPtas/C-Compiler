@@ -46,8 +46,17 @@ namespace c4 {
                 
                 inline LookaheadCondition operator~ (
                     LookaheadCondition l) {
+                    TokenType newTT = ~l.typeMask;
+
+                    if(std::underlying_type<token::Keyword>::type(~l.keywordMask)) {
+                        newTT = newTT | TokenType::Keyword;
+                    }
+                    if(std::underlying_type<token::Keyword>::type(~l.punctuatorMask)) {
+                        newTT = newTT | TokenType::Punctuator;
+                    }
+
                     return {
-                        ~l.typeMask,
+                        newTT,
                         ~l.keywordMask,
                         ~l.punctuatorMask,
                     };

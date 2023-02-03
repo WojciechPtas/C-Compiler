@@ -67,15 +67,15 @@ MAKE_STATE(_pointerMemberAccessState);
 MAKE_STATE(_pointerMemberAccessReductionState);
 MAKE_STATE(_subtractionReductionState);
 MAKE_STATE(_subtractionState);
-MAKE_STATE(_unaryAddressOfReductionState);
+MAKE_STATE(_unaryAddressOfReductionOrPostfix);
 MAKE_STATE(_unaryAddressOfState);
-MAKE_STATE(_unaryArithmeticNegationReductionState);
+MAKE_STATE(_unaryArithmeticNegationReductionOrPostfix);
 MAKE_STATE(_unaryArithmeticNegationState);
-MAKE_STATE(_unaryDereferenceReductionState);
+MAKE_STATE(_unaryDereferenceReductionOrPostfix);
 MAKE_STATE(_unaryDereferenceState);
-MAKE_STATE(_unaryLogicNegationReductionState);
+MAKE_STATE(_unaryLogicNegationReductionOrPostfix);
 MAKE_STATE(_unaryLogicNegationState);
-MAKE_STATE(_unarySizeOfReductionState);
+MAKE_STATE(_unarySizeOfReductionOrPostfix);
 MAKE_STATE(_unarySizeOfState);
 MAKE_STATE(_parenthesesExpressionOrType);
 MAKE_STATE(_typeInSizeofReduction);
@@ -530,77 +530,87 @@ static shared_ptr<const State> _initialize() {
     _addUnaryShifts(*_subtractionState);
     _subtractionState->addJump(ANY_EXPRESSION, _subtractionReductionState);
 
-    // State: _unaryAddressOfReductionState
+    // State: _unaryAddressOfReductionOrPostfix
 
-    _unaryAddressOfReductionState->addReduction(
-        ANY_TOKEN,
+    _unaryAddressOfReductionOrPostfix->addReduction(
+        ~POSTFIX_EXPRESSION_TOKENS,
         2, 1,
         bind(_reduceUnary, _1, UnaryExpressionType::AddressOf, _2)
     );
+
+    _addPostfixShifts(*_unaryAddressOfReductionOrPostfix);
 
     // State: _unaryAddressOfState
 
     _addUnaryShifts(*_unaryAddressOfState);
     _unaryAddressOfState->addJump(
         ANY_EXPRESSION,
-        _unaryAddressOfReductionState
+        _unaryAddressOfReductionOrPostfix
     );
 
-    // _unaryArithmeticNegationReductionState
+    // _unaryArithmeticNegationReductionOrPostfix
 
-    _unaryArithmeticNegationReductionState->addReduction(
-        ANY_TOKEN,
+    _unaryArithmeticNegationReductionOrPostfix->addReduction(
+        ~POSTFIX_EXPRESSION_TOKENS,
         2, 1,
         bind(_reduceUnary, _1, UnaryExpressionType::AdditiveInverse, _2)
     );
+
+    _addPostfixShifts(*_unaryArithmeticNegationReductionOrPostfix);
 
     // State: _unaryArithmeticNegationState
 
     _addUnaryShifts(*_unaryArithmeticNegationState);
     _unaryArithmeticNegationState->addJump(
         ANY_EXPRESSION,
-        _unaryArithmeticNegationReductionState
+        _unaryArithmeticNegationReductionOrPostfix
     );
 
-    // State: _unaryDereferenceReductionState
+    // State: _unaryDereferenceReductionOrPostfix
 
-    _unaryDereferenceReductionState->addReduction(
-        ANY_TOKEN,
+    _unaryDereferenceReductionOrPostfix->addReduction(
+        ~POSTFIX_EXPRESSION_TOKENS,
         2, 1,
         bind(_reduceUnary, _1, UnaryExpressionType::Indirection, _2)
     );
+
+    _addPostfixShifts(*_unaryDereferenceReductionOrPostfix);
 
     // State: _unaryDereferenceState
 
     _addUnaryShifts(*_unaryDereferenceState);
     _unaryDereferenceState->addJump(
         ANY_EXPRESSION,
-        _unaryDereferenceReductionState
+        _unaryDereferenceReductionOrPostfix
     );
 
-    // State: _unaryLogicNegationReductionState
+    // State: _unaryLogicNegationReductionOrPostfix
 
-    _unaryLogicNegationReductionState->addReduction(
-        ANY_TOKEN,
+    _unaryLogicNegationReductionOrPostfix->addReduction(
+        ~POSTFIX_EXPRESSION_TOKENS,
         2, 1,
         bind(_reduceUnary, _1, UnaryExpressionType::LogicalInverse, _2)
     );
+
+    _addPostfixShifts(*_unaryLogicNegationReductionOrPostfix);
 
     // State: _unaryLogicNegationState
 
     _addUnaryShifts(*_unaryLogicNegationState);
     _unaryLogicNegationState->addJump(
         ANY_EXPRESSION,
-        _unaryLogicNegationReductionState
+        _unaryLogicNegationReductionOrPostfix
     );
 
-    // State: _unarySizeOfReductionState
+    // State: _unarySizeOfReductionOrPostfix
 
-    _unarySizeOfReductionState->addReduction(
-        ANY_TOKEN,
+    _unarySizeOfReductionOrPostfix->addReduction(
+        ~POSTFIX_EXPRESSION_TOKENS,
         2, 1,
         bind(_reduceUnary, _1, UnaryExpressionType::Sizeof, _2)
     );
+
+    _addPostfixShifts(*_unarySizeOfReductionOrPostfix);
 
     // State: _unarySizeOfState
 
@@ -609,7 +619,7 @@ static shared_ptr<const State> _initialize() {
         PUNCTUATOR_TOKEN(Punctuator::LeftParenthesis),
         _parenthesesExpressionOrType
     );
-    _unarySizeOfState->addJump(ANY_EXPRESSION, _unarySizeOfReductionState);
+    _unarySizeOfState->addJump(ANY_EXPRESSION, _unarySizeOfReductionOrPostfix);
 
     //State: _parenthesesExpressionOrType
 
