@@ -141,7 +141,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const LabeledStatement &s
 
 void c4::model::statement::PrettyPrintinVisitor::visit(const SelectionStatement &s)
 {
-
+    if(afterIf) os <<"\n";
     auto a=afterElse;
     if(!a)
     printIndentation();
