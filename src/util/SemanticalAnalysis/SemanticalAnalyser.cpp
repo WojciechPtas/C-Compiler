@@ -62,6 +62,10 @@ void c4::util::sema::SemanticalAnalyser::visit(const model::statement::JumpState
 void c4::util::sema::SemanticalAnalyser::visit(const model::statement::LabeledStatement &s)
 {
     auto a = s;
+    if(labels.find(s.identifier)!=labels.end()){
+        std::string msg = "this label:  " + s.identifier +" was already declared";
+        if(labels[s.identifier]==true) reportError(s.first_token,msg);
+    }
     labels[s.identifier]=true;
     s.statement->accept(*this);
 }
