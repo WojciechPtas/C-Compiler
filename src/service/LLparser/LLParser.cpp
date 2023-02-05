@@ -102,8 +102,8 @@ std::shared_ptr<IDeclaration> LLParser::parse()
     auto a = m_input->read(&token);
     m_input->resetAndPopMark();
     std::vector<std::shared_ptr<IDeclaration>> decs;
-    std::shared_ptr<IDeclaration> ds=nullptr;
-    std::shared_ptr<IDeclaration> dec=nullptr;
+    std::shared_ptr<DeclarationSpecifier> ds=nullptr;
+    std::shared_ptr<Declarator> dec=nullptr;
     std::shared_ptr<CompoundStatement> cs=nullptr;
 
     do{
@@ -133,11 +133,11 @@ std::shared_ptr<IDeclaration> LLParser::parse()
     return std::static_pointer_cast<IDeclaration>(std::make_shared<Root>(decs));
 }
 
-std::shared_ptr<IDeclaration> LLParser::parseDeclaration()
+std::shared_ptr<Declaration> LLParser::parseDeclaration()
 {
 
         auto a =parseDeclarationSpecifier();
-        std::shared_ptr<IDeclaration> p =nullptr;
+        std::shared_ptr<Declarator> p =nullptr;
         if(a==nullptr) return nullptr; 
         if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon)))
         {
@@ -145,10 +145,10 @@ std::shared_ptr<IDeclaration> LLParser::parseDeclaration()
             if(p==nullptr) return nullptr;
         }
         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))) return nullptr;
-        return std::static_pointer_cast<IDeclaration>(std::make_shared<Declaration>(a,p)); 
+        return (std::make_shared<Declaration>(a,p)); 
 }
 
-std::shared_ptr<IDeclaration> LLParser::parseStructorUnionSpecifier(){
+std::shared_ptr<StructUnionSpecifier> LLParser::parseStructorUnionSpecifier(){
     m_input->read(&token);
     token->accept(visitor);
     auto first_token=token;
@@ -166,11 +166,11 @@ std::shared_ptr<IDeclaration> LLParser::parseStructorUnionSpecifier(){
             auto a =parseStructDeclarationList();
             if(a==nullptr) return nullptr;
             if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return nullptr;
-            return std::static_pointer_cast<IDeclaration>
+            return 
             (std::make_shared<StructUnionSpecifier>(name,a,first_token));
         }
         else{
-            return std::static_pointer_cast<IDeclaration>
+            return 
             (std::make_shared<StructUnionSpecifier>(name,nullptr,first_token));
         }
     }
@@ -179,68 +179,68 @@ std::shared_ptr<IDeclaration> LLParser::parseStructorUnionSpecifier(){
             auto a =parseStructDeclarationList();
             if(a==nullptr) return nullptr;
             if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace))) return nullptr;
-            return std::static_pointer_cast<IDeclaration>
+            return 
             (std::make_shared<StructUnionSpecifier>("",a,first_token));
     }
 
 }
 // DONE
-std::shared_ptr<IDeclaration> LLParser::parseStructDeclarationList(){
+std::shared_ptr<StructDeclarationList> LLParser::parseStructDeclarationList(){
 
-    std::shared_ptr<IDeclaration> ds=nullptr;
-    std::shared_ptr<IDeclaration> declarator=nullptr;
-    std::vector<std::shared_ptr<IDeclaration>> vec;
+    std::shared_ptr<DeclarationSpecifier> ds=nullptr;
+    std::shared_ptr<Declarator> declarator=nullptr;
+    std::vector<std::shared_ptr<Declaration>> vec;
     do{
         ds=parseDeclarationSpecifier();
         if(ds==nullptr) return nullptr;
         if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon))){
             consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
-            vec.push_back(std::static_pointer_cast<IDeclaration>
+            vec.push_back(
             (std::make_shared<Declaration>(ds,nullptr)));
         }
         else{
             declarator=parseDeclarator();
             if(declarator==nullptr) return nullptr;
             if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon)))return nullptr;
-            vec.push_back(std::static_pointer_cast<IDeclaration>
+            vec.push_back(
             (std::make_shared<Declaration>(ds,declarator)));
         }
     }while(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightBrace)));
-    return std::static_pointer_cast<IDeclaration>
+    return 
             (std::make_shared<StructDeclarationList>(vec));
 
 }
 // DONE!
-std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parsePointer()
+std::shared_ptr<Pointer> c4::service::parser::LLParser::parsePointer()
 {
     if(this->consume(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) return nullptr;
     auto first_token=token;
     if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) 
-    return std::static_pointer_cast<IDeclaration>(std::make_shared<Pointer>(nullptr,first_token));
+    return (std::make_shared<Pointer>(nullptr,first_token));
     auto ptr = parsePointer();
     if(ptr==nullptr) return nullptr;
-    return std::static_pointer_cast<IDeclaration>(std::make_shared<Pointer>(ptr,first_token));
+    return (std::make_shared<Pointer>(ptr,first_token));
 }
 // DONE!
-std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseDeclarator(bool abstract)
+std::shared_ptr<Declarator> c4::service::parser::LLParser::parseDeclarator(bool abstract)
 {
-    std::shared_ptr<IDeclaration> ptr=nullptr;
+    std::shared_ptr<Pointer> ptr=nullptr;
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) 
     {
         ptr=parsePointer();
         if(ptr==nullptr) return nullptr;
     }
     //std::cout<< "Direct declarator\n";
-    std::shared_ptr<IDeclaration> decl=parseDirectDeclarator(abstract);
+    std::shared_ptr<DirectDeclarator> decl=parseDirectDeclarator(abstract);
     if(decl==nullptr) return nullptr;
-    return std::static_pointer_cast<IDeclaration>(std::make_shared<Declarator>(ptr,decl));
+    return (std::make_shared<Declarator>(ptr,decl));
 }
 
-std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseDirectDeclarator(bool abstract)
+std::shared_ptr<DirectDeclarator> c4::service::parser::LLParser::parseDirectDeclarator(bool abstract)
 {
     std::string val="";
-    std::shared_ptr<IDeclaration> declarator=nullptr;
-    std::shared_ptr<IDeclaration> declarator2=nullptr;
+    std::shared_ptr<Declarator> declarator=nullptr;
+    std::shared_ptr<DirectDeclarator2> declarator2=nullptr;
     std::shared_ptr<Token> first_token=nullptr;
     m_input->pushMark();
     if(checkLookAhead(TokenKind::identifier)){
@@ -267,7 +267,7 @@ std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseDirectDeclarat
             m_input->resetAndPopMark();
             declarator2=parseDirectDeclarator2();
             if(declarator2==nullptr) return nullptr;
-            return std::static_pointer_cast<IDeclaration>(
+            return (
             std::make_shared<DirectDeclarator>(val,declarator,declarator2,first_token)); 
         }
         
@@ -276,7 +276,7 @@ std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseDirectDeclarat
                      ||  checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma))    )
     ){
         m_input->popMark();
-        return std::static_pointer_cast<IDeclaration>(
+        return (
         std::make_shared<DirectDeclarator>(val,declarator,declarator2,first_token));
 
     }
@@ -284,13 +284,13 @@ std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseDirectDeclarat
     return nullptr;} 
     declarator2=parseDirectDeclarator2(); 
     if(declarator2==nullptr) return nullptr;
-    return std::static_pointer_cast<IDeclaration>(
+    return (
         std::make_shared<DirectDeclarator>(val,declarator,declarator2,first_token));
 }
-std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseDirectDeclarator2()
+std::shared_ptr<DirectDeclarator2> c4::service::parser::LLParser::parseDirectDeclarator2()
 {
-    std::shared_ptr<IDeclaration> params=nullptr;
-    std::shared_ptr<IDeclaration> declarator=nullptr;
+    std::shared_ptr<ParameterTypeList> params=nullptr;
+    std::shared_ptr<DirectDeclarator2> declarator=nullptr;
     std::shared_ptr<Token> first_token=nullptr;
     if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::LeftParenthesis)))
     return std::make_shared<DirectDeclarator2>(nullptr,nullptr,nullptr);
@@ -310,8 +310,8 @@ std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseDirectDeclarat
             if(params==nullptr) return nullptr;
         }
         else{
-            std::vector<std::shared_ptr<IDeclaration>> a;
-            params=std::static_pointer_cast<IDeclaration>(std::make_shared<ParameterTypeList>
+            std::vector<std::shared_ptr<ParameterDeclaration>> a;
+            params=(std::make_shared<ParameterTypeList>
             ((a)));
         }
         if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return nullptr;
@@ -321,15 +321,15 @@ std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseDirectDeclarat
         if(declarator==nullptr) return nullptr;
         return std::make_shared<DirectDeclarator2>(params,declarator,first_token);
     }
-    return std::static_pointer_cast<IDeclaration>(
+    return (
         std::make_shared<DirectDeclarator2>(params,declarator,first_token));
     
 }
 // //DONE
-std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseParameterTypeList()
+std::shared_ptr<ParameterTypeList> c4::service::parser::LLParser::parseParameterTypeList()
 {
-    std::vector<std::shared_ptr<IDeclaration>> params;
-    auto a = std::static_pointer_cast<IDeclaration>(parseParameterDeclaration());
+    std::vector<std::shared_ptr<ParameterDeclaration>> params;
+    auto a = (parseParameterDeclaration());
     if(a==nullptr) return  nullptr;
     params.push_back(a);
     while(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma)))
@@ -339,16 +339,16 @@ std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseParameterTypeL
         if(a==nullptr) return  nullptr;
         params.push_back(a);
     }
-    return std::static_pointer_cast<IDeclaration>(std::make_shared<ParameterTypeList>(params));
+    return (std::make_shared<ParameterTypeList>(params));
 }
-std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseParameterDeclaration()
+std::shared_ptr<ParameterDeclaration> c4::service::parser::LLParser::parseParameterDeclaration()
 {
     auto spec = parseDeclarationSpecifier();
-    std::shared_ptr<IDeclaration> aa=nullptr;
+    std::shared_ptr<Declarator> aa=nullptr;
     //std::cout<<"Specifier\n";
     if(spec==nullptr) return nullptr;
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))||checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma)))
-     return std::static_pointer_cast<IDeclaration>(std::make_shared<ParameterDeclaration>(spec,nullptr));;
+     return (std::make_shared<ParameterDeclaration>(spec,nullptr));;
     //if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) 
     //{
     //    if(parsePointer()) return nullptr;
@@ -362,12 +362,12 @@ std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseParameterDecla
     //    if(parseAbstractDeclarator()) return nullptr;
     //}
     
-    return std::static_pointer_cast<IDeclaration>(std::make_shared<ParameterDeclaration>(spec,aa));
+    return (std::make_shared<ParameterDeclaration>(spec,aa));
 }
-std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseDeclarationSpecifier()
+std::shared_ptr<DeclarationSpecifier> c4::service::parser::LLParser::parseDeclarationSpecifier()
 {
     visit();
-    std::shared_ptr<IDeclaration> b=nullptr;
+    std::shared_ptr<StructUnionSpecifier> b=nullptr;
     Keyword key;
     if(visitor.getKind()!=TokenKind::keyword) return nullptr;
     std::shared_ptr<Token> first_token=token;
@@ -392,7 +392,7 @@ std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseDeclarationSpe
         b = (parseStructorUnionSpecifier());
         if(b==nullptr) return nullptr;
     }
-    return std::static_pointer_cast<IDeclaration>(std::make_shared<DeclarationSpecifier>(key,b,first_token));
+    return (std::make_shared<DeclarationSpecifier>(key,b,first_token));
 }
 // // DONE
 // bool c4::service::parser::LLParser::parseIdentifierList()

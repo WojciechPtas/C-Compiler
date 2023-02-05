@@ -6,9 +6,9 @@ namespace c4 {
         namespace declaration {
             class Pointer : public IDeclaration{
             public:
-                std::shared_ptr<IDeclaration> ptr;                
+                std::shared_ptr<Pointer> ptr;                
             
-                Pointer(std::shared_ptr<IDeclaration> ptr,
+                Pointer(std::shared_ptr<Pointer> ptr,
                 std::shared_ptr<token::Token> token) : IDeclaration(token), ptr(ptr){};
                     std::shared_ptr<IDeclaration> getPointer(){return ptr;}
                 void accept(statement::IASTVisitor &visitor) const override {
