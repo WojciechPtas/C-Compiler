@@ -15,7 +15,7 @@ namespace c4 {
                         std::shared_ptr<IStatement> thenStatement,
                         std::shared_ptr<IStatement> elseStatement=nullptr
                     ) : IStatement(token), ifExpr(ifExpr), thenStatement(thenStatement), elseStatement(elseStatement) {};
-                    void accept(IASTVisitor &visitor) const override {
+                    void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }
                 };

@@ -11,7 +11,7 @@ namespace c4 {
                     CompoundStatement(std::vector<std::shared_ptr<IStatement>>& a,
                     std::shared_ptr<token::Token> token) : IStatement(token), block_of_statements(a){};
                     std::vector<std::shared_ptr<IStatement>>& getBlockOfStatements(){return block_of_statements;}
-                    void accept(IASTVisitor &visitor) const override {
+                    void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }
             };

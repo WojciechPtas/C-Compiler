@@ -18,7 +18,7 @@ namespace c4 {
                     ) : IStatement(token),returnExpression(returnExpression),  gotoIdentifier(gotoIdentifier), 
                     k(k)
                     {};
-                    void accept(IASTVisitor &visitor) const override {
+                    void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }
                 };

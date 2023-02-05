@@ -1,9 +1,11 @@
 #include "PrettyPrintingVisitor.h"
 #include <iostream>
-#include "../util/expression/PrintVisitor.h"
+#include "../../expression/PrintVisitor.h"
+using namespace c4::util::pretty;
 using namespace c4::model::statement;
+using namespace c4::model::declaration;
 using namespace c4::util::expression;
-void c4::model::statement::PrettyPrintinVisitor::printIndentation()
+void c4::util::pretty::PrettyPrintinVisitor::printIndentation()
 {
     for(int i=0;i<indentation;i++){
         os << "\t";
@@ -67,7 +69,7 @@ void PrettyPrintinVisitor::visit(const CompoundStatement &s)
     exitingCompound=true;
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const ExpressionStatement &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const ExpressionStatement &s)
 {
     if(afterElse||afterWhile||afterIf) os<<"\n";
     afterElse=false;
@@ -80,7 +82,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const ExpressionStatement
     os << ";\n";
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const IterationStatement &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const IterationStatement &s)
 {
     if(afterElse||afterWhile||afterIf) os<<"\n";
     afterElse=false;
@@ -98,7 +100,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const IterationStatement 
     indentation--;
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const JumpStatement &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const JumpStatement &s)
 {
     if(afterElse||afterWhile||afterIf) os<<"\n";
     afterElse=false;
@@ -127,7 +129,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const JumpStatement &s)
     }
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const LabeledStatement &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const LabeledStatement &s)
 {
     if(afterElse||afterWhile||afterIf) os<<"\n";
     afterElse=false;
@@ -139,7 +141,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const LabeledStatement &s
     
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const SelectionStatement &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const SelectionStatement &s)
 {
     if(afterIf) os <<"\n";
     auto a=afterElse;
@@ -184,7 +186,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const SelectionStatement 
     }
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Declaration &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const Declaration &s)
 {
     if(afterElse||afterWhile||afterIf) os<<"\n";
     afterElse=false;
@@ -200,17 +202,17 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Declar
     os<<";\n";
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::DeclarationSpecifier &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const DeclarationSpecifier &s)
 {
     if(s.structorunion==nullptr){
         switch(s.keyword){
-            case token::Keyword::Int:
+            case model::token::Keyword::Int:
             os<<"int";
             break;
-            case token::Keyword::Char:
+            case model::token::Keyword::Char:
             os<<"char";
             break;
-            case token::Keyword::Void:
+            case model::token::Keyword::Void:
             os<<"void";
             break;
             default:
@@ -224,7 +226,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Declar
     //os<<"";
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Declarator &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const Declarator &s)
 {
     bool complex=false;
     if(s.ptr!=nullptr){
@@ -243,7 +245,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Declar
         os<<")";
     }
 }
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::DirectDeclarator &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const DirectDeclarator &s)
 {
     ahead=true;
     if(s.direct_declarator!=nullptr){
@@ -272,7 +274,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Direct
     }
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::DirectDeclarator2 &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const DirectDeclarator2 &s)
 {
     if(ahead){
         ahead = s.list!=nullptr || s.declarator!=nullptr;
@@ -288,7 +290,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Direct
     }
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::FunctionDefinition &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const FunctionDefinition &s)
 {
     printIndentation();
     s.ds->accept(*this);
@@ -298,7 +300,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Functi
     s.statement->accept(*this);
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::ParameterDeclaration &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const ParameterDeclaration &s)
 {
     s.type->accept(*this);
     //std::cout<<"parameter\n";
@@ -308,7 +310,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Parame
     }
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::ParameterTypeList &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const ParameterTypeList &s)
 {
     if(s.params.size()==0) return;
     for(size_t i=0;i<s.params.size()-1;i++)
@@ -319,7 +321,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Parame
     s.params[s.params.size()-1]->accept(*this);
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Pointer &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const Pointer &s)
 {
     os<<"*";
     if(s.ptr!=nullptr){
@@ -329,7 +331,7 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Pointe
     }
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Root &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const Root &s)
 {
     for(size_t i =0; i<s.definitions.size()-1;i++){
         s.definitions[i]->accept(*this);
@@ -338,14 +340,14 @@ void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::Root &
     s.definitions[s.definitions.size()-1]->accept(*this);
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::StructDeclarationList &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const StructDeclarationList &s)
 {
     for(auto& a: s.declarations){
         a->accept(*this);
     }
 }
 
-void c4::model::statement::PrettyPrintinVisitor::visit(const declaration::StructUnionSpecifier &s)
+void c4::util::pretty::PrettyPrintinVisitor::visit(const StructUnionSpecifier &s)
 {
     os<<"struct ";
     os<<s.name;

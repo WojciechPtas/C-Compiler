@@ -14,7 +14,7 @@ namespace c4 {
                     ) :  IStatement(token), identifier(i), statement(s){};
                     std::string getIdentifier(){return identifier;}
                     std::shared_ptr<IStatement> getStatement(){return statement;}
-                    void accept(IASTVisitor &visitor) const override {
+                    void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }                
             };

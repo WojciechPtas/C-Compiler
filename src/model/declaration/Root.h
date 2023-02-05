@@ -7,7 +7,7 @@ namespace c4::model::declaration{
         
         Root(std::vector<std::shared_ptr<IDeclaration>> definitions) :IDeclaration(nullptr),definitions(definitions) 
         {}
-        void accept(statement::IASTVisitor &visitor) const override {
+        void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }
     };

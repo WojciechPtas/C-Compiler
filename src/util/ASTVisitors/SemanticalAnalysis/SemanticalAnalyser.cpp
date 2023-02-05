@@ -1,11 +1,11 @@
 #include "SemanticalAnalyser.h"
-#include "../../util/token/PrintVisitor.h"
+#include "../../token/PrintVisitor.h"
 using namespace c4::util::sema;
 using namespace c4::model::declaration;
 using namespace c4::model::statement;
 using namespace c4::model::token;
 
-void c4::util::sema::SemanticalAnalyser::reportError(std::shared_ptr<model::token::Token> t, std::string msg)
+void c4::util::sema::SemanticalAnalyser::reportError(std::shared_ptr<const model::token::Token> t, std::string msg)
 {
     util::token::PrintVisitor v(os);
     v.printPosition(*t);
@@ -47,14 +47,14 @@ void c4::util::sema::SemanticalAnalyser::visit(const model::statement::JumpState
     }
     else if(s.k==kind::_goto){
        if(labels.insert(std::make_pair(s.gotoIdentifier, false)).second){
-        gotoLabels[s.gotoIdentifier]=s.first_token;
+        gotoLabels[s.gotoIdentifier]=s.firstTerminal;
        }
     }
     else{
         if(inLoop)
         return;
         else{
-            this->reportError(s.first_token,"continue and break are only allowed inside a loop");
+            this->reportError(s.firstTerminal,"continue and break are only allowed inside a loop");
         }
     }
 }
@@ -64,7 +64,7 @@ void c4::util::sema::SemanticalAnalyser::visit(const model::statement::LabeledSt
     auto a = s;
     if(labels.find(s.identifier)!=labels.end()){
         std::string msg = "this label:  " + s.identifier +" was already declared";
-        if(labels[s.identifier]==true) reportError(s.first_token,msg);
+        if(labels[s.identifier]==true) reportError(s.firstTerminal,msg);
     }
     labels[s.identifier]=true;
     s.statement->accept(*this);
@@ -85,7 +85,7 @@ void c4::util::sema::SemanticalAnalyser::visit(const model::declaration::Declara
     s.ds->accept(*this);
     if(s.declarator!=nullptr) s.declarator->accept(*this);
     else if(being_built.simple!=simple_type::_STRUCT){
-        reportError(s.first_token,"Declarations without declarators are not valid.");
+        reportError(s.firstTerminal,"Declarations without declarators are not valid.");
     }
     if(isVar){
         variables_type.back()[name]=being_built;
@@ -140,7 +140,7 @@ void c4::util::sema::SemanticalAnalyser::visit(const model::declaration::DirectD
         auto se = declared_vars.back();
         if(se.find(s.identifier)!=se.end()){
             std::string msg="Variable with this name: \"" + s.identifier + "\" was already declared in this scope";            
-            reportError(s.first_token,msg);
+            reportError(s.firstTerminal,msg);
             return;
         }
         else{

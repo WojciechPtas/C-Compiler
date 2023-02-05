@@ -5,10 +5,10 @@
 namespace c4 {
     namespace model {
         namespace declaration {
-            class IDeclaration:public statement::IStatement{;
+            class IDeclaration: public statement::IStatement {
             public:
-            IDeclaration(std::shared_ptr<token::Token> token) : IStatement(token) {}
-            virtual void accept(statement::IASTVisitor& visitor)const =0;
+            IDeclaration(std::shared_ptr<const token::Token> token) : statement::IStatement(token) {}
+            virtual void accept(util::IASTVisitor& visitor)const =0;
             };
         }
         }

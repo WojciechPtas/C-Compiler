@@ -12,8 +12,8 @@ namespace c4 {
                 std::shared_ptr<Declarator> dec;            
                 ParameterDeclaration(std::shared_ptr<DeclarationSpecifier> type,
                 std::shared_ptr<Declarator> dec
-                ) : IDeclaration(type->first_token),type(type), dec(dec) {}
-                void accept(statement::IASTVisitor &visitor) const override {
+                ) : IDeclaration(type->firstTerminal),type(type), dec(dec) {}
+                void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }
             };

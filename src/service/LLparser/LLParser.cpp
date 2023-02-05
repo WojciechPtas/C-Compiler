@@ -1,8 +1,9 @@
 #include "LLParser.h"
 #include "../../util/expression/PrintVisitor.h"
 #include "../../util/parser/lr/StateUtilities.h"
-#include "../../model/PrettyPrintingVisitor.h"
-#include "../../util/SemanticalAnalysis/SemanticalAnalyser.h"
+#include "../../util/ASTVisitors/PrettyPrintingVisitor/PrettyPrintingVisitor.h"
+#include "../../util/ASTVisitors/SemanticalAnalysis/SemanticalAnalyser.h"
+
 #include <iostream>
 using namespace c4::service::io;
 using namespace c4::util::token;
@@ -90,7 +91,7 @@ int c4::service::parser::LLParser::print()
         util::sema::SemanticalAnalyser sem(std::cerr);
         a->accept(sem);
         if(sem.isErrorFound()) return 1;
-        PrettyPrintinVisitor p(std::cout);
+        util::pretty::PrettyPrintinVisitor p(std::cout);
         a->accept(p);
         return 0;
     }
@@ -437,6 +438,7 @@ std::shared_ptr<CompoundStatement> c4::service::parser::LLParser::parseCompoundS
 // DONE
 std::shared_ptr<SelectionStatement> c4::service::parser::LLParser::parseSelectionStatement()
 {
+    // if (expr) {}
     // std::cout << "parseSelectionStatement()\n";
     if(consume(TokenKind::keyword,SpecifiedToken(Keyword::If))) return nullptr;
     std::shared_ptr<Token> first_token=token;

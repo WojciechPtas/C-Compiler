@@ -11,7 +11,7 @@ namespace c4::model::declaration{
             std::shared_ptr<DirectDeclarator2> declarator,
             std::shared_ptr<token::Token> token=nullptr) : IDeclaration(token), list(list), 
             declarator(declarator){}
-        void accept(statement::IASTVisitor &visitor) const override {
+        void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }    
     };

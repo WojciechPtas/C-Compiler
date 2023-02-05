@@ -9,7 +9,7 @@ namespace c4 {
                 std::vector<std::shared_ptr<ParameterDeclaration>> params;
                 ParameterTypeList(std::vector<std::shared_ptr<ParameterDeclaration>>& params,
                 std::shared_ptr<token::Token> token=nullptr) : IDeclaration(token), params(params) {};
-                void accept(statement::IASTVisitor &visitor) const override {
+                void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }
                 };

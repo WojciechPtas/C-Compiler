@@ -11,7 +11,7 @@ namespace c4 {
                 Pointer(std::shared_ptr<Pointer> ptr,
                 std::shared_ptr<token::Token> token) : IDeclaration(token), ptr(ptr){};
                     std::shared_ptr<IDeclaration> getPointer(){return ptr;}
-                void accept(statement::IASTVisitor &visitor) const override {
+                void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }
             };
