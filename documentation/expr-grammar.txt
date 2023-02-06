@@ -46,6 +46,3 @@ primary-expression	::= identifier
 			  | constant
 			  | string-literal
 			  | '(' assignment-expression ')'
-
-DONE? Left associativity
-_operatorOrConditionalReduction and probably others: have excessive shifting(cover themselves), maybe lack of reductions

@@ -20,6 +20,8 @@
 #include "util/expression/PrintVisitor.h"
 #include "service/LLparser/LLParser.h"
 
+#include "service/CodeGenerator/codegen.h"
+
 using namespace c4::service::parser;
 using namespace c4::model::token;
 using namespace c4::model::parser::lr;
@@ -39,6 +41,7 @@ enum Action{
     PRETTYPRINT,
     COMPILE
 };
+
 
 
 shared_ptr<LexingInputStream> initializeLexer(const std::string& input) {
@@ -164,6 +167,12 @@ int main(int argc, char* argv[]) {
             input= argv[i+1];
             return LRparse(input);
         }
+        else if(in =="--compile") {
+            input= argv[i+1];
+            CodeGen cg(input);
+            return cg.codeGenTest();
+        }
     }
     cerr << "No command given\n";
+    return 1;
 }

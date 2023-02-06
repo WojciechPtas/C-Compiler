@@ -4,7 +4,7 @@ LLVM_CONFIG := llvm-config
 
 LLVM_CXXFLAGS  := $(subst -I,-isystem,$(shell $(LLVM_CONFIG) --cppflags))
 LLVM_LDFLAGS := $(shell $(LLVM_CONFIG) --ldflags --system-libs)
-CXXFLAGS  += -Wall -W -std=c++14 -O0 -g -Wno-unused-parameter $(LLVM_CXXFLAGS)
+CXXFLAGS  += -Wall -W -std=c++14 -O0 -g -pthread -Wno-unused-parameter $(LLVM_CXXFLAGS)
 
 ifeq ($(LLVM_SHARED), yes)
 	LLVM_LIBS := -lLLVM-$(shell $(LLVM_CONFIG) --version)
