@@ -1,6 +1,10 @@
 #pragma once
 
 #include "../../model/ASTNode.h"
+#include "../../model/expression/IExpressionCodeGenVisitor.h"
+#include "../../model/CType/BaseCType.h"
+#include "../../model/CType/CFunctionType.h"
+#include "../../model/CType/ParameterInfo.h"
 
 #include <unordered_map>
 #include <iostream>
@@ -22,129 +26,33 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/SystemUtils.h"
 
-using namespace c4;
+using namespace c4::model::ctype;
 using namespace llvm;
 
 class CodeGen {
     //"Global" stuff
 
-    enum TypeSpecifier {
-        VOID,
-        INT,
-        CHAR
-    };
-
-    class CType {
-    protected:
-        uint indirections;
-
-    public:
-        CType(uint indirections) : indirections(indirections) {}
-        virtual Type* getLLVMType(IRBuilder<> &builder) const = 0;
-        void incIndirections() {
-            indirections++;
-        }
-        void decIndirections() {
-            indirections--;
-        }
-    };
-
-    //Perhaps implement BaseCType::get() to be able to do pointer equality
-    class BaseCType : public CType {
-    private:
-        TypeSpecifier t;
-
-    public:
-        BaseCType(TypeSpecifier t, uint indirections) 
-        : CType(indirections), t(t) 
-        {}
-
-        BaseCType(TypeSpecifier t) 
-        : CType(0), t(t) 
-        {}
-
-        virtual Type* getLLVMType(IRBuilder<> &builder) const override {
-            if(indirections) {
-                return builder.getPtrTy();
-            }
-            switch(t) {
-                case INT:
-                    return builder.getInt32Ty();
-                case CHAR:
-                    return builder.getInt8Ty();
-                case VOID: 
-                    return builder.getVoidTy();
-                default:
-                    throw std::logic_error("Unrecognized type");
-            }
-            return NULL;
-        }
-    };
-
-    class CFunctionType : public CType {
-        CType* retType;
-        std::vector<CType*> paramTypes;
-
-    public:
-        CFunctionType(
-            CType* retType,
-            std::vector<CType*> paramTypes,
-            uint indirections
-        ) : CType(indirections), retType(retType), paramTypes(paramTypes) {}
-
-        CFunctionType(
-            CType* retType,
-            std::vector<CType*> paramTypes
-        ) : CType(0), retType(retType), paramTypes(paramTypes) {}
-        
-
-        FunctionType* getLLVMFuncType(IRBuilder<> &builder) const {
-            Type* llvmRetType = retType->getLLVMType(builder);
-            std::vector<Type*> llvmParamTypes;
-            for(CType* ctype : paramTypes) {
-                llvmParamTypes.push_back(ctype->getLLVMType(builder));
-            }
-            return FunctionType::get(llvmRetType, llvmParamTypes, false);
-        }
-
-        virtual Type* getLLVMType(IRBuilder<> &builder) const override {
-            return getLLVMFuncType(builder);
-        }
-    };
         
     class CTypedLValue {
         Value* lvalue;
-        CType* type;
+        std::shared_ptr<CType> type;
 
     public:
-        CTypedLValue(Value* lvalue, CType* type) : lvalue(lvalue), type(type) {}
+        CTypedLValue(Value* lvalue, const std::shared_ptr<CType>& type) : lvalue(lvalue), type(type) {}
 
-        Type* getLLVMType(IRBuilder<> &builder) {
+        Type* getLLVMType(IRBuilder<> &builder) const {
             return type->getLLVMType(builder);
         }
 
-        Value* getValue() {
+        Value* getValue() const {
             return lvalue;
         }
         
     };
 
-    class ParametersInfo {
-    public:
-        std::vector<std::string> names;
-        std::vector<CType*> types;
-        
-        std::vector<Type*> getLLVMTypes(IRBuilder<> &builder) {
-            std::vector<Type*> ret;
-            for(CType* ctype : types) {
-                ret.push_back(ctype->getLLVMType(builder));
-            }
-            return ret;
-        }
-    };
 
     class Scope {
-        std::unordered_map<std::string, CTypedLValue*> current;
+        std::unordered_map<std::string, std::shared_ptr<CTypedLValue>> current;
         Scope* outer = NULL;
 
     public:
@@ -153,9 +61,9 @@ class CodeGen {
         Scope(Scope* outer) : outer(outer) 
         {}
 
-        CTypedLValue* operator[](const std::string& name) {
+        CTypedLValue const* operator[](const std::string& name) const {
             if(current.count(name)) {
-                return current[name];
+                return (*current.find(name)).second.get();
             }
             else if(outer == NULL) {
                 return (*outer)[name];
@@ -171,13 +79,13 @@ class CodeGen {
                 ((outer != NULL) ? outer->count(name) : false);
         }
 
-        void set(const std::string& name, CTypedLValue* val) {
-            current[name] = val;
+        //Parameter will be copied in a shared_ptr
+        void set(const std::string& name, const CTypedLValue& val) {
+            current[name] = std::make_shared<CTypedLValue>(val);
         }
     };
 
     std::string filename;
-    std::unordered_map<std::string, Function*> functions;
     Scope global;
     LLVMContext ctx;
     Module M; //1:1 with translation units i.e. source file 
