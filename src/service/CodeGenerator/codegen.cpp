@@ -12,80 +12,80 @@ AllocaInst* CodeGen::Alloca(Type* type) {
 
 int CodeGen::codeGenTest() {
 
-    // std::cout << filename << std::endl;
-    // sys::PrintStackTraceOnErrorSignal(filename);
-    // // PrettyStackTraceProgram X(argc, argv);
-    // std::shared_ptr<BaseCType> Int = std::make_shared<BaseCType>(TypeSpecifier::INT);
+    std::cout << filename << std::endl;
+    sys::PrintStackTraceOnErrorSignal(filename);
+    // PrettyStackTraceProgram X(argc, argv);
+    std::shared_ptr<const BaseCType> Int = std::make_shared<const BaseCType>(TypeSpecifier::INT);
 
-    // //We now generate code for a function definition
+    //We now generate code for a function definition
 
-    // //We can obtain these directly or indirectly from the AST (current node or children)
-    // ParametersInfo funcParams = {{"a", "b"}, {Int, Int}};
-    // std::shared_ptr<CType> funcRetType = Int;
-    // std::string funcName = "add";
-    // //End of information gathering
+    //We can obtain these directly or indirectly from the AST (current node or children)
+    ParametersInfo funcParams = {{"a", "b"}, {Int, Int}};
+    std::shared_ptr<const CType> funcRetType = Int;
+    std::string funcName = "add";
+    //End of information gathering
     
-    // CFunctionType funcType(funcRetType, funcParams.types);
+    CFunctionType funcType(funcRetType, funcParams.types);
 
-    // // FunctionType* funcType = FunctionType::get(
-    // //     funcAddRetType->getLLVMType(builder),
-    // //     funcAddParams.getLLVMTypes(builder), 
-    // //     false
-    // // );
-
-    // Function* func = Function::Create(
-    //     funcType.getLLVMFuncType(builder), 
-    //     GlobalValue::ExternalLinkage,
-    //     funcName,
-    //     &M
+    // FunctionType* funcType = FunctionType::get(
+    //     funcAddRetType->getLLVMType(builder),
+    //     funcAddParams.getLLVMTypes(builder), 
+    //     false
     // );
 
-    // scope.set(
-    //     funcName,
-    //     CTypedValue(func, std::make_shared<CFunctionType>(funcType))
-    // );
+    Function* func = Function::Create(
+        funcType.getLLVMFuncType(ctx), 
+        GlobalValue::ExternalLinkage,
+        funcName,
+        &M
+    );
 
-    // //If it was just a function declaration we would stop here, but since it is a definition...
+    scope.set(
+        funcName,
+        CTypedValue(func, std::make_shared<CFunctionType>(funcType))
+    );
 
-    // //We add a new scope onto the stack
-    // scope.pushScope();
+    //If it was just a function declaration we would stop here, but since it is a definition...
 
-    // BasicBlock* funcAddBlockEntry = BasicBlock::Create(
-    //     ctx,
-    //     "add_entry",
-    //     func,
-    //     NULL //Insert at the end
-    // );
+    //We add a new scope onto the stack
+    scope.pushScope();
 
-    // allocaBuilder.SetInsertPoint(funcAddBlockEntry);
-    // builder.SetInsertPoint(funcAddBlockEntry);
+    BasicBlock* funcAddBlockEntry = BasicBlock::Create(
+        ctx,
+        "add_entry",
+        func,
+        NULL //Insert at the end
+    );
 
-    // for(uint i=0; i<funcParams.names.size(); i++) {
-    //     Argument* arg = func->arg_begin()+i;
-    //     arg->setName(funcParams.names[i]);
-    //     AllocaInst *lvalue = Alloca(arg->getType());
-    //     builder.CreateStore(arg, lvalue);
-    //     CTypedValue typedLvalue(lvalue, funcParams.types[i]);
-    //     scope.set(funcParams.names[i], typedLvalue); //Every time we use this we look at the map
-    // }
+    allocaBuilder.SetInsertPoint(funcAddBlockEntry);
+    builder.SetInsertPoint(funcAddBlockEntry);
 
-    // Value* LHS = builder.CreateLoad(scope["a"].getLLVMType(builder), scope["a"].value);
-    // Value* RHS = builder.CreateLoad(scope["b"].getLLVMType(builder), scope["b"].value);
-    // Value* retVal = builder.CreateAdd(LHS, RHS, "retval");
-    // builder.CreateRet(retVal);
+    for(uint i=0; i<funcParams.names.size(); i++) {
+        Argument* arg = func->arg_begin()+i;
+        arg->setName(funcParams.names[i]);
+        AllocaInst *lvalue = Alloca(arg->getType());
+        builder.CreateStore(arg, lvalue);
+        CTypedValue typedLvalue(lvalue, funcParams.types[i]);
+        scope.set(funcParams.names[i], typedLvalue); //Every time we use this we look at the map
+    }
 
-    // //Just like a delete after a new: don't forget it.
-    // scope.popScope();
+    Value* LHS = builder.CreateLoad(scope["a"].getLLVMType(ctx), scope["a"].value);
+    Value* RHS = builder.CreateLoad(scope["b"].getLLVMType(ctx), scope["b"].value);
+    Value* retVal = builder.CreateAdd(LHS, RHS, "retval");
+    builder.CreateRet(retVal);
+
+    //Just like a delete after a new: don't forget it.
+    scope.popScope();
 
 
-    // std::error_code EC;
-    // raw_fd_ostream stream(filename, EC, llvm::sys::fs::OpenFlags::OF_Text);
+    std::error_code EC;
+    raw_fd_ostream stream(filename, EC, llvm::sys::fs::OpenFlags::OF_Text);
 
-    // verifyFunction(*func, &stream);
-    // verifyModule(M, &stream);
-    // stream << "\n";
+    verifyFunction(*func, &stream);
+    verifyModule(M, &stream);
+    stream << "\n";
 
-    // M.print(stream, nullptr); /* M is a llvm::Module */
+    M.print(stream, nullptr); /* M is a llvm::Module */
 
 
     return 0;
