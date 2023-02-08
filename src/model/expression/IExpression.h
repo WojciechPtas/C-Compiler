@@ -1,7 +1,11 @@
 #pragma once
-#include "IExpressionVisitor.h"
+
 #include <memory>
+
+#include "IExpressionVisitor.h"
+#include "IExpressionCodeGenVisitor.h"
 #include "../token/Token.h"
+#include "../CType/CTypedValue.h"
 
 namespace c4 {
     namespace model {
@@ -15,6 +19,10 @@ namespace c4 {
 
                 virtual ~IExpression() { }
                 virtual void accept(IExpressionVisitor &visitor) const = 0;
+                virtual ctype::CTypedValue getLValue(IExpressionCodeGenVisitor &cg) const = 0;
+                virtual ctype::CTypedValue getRValue(IExpressionCodeGenVisitor &cg) const = 0;
+
+
                 virtual bool isTerminal() const {
                     return false;
                 }

@@ -24,6 +24,14 @@ namespace c4 {
                 bool isTerminal() const override {
                     return true;
                 }
+
+                virtual ctype::CTypedValue getLValue(IExpressionCodeGenVisitor &cg) const override {
+                    return cg.visitLValue(*this);
+                }
+
+                virtual ctype::CTypedValue getRValue(IExpressionCodeGenVisitor &cg) const override {
+                    return cg.visitRValue(*this);
+                }
             };
         }
     }

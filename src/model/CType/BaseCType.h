@@ -5,21 +5,27 @@
 using namespace llvm;
 
 namespace c4::model::ctype {
-    //Perhaps implement BaseCType::get() to be able to do pointer equality
     class BaseCType : public CType {
-    private:
-        TypeSpecifier t;
-
     public:
-        BaseCType(TypeSpecifier t, uint indirections) 
-        : CType(indirections, NOT_A_FUNCTION), t(t) 
+        const TypeSpecifier t;
+
+        BaseCType(TypeSpecifier t, int indirections) 
+        : CType(indirections, BASE), t(t) 
         {}
 
         BaseCType(TypeSpecifier t) 
-        : CType(0, NOT_A_FUNCTION), t(t) 
+        : BaseCType(t, 0) 
         {}
 
-        virtual bool equals(const CType* another) const override;
+        virtual std::shared_ptr<const CType> dereference() const override {
+            return std::make_shared<BaseCType>(t, indirections-1);
+        }
+        
+        virtual std::shared_ptr<const CType> addStar() const override {
+            return std::make_shared<BaseCType>(t, indirections+1);
+        }
+
+        virtual bool compatible(const CType* another) const override;
 
         virtual Type* getLLVMType(IRBuilder<> &builder) const override;
     };

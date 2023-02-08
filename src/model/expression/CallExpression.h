@@ -30,6 +30,14 @@ namespace c4 {
                 void accept(IExpressionVisitor &visitor) const override {
                     visitor.visit(*this);
                 }
+
+                virtual ctype::CTypedValue getLValue(IExpressionCodeGenVisitor &cg) const override {
+                    return cg.visitLValue(*this);
+                }
+
+                virtual ctype::CTypedValue getRValue(IExpressionCodeGenVisitor &cg) const override {
+                    return cg.visitRValue(*this);
+                }
             };
         }
     }

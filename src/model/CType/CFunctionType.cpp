@@ -2,19 +2,19 @@
 
 using namespace c4::model::ctype;
 
-bool CFunctionType::equals(const CType* another) const {
-    if(!another->isFunction) {
+bool CFunctionType::compatible(const CType* another) const {
+    if(this->kind != another->kind) {
         return false;
     }
     //else
     const CFunctionType* casted = dynamic_cast<const CFunctionType*>(another);
     
     bool condition = (this->paramTypes.size() == casted->paramTypes.size()) &&
-        (this->retType->equals(casted->retType.get()));
+        (this->retType->compatible(casted->retType.get()));
 
     for(int i=paramTypes.size(); condition && i>0; i--) {
         condition = condition && 
-            this->paramTypes[i]->equals(casted->paramTypes[i].get());
+            this->paramTypes[i]->compatible(casted->paramTypes[i].get());
     }
     return condition;
 }
@@ -37,7 +37,7 @@ FunctionType* CFunctionType::getLLVMFuncType(IRBuilder<> &builder) const {
     }
     Type* llvmRetType = retType->getLLVMType(builder);
     std::vector<Type*> llvmParamTypes;
-    for(std::shared_ptr<CType> ctype : paramTypes) {
+    for(auto& ctype : paramTypes) {
         llvmParamTypes.push_back(ctype->getLLVMType(builder));
     }
     return FunctionType::get(llvmRetType, llvmParamTypes, false);

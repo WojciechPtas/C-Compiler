@@ -8,8 +8,8 @@ bool isCompatible(TypeSpecifier ts1, TypeSpecifier ts2) {
         (ts1 == ts2 && ts1 == TypeSpecifier::VOID);
 }
 
-bool BaseCType::equals(const CType* another) const {
-    if(another->isFunction) {
+bool BaseCType::compatible(const CType* another) const {
+    if(this->kind != another->kind) {
         return false;
     }
     //else

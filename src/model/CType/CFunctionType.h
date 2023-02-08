@@ -7,23 +7,33 @@ using namespace llvm;
 namespace c4::model::ctype {
 
     class CFunctionType : public CType {
-        std::shared_ptr<CType> retType;
-        std::vector<std::shared_ptr<CType>> paramTypes;
 
     public:
+        std::shared_ptr<const CType> retType;
+        std::vector<std::shared_ptr<const CType>> paramTypes;
+        
         CFunctionType(
-            std::shared_ptr<CType> retType,
-            std::vector<std::shared_ptr<CType>> paramTypes,
-            uint indirections
+            std::shared_ptr<const CType> retType,
+            std::vector<std::shared_ptr<const CType>> &paramTypes,
+            int indirections
         ) : CType(indirections, FUNCTION), retType(retType), paramTypes(paramTypes) {}
 
         CFunctionType(
-            std::shared_ptr<CType> retType,
-            std::vector<std::shared_ptr<CType>> paramTypes
-        ) : CType(0, FUNCTION), retType(retType), paramTypes(paramTypes) {}
+            std::shared_ptr<const CType> retType,
+            std::vector<std::shared_ptr<const CType>> &paramTypes
+        ) : CFunctionType(retType, paramTypes, 0) {}
 
-        virtual bool equals(const CType* another) const override;
+        virtual std::shared_ptr<const CType> dereference() const override {
+            return nullptr;
+            // return std::make_shared<CFunctionType>(retType, paramTypes, indirections-1);
+        }
         
+        virtual std::shared_ptr<const CType> addStar() const override {
+            return nullptr;
+            // return std::make_shared<CFunctionType>(retType, paramTypes, indirections+1);
+        }
+
+        virtual bool compatible(const CType* another) const override;
 
         virtual Type* getLLVMType(IRBuilder<> &builder) const override;
 

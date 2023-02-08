@@ -5,6 +5,7 @@
 #include "../../model/CType/BaseCType.h"
 #include "../../model/CType/CFunctionType.h"
 #include "../../model/CType/ParameterInfo.h"
+#include "../../model/CType/CTypedValue.h"
 
 #include <unordered_map>
 #include <iostream>
@@ -27,71 +28,91 @@
 #include "llvm/Support/SystemUtils.h"
 
 using namespace c4::model::ctype;
+using namespace c4::model::expression;
 using namespace llvm;
 
-class CodeGen {
+class CodeGen : IExpressionCodeGenVisitor {
     //"Global" stuff
 
-        
-    class CTypedLValue {
-        Value* lvalue;
-        std::shared_ptr<CType> type;
-
+    typedef std::unordered_map<std::string, CTypedValue> Scope;
+    
+    class ScopeStack : std::vector<Scope> {
     public:
-        CTypedLValue(Value* lvalue, const std::shared_ptr<CType>& type) : lvalue(lvalue), type(type) {}
-
-        Type* getLLVMType(IRBuilder<> &builder) const {
-            return type->getLLVMType(builder);
+        ScopeStack() {
+            pushScope();
         }
 
-        Value* getValue() const {
-            return lvalue;
+        void pushScope() {
+            Scope s;
+            push_back(s);
         }
-        
-    };
 
-
-    class Scope {
-        std::unordered_map<std::string, std::shared_ptr<CTypedLValue>> current;
-        Scope* outer = NULL;
-
-    public:
-        Scope() = default;
-        
-        Scope(Scope* outer) : outer(outer) 
-        {}
-
-        CTypedLValue const* operator[](const std::string& name) const {
-            if(current.count(name)) {
-                return (*current.find(name)).second.get();
+        void popScope() {
+            if(size() <= 1) {
+                throw std::logic_error("Trying to pop the global scope!");
             }
-            else if(outer == NULL) {
-                return (*outer)[name];
+            pop_back();
+        }
+
+        CTypedValue operator[](const std::string& name) const {
+            bool notFound = true;
+            for(auto it=rbegin(); notFound && it<rend(); it++) {
+                auto current = *it;
+                if(current.count(name)) {
+                    return (*current.find(name)).second;
+                }
             }
-            else {
-                throw std::logic_error("Name not present in the Scope table");
-            }
-            return NULL;
+            //Not found!
+            throw std::logic_error("Name not present in the ScopeStack table");
+            return CTypedValue(nullptr, nullptr);
         }
 
         bool count(const std::string& name) const {
-            return current.count(name) || 
-                ((outer != NULL) ? outer->count(name) : false);
+            for(auto it=rbegin(); it<rend(); it++) {
+                auto current = *it;
+                if(current.count(name)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
-        //Parameter will be copied in a shared_ptr
-        void set(const std::string& name, const CTypedLValue& val) {
-            current[name] = std::make_shared<CTypedLValue>(val);
+        void set(const std::string& name, const CTypedValue& val) {
+            back().insert({name, val});
         }
     };
 
     std::string filename;
-    Scope global;
+    ScopeStack scope; //Every time a new block is introduced, a new scope layer should be created, 
     LLVMContext ctx;
     Module M; //1:1 with translation units i.e. source file 
     IRBuilder<> builder, allocaBuilder;
 
+    //Helper functions
     AllocaInst* Alloca(Type* type);
+    void dereference(CTypedValue &ctv);
+
+
+    //Visitor declarations
+    virtual CTypedValue visitLValue(const BinaryExpression &expr) override;
+    virtual CTypedValue visitLValue(const CallExpression &expr) override;
+    virtual CTypedValue visitLValue(const ConditionalExpression &expr) override;
+    virtual CTypedValue visitLValue(const ConstantExpression &expr) override;
+    virtual CTypedValue visitLValue(const IdentifierExpression &expr) override;
+    virtual CTypedValue visitLValue(const IndexExpression &expr) override;
+    virtual CTypedValue visitLValue(const MemberExpression &expr) override;
+    virtual CTypedValue visitLValue(const SizeOfType &expr) override;
+    virtual CTypedValue visitLValue(const UnaryExpression &expr) override;
+
+    virtual CTypedValue visitRValue(const BinaryExpression &expr) override;
+    virtual CTypedValue visitRValue(const CallExpression &expr) override;
+    virtual CTypedValue visitRValue(const ConditionalExpression &expr) override;
+    virtual CTypedValue visitRValue(const ConstantExpression &expr) override;
+    virtual CTypedValue visitRValue(const IdentifierExpression &expr) override;
+    virtual CTypedValue visitRValue(const IndexExpression &expr) override;
+    virtual CTypedValue visitRValue(const MemberExpression &expr) override;
+    virtual CTypedValue visitRValue(const SizeOfType &expr) override;
+    virtual CTypedValue visitRValue(const UnaryExpression &expr) override;
 
 public:
     CodeGen(const std::string& filename) 

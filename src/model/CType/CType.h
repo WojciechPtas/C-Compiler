@@ -12,30 +12,26 @@ enum TypeSpecifier {
     CHAR
 };
 
-
+//CTypes represent types in the C languages.
+//Objects of this and any subclasses are immutable
 class CType {
     protected:
-        enum {
-            NOT_A_FUNCTION = false,
-            FUNCTION = true
+        enum CTypeKind {
+            BASE,
+            STRUCT,
+            FUNCTION
         };
     public:
-        uint indirections;
-        const bool isFunction; 
-
-        CType(uint indirections, bool isFunction) : indirections(indirections), isFunction(isFunction) {}
-        virtual Type* getLLVMType(IRBuilder<> &builder) const = 0;
-        virtual bool equals(const CType* another) const = 0;
-
-        void incIndirections() {
-            indirections++;
-        }
-
-        void decIndirections() {
-            if(indirections == 0) {
+        const int indirections;
+        const CTypeKind kind; 
+        CType(int indirections, CTypeKind kind) : indirections(indirections), kind(kind) {
+            if(indirections < 0) {
                 throw std::logic_error("Decremented indirections below 0!");
             }
-            indirections--;
         }
+        virtual Type* getLLVMType(IRBuilder<> &builder) const = 0;
+        virtual bool compatible(const CType* another) const = 0;
+        virtual std::shared_ptr<const CType> dereference() const = 0;
+        virtual std::shared_ptr<const CType> addStar() const = 0;
     };
 }

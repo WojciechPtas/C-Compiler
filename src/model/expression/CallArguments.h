@@ -37,6 +37,16 @@ class CallArguments : public IExpression {
         void accept(IExpressionVisitor &visitor) const override {
             visitor.visit(*this);
         }
+
+        virtual ctype::CTypedValue getLValue(IExpressionCodeGenVisitor &cg) const override {
+            throw std::logic_error("These should not exist");
+            return ctype::CTypedValue::invalid();
+        }
+
+        virtual ctype::CTypedValue getRValue(IExpressionCodeGenVisitor &cg) const override {
+            throw std::logic_error("These should not exist");
+            return ctype::CTypedValue::invalid();
+        }
     };
 
 
