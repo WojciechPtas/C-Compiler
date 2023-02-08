@@ -1,6 +1,8 @@
 #include "BaseCType.h"
+#include "llvm/IR/DerivedTypes.h"
 
 using namespace c4::model::ctype;
+using namespace llvm;
 
 //Needs to be adjusted if more types are added
 bool isCompatible(TypeSpecifier ts1, TypeSpecifier ts2) {
@@ -19,17 +21,17 @@ bool BaseCType::compatible(const CType* another) const {
     
 }
 
-Type* BaseCType::getLLVMType(IRBuilder<> &builder) const {
+Type* BaseCType::getLLVMType(LLVMContext &ctx) const {
     if(indirections) {
-        return builder.getPtrTy();
+        return PointerType::getUnqual(ctx);
     }
     switch(t) {
         case TypeSpecifier::INT:
-            return builder.getInt32Ty();
+            return IntegerType::getInt32Ty(ctx);
         case TypeSpecifier::CHAR:
-            return builder.getInt8Ty();
+            return IntegerType::getInt8Ty(ctx);
         case TypeSpecifier::VOID: 
-            return builder.getVoidTy();
+            return Type::getVoidTy(ctx);
         default:
             throw std::logic_error("Unrecognized type to LLVM-convert to");
     }

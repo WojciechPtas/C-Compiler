@@ -17,10 +17,10 @@ namespace c4::model::ctype {
 
         // }
         
-        std::vector<Type*> getLLVMTypes(IRBuilder<> &builder) const {
-            std::vector<Type*> ret;
+        std::vector<llvm::Type*> getLLVMTypes(llvm::LLVMContext &ctx) const {
+            std::vector<llvm::Type*> ret;
             for(std::shared_ptr<CType> ctype : types) {
-                ret.push_back(ctype->getLLVMType(builder));
+                ret.push_back(ctype->getLLVMType(ctx));
             }
             return ret;
         }

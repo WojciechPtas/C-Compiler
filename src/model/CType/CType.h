@@ -1,8 +1,13 @@
 #pragma once
 
-#include "llvm/IR/IRBuilder.h"
+#include <memory>
 
-using namespace llvm;
+//Few declarations to avoid including huge stuff every time
+namespace llvm {
+    class LLVMContext;
+    class Type;
+    class Value;
+}
 
 namespace c4::model::ctype {
 
@@ -29,7 +34,7 @@ class CType {
                 throw std::logic_error("Decremented indirections below 0!");
             }
         }
-        virtual Type* getLLVMType(IRBuilder<> &builder) const = 0;
+        virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const = 0;
         virtual bool compatible(const CType* another) const = 0;
         virtual std::shared_ptr<const CType> dereference() const = 0;
         virtual std::shared_ptr<const CType> addStar() const = 0;

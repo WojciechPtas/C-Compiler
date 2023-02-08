@@ -1,9 +1,6 @@
 #pragma once
 
-#include "llvm/IR/IRBuilder.h"
 #include "../CType/CTypedValue.h"
-
-using namespace llvm;
 
 namespace c4 {
     namespace model {

@@ -5,7 +5,6 @@
 #include "IExpressionVisitor.h"
 #include "IExpressionCodeGenVisitor.h"
 #include "../token/Token.h"
-#include "../CType/CTypedValue.h"
 
 namespace c4 {
     namespace model {

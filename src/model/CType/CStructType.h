@@ -1,32 +1,29 @@
 #pragma once
 
-#include "CType.h"
-#include <unordered_map>
 #include <vector>
-#include "llvm/IR/IRBuilder.h"
-
-using namespace llvm;
+#include "CType.h"
+#include "llvm/IR/DerivedTypes.h"
 
 namespace c4::model::ctype {
     class CStructType : public CType {
 
     public:
         const std::string name;
-        std::vector<std::string> fieldNames;
-        std::vector<std::shared_ptr<const CType>> fieldTypes;
+        const std::vector<std::string> fieldNames;
+        const std::vector<std::shared_ptr<const CType>> fieldTypes;
 
         CStructType(
-            const std::string name,
-            std::vector<std::string> fieldNames,
-            std::vector<std::shared_ptr<const CType>> fieldTypes,
+            const std::string &name,
+            const std::vector<std::string> &fieldNames,
+            const std::vector<std::shared_ptr<const CType>> &fieldTypes,
             int indirections
         ) 
         : CType(indirections, STRUCT), name(name), fieldNames(fieldNames), fieldTypes(fieldTypes) {}
 
         CStructType(
-            const std::string name,
-            std::vector<std::string> fieldNames,
-            std::vector<std::shared_ptr<const CType>> fieldTypes
+            const std::string &name,
+            const std::vector<std::string> &fieldNames,
+            const std::vector<std::shared_ptr<const CType>> &fieldTypes
         ) 
         : CStructType(name, fieldNames, fieldTypes, 0) {}
 
@@ -39,7 +36,7 @@ namespace c4::model::ctype {
         }
 
         virtual bool compatible(const CType* another) const override;
-        StructType* getLLVMStructType(IRBuilder<> &builder) const;
-        virtual Type* getLLVMType(IRBuilder<> &builder) const override;
+        llvm::StructType* getLLVMStructType(llvm::LLVMContext &ctx) const;
+        virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;
     };
 }

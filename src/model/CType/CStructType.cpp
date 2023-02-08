@@ -1,6 +1,7 @@
 #include "CStructType.h"
 
 using namespace c4::model::ctype;
+using namespace llvm;
 
 bool CStructType::compatible(const CType* another) const {
     if(this->kind != another->kind) {
@@ -12,14 +13,14 @@ bool CStructType::compatible(const CType* another) const {
     ) == 0;
 }
 
-StructType* CStructType::getLLVMStructType(IRBuilder<> &builder) const {
+StructType* CStructType::getLLVMStructType(llvm::LLVMContext &ctx) const {
     std::vector<Type*> fields;
     for(auto& type : fieldTypes) {
-        fields.push_back(type->getLLVMType(builder));
+        fields.push_back(type->getLLVMType(ctx));
     }
-    return StructType::create(builder.getContext(), fields, name);
+    return StructType::create(ctx, fields, name);
 }
 
-Type* CStructType::getLLVMType(IRBuilder<> &builder) const {
-    return getLLVMStructType(builder);
+Type* CStructType::getLLVMType(llvm::LLVMContext &ctx) const {
+    return getLLVMStructType(ctx);
 }

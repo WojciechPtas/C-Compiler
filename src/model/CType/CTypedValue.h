@@ -1,18 +1,17 @@
 #pragma once
 
 #include "CType.h"
-#include "llvm/IR/Type.h"
 
 namespace c4::model::ctype {
 
 class CTypedValue {
 public:
-    Value* value;
+    llvm::Value* value;
     std::shared_ptr<const CType> type;
 
     CTypedValue() {}
     
-    CTypedValue(Value* value, std::shared_ptr<const CType> type) : value(value), type(type)
+    CTypedValue(llvm::Value* value, std::shared_ptr<const CType> type) : value(value), type(type)
     {}
 
     CTypedValue(const CTypedValue& ctv) = default;
@@ -21,8 +20,8 @@ public:
         return CTypedValue(nullptr, nullptr);
     }
 
-    Type* getLLVMType(IRBuilder<> &builder) const {
-        return type->getLLVMType(builder);
+    llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const {
+        return type->getLLVMType(ctx);
     }
 
     bool isValid() {

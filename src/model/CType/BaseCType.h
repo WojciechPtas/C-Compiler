@@ -2,8 +2,6 @@
 
 #include "CType.h"
 
-using namespace llvm;
-
 namespace c4::model::ctype {
     class BaseCType : public CType {
     public:
@@ -27,6 +25,6 @@ namespace c4::model::ctype {
 
         virtual bool compatible(const CType* another) const override;
 
-        virtual Type* getLLVMType(IRBuilder<> &builder) const override;
+        virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;
     };
 }

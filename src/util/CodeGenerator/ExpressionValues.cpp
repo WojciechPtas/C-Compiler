@@ -21,7 +21,7 @@ void CodeGen::dereference(CTypedValue &ctv) {
     ctv.type = ctv.type->dereference();
 
     //It loads a value of the updated type using the old value as pointer. New value is updated with loaded value.
-    ctv.value = builder.CreateLoad(ctv.getLLVMType(builder), ctv.value);
+    ctv.value = builder.CreateLoad(ctv.getLLVMType(ctx), ctv.value);
 }
 
 CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
@@ -58,7 +58,7 @@ CTypedValue CodeGen::visitLValue(const IndexExpression &expr) {
     //GetElementPtr of elements of size "indexedElement", starting at container.value (rvalue!) stepping a number of times dictated by rvalue of idx
     indexedLValue.value = 
         builder.CreateGEP(
-            indexedLValue.getLLVMType(builder),
+            indexedLValue.getLLVMType(ctx),
             base.value,
             indexes
         );
