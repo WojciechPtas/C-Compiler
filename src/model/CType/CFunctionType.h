@@ -31,6 +31,10 @@ namespace c4::model::ctype {
             // return nullptr;
             return std::make_shared<CFunctionType>(retType, paramTypes, indirections+1);
         }
+        
+        bool isInteger() const override {
+            return false;
+        }
 
         virtual bool compatible(const CType* another) const override;
 

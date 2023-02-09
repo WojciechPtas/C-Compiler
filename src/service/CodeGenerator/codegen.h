@@ -90,7 +90,7 @@ class CodeGen : IExpressionCodeGenVisitor {
 
     //Helper functions
     AllocaInst* Alloca(Type* type);
-    void dereference(CTypedValue &ctv);
+    void dereferenceAndLoad(CTypedValue &ctv);
 
 
     //Visitor declarations

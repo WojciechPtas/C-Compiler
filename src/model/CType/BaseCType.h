@@ -23,6 +23,10 @@ namespace c4::model::ctype {
             return std::make_shared<BaseCType>(t, indirections+1);
         }
 
+        bool isInteger() const override {
+            return (t == TypeSpecifier::INT) || (t == TypeSpecifier::CHAR);
+        }
+
         virtual bool compatible(const CType* another) const override;
 
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;

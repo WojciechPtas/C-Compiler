@@ -34,6 +34,16 @@ class CType {
                 throw std::logic_error("Decremented indirections below 0!");
             }
         }
+        bool isStruct() const {
+            return kind == CTypeKind::STRUCT;
+        }
+        bool isFunc() const {
+            return kind == CTypeKind::FUNCTION;
+        }
+        virtual bool isInteger() const = 0; 
+        bool isPointer() const {
+            return indirections;
+        }
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const = 0;
         virtual bool compatible(const CType* another) const = 0;
         virtual std::shared_ptr<const CType> dereference() const = 0;

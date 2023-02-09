@@ -16,6 +16,7 @@ public:
 
     CTypedValue(const CTypedValue& ctv) = default;
 
+    //Use this in case of error
     static CTypedValue invalid() {
         return CTypedValue(nullptr, nullptr);
     }
@@ -26,6 +27,12 @@ public:
 
     bool isValid() {
         return value != nullptr && type != nullptr;
+    }
+
+    //Calls dereference on its type, decrementing the indirections counter
+    //Beware! It will not check for a negative number
+    void dereference() {
+        type = type->dereference();
     }
     
 };
