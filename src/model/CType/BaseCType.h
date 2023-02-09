@@ -3,6 +3,13 @@
 #include "CType.h"
 
 namespace c4::model::ctype {
+    enum TypeSpecifier {
+        VOID,
+        INT,
+        CHAR,
+        BOOL
+    };
+
     class BaseCType : public CType {
     public:
         const TypeSpecifier t;
@@ -23,8 +30,16 @@ namespace c4::model::ctype {
             return std::make_shared<BaseCType>(t, indirections+1);
         }
 
+        static std::shared_ptr<const BaseCType> get(TypeSpecifier ts) {
+            return std::make_shared<const BaseCType>(ts);
+        }
+
         bool isInteger() const override {
-            return (t == TypeSpecifier::INT) || (t == TypeSpecifier::CHAR);
+            return (t == TypeSpecifier::INT) || (t == TypeSpecifier::CHAR) || (t == TypeSpecifier::BOOL);
+        }
+
+        bool isBool() const override {
+            return t == TypeSpecifier::BOOL;
         }
 
         virtual bool compatible(const CType* another) const override;

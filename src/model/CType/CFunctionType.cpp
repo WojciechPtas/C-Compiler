@@ -4,13 +4,19 @@ using namespace c4::model::ctype;
 using namespace llvm;
 
 bool CFunctionType::compatible(const CType* another) const {
-    if(this->kind != another->kind) {
+    if(
+        this->kind != another->kind ||
+        (this->indirections != another->indirections &&
+            !(this->isFunc() && another->isFunc())
+        )
+    ) {
         return false;
     }
     //else
     const CFunctionType* casted = dynamic_cast<const CFunctionType*>(another);
     
-    bool condition = (this->paramTypes.size() == casted->paramTypes.size()) &&
+    bool condition = 
+        (this->paramTypes.size() == casted->paramTypes.size()) &&
         (this->retType->compatible(casted->retType.get()));
 
     for(int i=paramTypes.size(); condition && i>0; i--) {

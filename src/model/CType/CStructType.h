@@ -44,14 +44,21 @@ namespace c4::model::ctype {
             return false;
         }
 
+        bool isBool() const override {
+            return false;
+        }
+
         bool hasMember(const std::string& fieldName) const {
             return memberIndexes.count(fieldName);
         }
-        virtual bool compatible(const CType* another) const override;
-        llvm::StructType* getLLVMStructType(llvm::LLVMContext &ctx) const;
-        virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;
+        
         uint getIndexOf(const std::string& fieldName) const {
             return memberIndexes.find(name)->second;
         }
+
+        virtual bool compatible(const CType* another) const override;
+        llvm::StructType* getLLVMStructType(llvm::LLVMContext &ctx) const;
+        virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;
+        
     };
 }

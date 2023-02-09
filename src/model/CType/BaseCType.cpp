@@ -4,12 +4,6 @@
 using namespace c4::model::ctype;
 using namespace llvm;
 
-//Needs to be adjusted if more types are added
-bool isCompatible(TypeSpecifier ts1, TypeSpecifier ts2) {
-    return (ts1 != TypeSpecifier::VOID && ts2 != TypeSpecifier::VOID) || 
-        (ts1 == ts2 && ts1 == TypeSpecifier::VOID);
-}
-
 bool BaseCType::compatible(const CType* another) const {
     if(this->kind != another->kind) {
         return false;
@@ -17,7 +11,9 @@ bool BaseCType::compatible(const CType* another) const {
     //else
     const BaseCType* casted = dynamic_cast<const BaseCType*>(another);
     return (this->indirections == another->indirections) &&
-        (indirections == 0 ? isCompatible(this->t, casted->t) : this->t == casted->t);
+        (this->t == casted->t || 
+            (indirections == 0 && this->isInteger() && casted->isInteger())
+        );
     
 }
 

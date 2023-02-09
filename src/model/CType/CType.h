@@ -11,12 +11,6 @@ namespace llvm {
 
 namespace c4::model::ctype {
 
-enum TypeSpecifier {
-    VOID,
-    INT,
-    CHAR
-};
-
 //CTypes represent types in the C languages.
 //Objects of this and any subclasses are immutable
 class CType {
@@ -35,12 +29,20 @@ class CType {
             }
         }
         bool isStruct() const {
-            return kind == CTypeKind::STRUCT;
+            return kind == CTypeKind::STRUCT && !isPointer();
         }
         bool isFunc() const {
-            return kind == CTypeKind::FUNCTION;
+            return kind == CTypeKind::FUNCTION && indirections <= 1;
         }
+        bool isFuncDesignator() const {
+            return kind == CTypeKind::FUNCTION && indirections == 1;
+        }
+        bool isFuncNonDesignator() const {
+            return kind == CTypeKind::FUNCTION && indirections == 0;
+        }
+
         virtual bool isInteger() const = 0; 
+        virtual bool isBool() const = 0; 
         bool isPointer() const {
             return indirections;
         }
