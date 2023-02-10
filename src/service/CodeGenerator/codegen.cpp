@@ -11,6 +11,8 @@ AllocaInst* CodeGen::Alloca(Type* type) {
 }
 
 int CodeGen::codeGenTest() {
+    
+
 
     std::cout << filename << std::endl;
     sys::PrintStackTraceOnErrorSignal(filename);
@@ -85,7 +87,7 @@ int CodeGen::codeGenTest() {
     Value* RHS = builder.CreateLoad(scope["b"].getLLVMType(ctx), scope["b"].value);
     Value* retVal = builder.CreateAdd(LHS, RHS, "retval");
     builder.CreateRet(retVal);
-
+    
     //Just like a delete after a new: don't forget it.
     scope.popScope();
 

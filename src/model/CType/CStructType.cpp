@@ -25,5 +25,10 @@ StructType* CStructType::getLLVMStructType(llvm::LLVMContext &ctx) const {
 }
 
 Type* CStructType::getLLVMType(llvm::LLVMContext &ctx) const {
-    return getLLVMStructType(ctx);
+    if(indirections > 0) {
+        return PointerType::getUnqual(ctx);
+    }
+    else {
+        return getLLVMStructType(ctx);
+    }
 }

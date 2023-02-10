@@ -14,9 +14,11 @@
 #include "../../model/expression/SizeOfType.h"
 #include "../../model/expression/UnaryExpression.h"
 
+#include "../lexer/ReadUtilities.h"
 
 using namespace llvm;
 using namespace c4::model::ctype;
+using c4::model::ConstantType;
 
 /*
 CTypedValues of type function can have either 0 or 1 indirections (functions or function designators)
@@ -40,6 +42,32 @@ Dereferencing a function must yield its lvalue (as everything that asks for its 
 //     ctv.value = builder.CreateLoad(ctv.getLLVMType(ctx), ctv.value);
 // }
 
+void CodeGen::convertToINT(CTypedValue& ctv) { //Argument must be integer type
+    ctv.type = BaseCType::get(TypeSpecifier::INT);
+    ctv.value = builder.CreateSExtOrTrunc(
+        ctv.value,
+        IntegerType::getInt32Ty(ctx)
+    );
+}
+
+CTypedValue CodeGen::loadFromLValue(const IExpression& expr) {
+    //Source of inefficiency, but at least it allows for good code recycling
+    //Since assignments have lvalue, and getting the lvalue computes side effect, to get the rvalue just load from its lvalue
+    CTypedValue rvalue = expr.getLValue(*this);
+    if(!rvalue.isValid()) {
+        return CTypedValue::invalid();
+    }
+
+    if(!rvalue.type->isFuncNonDesignator()) {
+        rvalue.value = builder.CreateLoad(rvalue.getLLVMType(ctx), rvalue.value);
+    }
+    return rvalue;
+}
+
+Value* CodeGen::funcToPtr(Value* func) {
+    return builder.CreateBitCast(func, PointerType::getUnqual(ctx));
+}
+
 //Will use the GEP instruction with side effect to base, but its type is not changed
 void CodeGen::pointerAddInt(CTypedValue &base, const CTypedValue &index) {
     std::vector<Value*> indices;
@@ -51,13 +79,16 @@ void CodeGen::pointerAddInt(CTypedValue &base, const CTypedValue &index) {
     );
 }
 
-void CodeGen::unifyIntegerSize(CTypedValue &lhs, CTypedValue &rhs) {
+//Doesn't check if they both are integers, it is assumed it already has been done
+void CodeGen::unifyIntegerSize(CTypedValue &lhs, CTypedValue &rhs, BasicBlock* insertLeftHere, BasicBlock* insertRightHere) {
+    BasicBlock* oldInsertPoint = builder.GetInsertBlock();
     Type* leftType = lhs.value->getType();
     Type* rightType = rhs.value->getType();
     uint leftBits = leftType->getIntegerBitWidth();
     uint rightBits = leftType->getIntegerBitWidth();
 
     if(leftBits > rightBits) {
+        builder.SetInsertPoint(insertRightHere);
         rhs.value = builder.CreateSExt(
             rhs.value,
             IntegerType::getIntNTy(ctx, leftBits)
@@ -65,13 +96,20 @@ void CodeGen::unifyIntegerSize(CTypedValue &lhs, CTypedValue &rhs) {
         rhs.type = lhs.type;
     }
     else if(rightBits > leftBits) {
+        builder.SetInsertPoint(insertLeftHere);
         lhs.value = builder.CreateSExt(
             lhs.value,
             IntegerType::getIntNTy(ctx, rightBits)
         );
         lhs.type = rhs.type;
     }
+    builder.SetInsertPoint(oldInsertPoint);
 }
+
+void CodeGen::unifyIntegerSize(CTypedValue &lhs, CTypedValue &rhs) {
+    unifyIntegerSize(lhs, rhs, builder.GetInsertBlock(), builder.GetInsertBlock());
+}
+
 
 Value* CodeGen::ptrToInt64(Value* value) {
     value = builder.CreatePtrToInt(
@@ -81,34 +119,42 @@ Value* CodeGen::ptrToInt64(Value* value) {
     return value;
 }
 
-Value* CodeGen::intToBool(Value* value) {
+Value* CodeGen::intToBool(Value* value, bool negated) {
     uint bitwidth = value->getType()->getIntegerBitWidth();
-    value = builder.CreateICmpNE(value, builder.getIntN(bitwidth, 0));
+    if(negated) {
+        value = builder.CreateICmpEQ(value, builder.getIntN(bitwidth, 0));
+    }
+    else {
+        value = builder.CreateICmpNE(value, builder.getIntN(bitwidth, 0));
+    }
     return value;
 }
 
 //Helper function to generate code that checks if an integer/pointer is equal to 0
-Value* CodeGen::evaluateCondition(CTypedValue& ctv) {
-    Value* condition;
+//Checks included
+void CodeGen::evaluateCondition(CTypedValue& ctv, bool negated=false) {
+    if(ctv.isValid()) {
+        if(ctv.type->isFunc()) {
+            ctv.value = funcToPtr(ctv.value);
+        }
 
-    if(ctv.type->isPointer() && !ctv.type->isFunc()) {
-        ctv.value = ptrToInt64(ctv.value);
-        ctv.type = BaseCType::get(TypeSpecifier::INT); //Sets up for the following condition
-    }
+        if(ctv.type->isPointer() || ctv.type->isFunc()) {
+            ctv.value = ptrToInt64(ctv.value);
+            ctv.type = BaseCType::get(TypeSpecifier::INT);
+        }
 
-    if(ctv.type->isInteger()) {
-        if(!ctv.type->isBool()) {
-            condition = intToBool(ctv.value);
+        if(ctv.type->isInteger()) {
+            if(!ctv.type->isBool()) {
+                ctv.value = intToBool(ctv.value, negated);
+                ctv.type = BaseCType::get(TypeSpecifier::BOOL);
+            }
         }
         else {
-            condition = ctv.value;
+            //Condition is not scalar!
+            ctv = CTypedValue::invalid();
         }
     }
-    else {
-        //Rvalue must have integer or pointer type
-        return nullptr;
-    }
-    return condition;
+    //else it will will remain invalid
 }
 
 CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
@@ -117,18 +163,9 @@ CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
         CTypedValue lhs = expr.left->getLValue(*this);
         CTypedValue rhs = expr.right->getRValue(*this);
         if(!lhs.isValid()) {
-            // if(!error()) {
-            //     set error
-
-            // }
             return CTypedValue::invalid();
         }
         if(!rhs.isValid()) {
-            return CTypedValue::invalid();
-        }
-
-        if(!lhs.type->compatible(rhs.type.get())) {
-            //Incompatible types
             return CTypedValue::invalid();
         }
 
@@ -137,6 +174,20 @@ CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
             return CTypedValue::invalid();
         }
 
+        if(!lhs.type->compatible(rhs.type.get())) {
+            //Incompatible types
+            return CTypedValue::invalid();
+        }
+
+        if(lhs.type->isInteger()) {
+            //Need to unify their sizes
+            //It would be nice to issue a warning in this case
+            rhs.value = builder.CreateSExtOrTrunc(
+                rhs.value,
+                lhs.value->getType()
+            );
+            rhs.type = lhs.type;
+        }
 
         builder.CreateStore(rhs.value, lhs.value);
         return lhs;
@@ -167,6 +218,7 @@ CTypedValue CodeGen::visitLValue(const IdentifierExpression &expr) {
 }
 CTypedValue CodeGen::visitLValue(const IndexExpression &expr) {
     CTypedValue base = expr.container->getRValue(*this); //RValue of container should be a pointer
+    CTypedValue idx = expr.index->getRValue(*this);
     if(!base.isValid()) {
         //You can always obtain the rvalue of an expression. The only way you get invalid is if there was an error beforehand
         return CTypedValue::invalid();
@@ -181,7 +233,9 @@ CTypedValue CodeGen::visitLValue(const IndexExpression &expr) {
         return CTypedValue::invalid();
     }
     
-    CTypedValue idx = expr.index->getRValue(*this);
+    if(!idx.isValid()) {
+        return CTypedValue::invalid(); 
+    }
     if(!idx.type->isInteger()) {
         //idx not an integer!
         return CTypedValue::invalid();
@@ -189,19 +243,15 @@ CTypedValue CodeGen::visitLValue(const IndexExpression &expr) {
 
     pointerAddInt(base, idx);
     base.dereference();
-    //Value of indexedLValue has been dereferenced, but we still want its lvalue
+    //Type of indexedLValue has been dereferenced, but we still want its lvalue
     return base;
 }
 
 CTypedValue CodeGen::visitLValue(const MemberExpression &expr) {
     CTypedValue base;
-    //must have correct type
     if(expr.type == MemberExpressionType::Direct) {
         base = expr.container->getLValue(*this);
         if(!base.isValid()) {
-            // if(!error()) {
-            //     accessing something with no lvalue
-            // }
             return CTypedValue::invalid();
         }
     }
@@ -212,7 +262,7 @@ CTypedValue CodeGen::visitLValue(const MemberExpression &expr) {
         }
 
         if(!base.type->isPointer()) {
-            //Dereferencing a non-pointer
+            //Dereferencing a non-struct-pointer
             return CTypedValue::invalid();
         }
 
@@ -251,7 +301,7 @@ CTypedValue CodeGen::visitLValue(const UnaryExpression &expr) {
             return CTypedValue::invalid();
         }
 
-        if(!ptr.type->isPointer()) {
+        if(!(ptr.type->isPointer() || ptr.type->isFunc())) {
             //dereferenced something that's not a pointer
             return CTypedValue::invalid();
         }
@@ -265,21 +315,9 @@ CTypedValue CodeGen::visitLValue(const UnaryExpression &expr) {
 }
 
 
-
-//Integer addition AND pointer addition! Che palle...
 CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
     if (expr.type == BinaryExpressionType::Assignment) {
-        //Source of inefficiency, but at least it allows for good code recycling
-        //Since assignments have lvalue, and getting the lvalue computes side effect, to get the rvalue just load from its lvalue
-        CTypedValue rvalue = expr.getLValue(*this);
-        rvalue.value = builder.CreateLoad(rvalue.getLLVMType(ctx), rvalue.value);
-        return rvalue;
-    }
-
-    CTypedValue lhs = expr.left->getRValue(*this);
-    CTypedValue rhs = expr.right->getRValue(*this);
-    if(!(lhs.isValid() && rhs.isValid())) {
-        return CTypedValue::invalid();
+        return loadFromLValue(expr);
     }
 
     //Following are lazy-evaluating operators
@@ -287,11 +325,13 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
         case BinaryExpressionType::LogicalOr:
             //Continue with logicalAnd
         case BinaryExpressionType::LogicalAnd: {
-            Value* leftCond = evaluateCondition(lhs);
-            if(leftCond == nullptr) {
+            CTypedValue lhs = expr.left->getRValue(*this);
+            evaluateCondition(lhs);
+            if(!lhs.isValid()) {
                 //Error encountered and reported
                 return CTypedValue::invalid();
             }
+            Value* leftCond = lhs.value;
 
             BasicBlock* leftEvalBlock = builder.GetInsertBlock();
             Function* currentFunction = leftEvalBlock->getParent();
@@ -317,12 +357,13 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
 
             //Now we insert code that evaluates rhs only if lhs was true
             builder.SetInsertPoint(lazyEvalBlock);
-
-            Value* rightCond = evaluateCondition(rhs);
-            if(rightCond == nullptr) {
+               CTypedValue rhs = expr.right->getRValue(*this);
+            evaluateCondition(rhs);
+            if(!rhs.isValid()) {
                 //Error encountered and reported
                 return CTypedValue::invalid();
             }
+            Value* rightCond = rhs.value;
             Value* result = (expr.type == BinaryExpressionType::LogicalAnd) ?
                 builder.CreateAnd(leftCond, rightCond) :
                 builder.CreateOr(leftCond, rightCond);
@@ -358,15 +399,14 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             }
 
             if(lhs.type->isFunc()) {
-                //Function pointer comparison
-                return CTypedValue::invalid();
+                lhs.value = funcToPtr(lhs.value);
             }
             
-            if(lhs.type->isPointer()) { //They're both pointers and of the same type
+            if(lhs.type->isPointer() || lhs.type->isFunc()) { //They're both pointers and of the same type
                 lhs.value = ptrToInt64(lhs.value);
-                lhs.type = BaseCType::get(TypeSpecifier::INT); //Sets up for the following condition
+                lhs.type = BaseCType::get(TypeSpecifier::INT);
                 rhs.value = ptrToInt64(rhs.value);
-                rhs.type = lhs.type; //Sets up for the following condition
+                rhs.type = lhs.type;
             }
 
             else if(!lhs.type->isInteger()) {
@@ -419,10 +459,11 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
                 return CTypedValue::invalid();
             }
 
-            CTypedValue result;
 
             if(lhs.type->isInteger() && rhs.type->isInteger()) {
-                unifyIntegerSize(lhs, rhs);
+                CTypedValue result;
+                convertToINT(lhs);
+                convertToINT(rhs);
                 result.type = lhs.type;
                 switch(expr.type) {
                     case BinaryExpressionType::Sum: {
@@ -440,6 +481,7 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
                     default:
                         throw std::logic_error("Inner switch for code generation for arithmetic dealt with an unexpected type");
                 }
+                return result;
             }
             else if(lhs.type->isPointer() && rhs.type->isInteger()) {
                 if(expr.type == BinaryExpressionType::Multiplication) {
@@ -485,16 +527,16 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
                 return CTypedValue::invalid();
             }
         }
+        default:
+            throw std::logic_error("Codegen: unrecognized binary expression type");
+            return CTypedValue::invalid();
     }
     
 }
 CTypedValue CodeGen::visitRValue(const CallExpression &expr) {
     //In this context we need to invoke the function. But first we need the function pointer
-    CTypedValue called = expr.called->getRValue(*this);
+    CTypedValue called = expr.called->getRValue(*this); //GetRValue() on a function object returns the pointer itself
     if(!called.isValid()) {
-        // if(!error()) {
-        //     called something with no lvalue
-        // }
         return CTypedValue::invalid();
     }
 
@@ -521,71 +563,216 @@ CTypedValue CodeGen::visitRValue(const CallExpression &expr) {
             //Incompatible types in function call
             return CTypedValue::invalid();
         }
+        if(argRvalue.type->isInteger()) {
+            //Need to convert it into the correct size
+            //It would be nice to issue a warning in case of trunc, but whatever
+            argRvalue.value = builder.CreateSExtOrTrunc(
+                argRvalue.value,
+                funcType->paramTypes[i]->getLLVMType(ctx)
+            );
+            argRvalue.type = funcType->paramTypes[i];
+        }
         //If all is good, i fill a vector of Value* for the llvm Call instruction
         llvmArguments.push_back(argRvalue.value);
     }
     CTypedValue returnedRValue;
     returnedRValue.type = funcType->retType;
-    //Following static_cast is safe under the assumption that if called.isValid() && called.type->isFunction(), then called.value will contain a Function*
-    returnedRValue.value = builder.CreateCall(static_cast<Function*>(called.value), llvmArguments);
+    returnedRValue.value = builder.CreateCall(
+        funcType->getLLVMFuncType(ctx), 
+        called.value, 
+        llvmArguments
+    );
 
     return returnedRValue;
 
 }
 CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
-    return CTypedValue::invalid();
+    CTypedValue cond = expr.condition->getRValue(*this);
+    evaluateCondition(cond);
+    if(!cond.isValid()) {
+        return CTypedValue::invalid();
+    }
+
+    Function* currentFunction = builder.GetInsertBlock()->getParent();
+
+    BasicBlock* leftEvalBlock = BasicBlock::Create(
+        ctx,
+        "ConditionalExprLeftEval",
+        currentFunction
+    );
+    BasicBlock* rightEvalBlock = BasicBlock::Create(
+        ctx,
+        "ConditionalExprRightEval",
+        currentFunction
+    );
+    BasicBlock* endBlock = BasicBlock::Create(
+        ctx,
+        "ConditionalExprEnd",
+        currentFunction
+    );
+
+    builder.SetInsertPoint(leftEvalBlock);
+    CTypedValue leftExpr = expr.thenCase->getRValue(*this);
+    builder.CreateBr(endBlock);
+    builder.SetInsertPoint(rightEvalBlock);
+    CTypedValue rightExpr = expr.thenCase->getRValue(*this);
+    builder.CreateBr(endBlock);
+
+    if(!(leftExpr.isValid() && rightExpr.isValid())) {
+        return CTypedValue::invalid();
+    }
+
+    if(!leftExpr.compatible(rightExpr)) {
+        //Left and right of Conditional Expressions not compatible
+        return CTypedValue::invalid();
+    }
+
+    if(!leftExpr.type->equivalent(leftExpr.type.get()) && leftExpr.type->isInteger()) { //Integers of different sizes
+        builder.SetInsertPoint(leftEvalBlock);
+        leftExpr.value = builder.CreateSExtOrTrunc(
+            leftExpr.value, 
+            IntegerType::getInt32Ty(ctx)
+        );
+        builder.SetInsertPoint(rightEvalBlock);
+        rightExpr.value = builder.CreateSExtOrTrunc(
+            rightExpr.value, 
+            IntegerType::getInt32Ty(ctx)
+        );
+    }
+
+    //Now they're of the same llvm type
+    builder.SetInsertPoint(endBlock);
+    PHINode* phi = builder.CreatePHI(
+        leftExpr.getLLVMType(ctx),
+        2,
+        "ConditionalExprChoose"
+    );
+    phi->addIncoming(
+        leftExpr.value,
+        leftEvalBlock
+    );
+    phi->addIncoming(
+        rightExpr.value,
+        rightEvalBlock
+    );
+
+    return CTypedValue(
+        phi,
+        leftExpr.type //Should both have same type at this point
+    );
+    
     
 }
 CTypedValue CodeGen::visitRValue(const ConstantExpression &expr) {
-    return CTypedValue::invalid();
+    switch(expr.type) {
+        case ConstantType::Character: {
+            return CTypedValue(
+                builder.getInt8(c4::util::lexer::parseSingleChar(expr.value)),
+                BaseCType::get(TypeSpecifier::CHAR)
+            );
+        }
+        case ConstantType::Decimal: {
+            return CTypedValue(
+                builder.getInt32(std::stoi(expr.value)),
+                BaseCType::get(TypeSpecifier::INT)
+            );
+        }
+        case ConstantType::String: {
+            return CTypedValue(
+                builder.CreateGlobalStringPtr(expr.value),
+                BaseCType::get(TypeSpecifier::CHAR, 1)
+            );
+        }
+        default: {
+            throw std::logic_error("ConstantExpression CodeGen: unrecognized constant type");
+        }
+    }
     
 }
 CTypedValue CodeGen::visitRValue(const IdentifierExpression &expr) {
-    CTypedValue lvalue = expr.getLValue(*this);
-    //Checks for existence are already done
-    if(lvalue.type->isFuncNonDesignator()) {
-        return lvalue;
-    }
-    else {
-        lvalue.value = builder.CreateLoad(lvalue.getLLVMType(ctx), lvalue.value);
-        return lvalue;
-    }
+    return loadFromLValue(expr);
 }
 CTypedValue CodeGen::visitRValue(const IndexExpression &expr) {
-    CTypedValue lvalue = expr.getLValue(*this);
-    //Checks already done
-    if(lvalue.type->isFuncNonDesignator()) {
-        //Shouldn't need this at the moment, as function pointer arithmetic is not yet supported
-        return lvalue;
-    }
-    else {
-        lvalue.value = builder.CreateLoad(lvalue.getLLVMType(ctx), lvalue.value);
-        return lvalue;
-    }
-    
+    return loadFromLValue(expr);
 }
 CTypedValue CodeGen::visitRValue(const MemberExpression &expr) {
-    CTypedValue lvalue = expr.getLValue(*this);
-    //Checks already done
-    if(lvalue.type->isFuncNonDesignator()) {
-        //Shouldn't need this at the moment, as function pointer arithmetic is not yet supported
-        return lvalue;
-    }
-    else {
-        lvalue.value = builder.CreateLoad(lvalue.getLLVMType(ctx), lvalue.value);
-        return lvalue;
-    }
-    
+    return loadFromLValue(expr);
 }
 CTypedValue CodeGen::visitRValue(const SizeOfType &expr) {
+    //Need refactoring of the SizeOfType expression
     return CTypedValue::invalid();
     
 }
 CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
-    // switch(expr.type) {
-    //     case UnaryExpressionType::Indirection:
-    //         CTypedValue ptr = expr.expression->getRValue(*this);
-    //         ptr
-    // }
-    return CTypedValue::invalid();
+    switch(expr.type) {
+        case UnaryExpressionType::Indirection: {
+            return loadFromLValue(expr);
+        }
+        case UnaryExpressionType::AdditiveInverse: {
+            CTypedValue positive = expr.expression->getRValue(*this);
+            if(!positive.isValid()) {
+                return CTypedValue::invalid();
+            }
+            if(!positive.type->isInteger()) {
+                //Negating a non-integer
+                return CTypedValue::invalid();
+            }
+            convertToINT(positive);
+            positive.value = builder.CreateNeg(
+                positive.value,
+                "negated"
+            );
+            return positive; //Now negative
+        }
+        case UnaryExpressionType::AddressOf: {
+            CTypedValue address = expr.expression->getLValue(*this);
+            if(!address.isValid()) {
+                return CTypedValue::invalid();
+            }
+            if(!address.type->isFuncNonDesignator()) {
+                address.type = address.type->addStar();
+            }
+            return address;
+        }
+        case UnaryExpressionType::LogicalInverse: {
+            CTypedValue operand = expr.expression->getRValue(*this);
+            evaluateCondition(operand, true);
+            return operand;
+        }
+        case UnaryExpressionType::Sizeof: {
+            BasicBlock* currentBlock = builder.GetInsertBlock();
+            BasicBlock* deadBlock = BasicBlock::Create(
+                ctx, 
+                "DEAD-BLOCK", 
+                currentBlock->getParent()
+            );
+
+            //Since computing types is tied with generating code, I need to do this trick
+            builder.SetInsertPoint(deadBlock);
+            CTypedValue operand = expr.expression->getRValue(*this);
+            builder.SetInsertPoint(currentBlock);
+
+            if(!operand.isValid()) {
+                return CTypedValue::invalid();
+            }
+
+            if(operand.type->isFunc()) {
+                //Size of function object not allowed
+                return CTypedValue::invalid();
+            }
+
+            return CTypedValue(
+                ConstantInt::get(
+                    IntegerType::getInt32Ty(ctx),
+                    M.getDataLayout().getTypeAllocSize(operand.value->getType())
+                ),
+                BaseCType::get(TypeSpecifier::INT)
+            );
+        }
+        default: {
+            throw std::logic_error("Codegen: unrecognized unary expression type");
+            return CTypedValue::invalid();
+        }
+            
+    }
 }

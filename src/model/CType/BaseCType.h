@@ -30,8 +30,11 @@ namespace c4::model::ctype {
             return std::make_shared<BaseCType>(t, indirections+1);
         }
 
+        static std::shared_ptr<const BaseCType> get(TypeSpecifier ts, int indirections) {
+            return std::make_shared<const BaseCType>(ts, indirections);
+        }
         static std::shared_ptr<const BaseCType> get(TypeSpecifier ts) {
-            return std::make_shared<const BaseCType>(ts);
+            return BaseCType::get(ts, 0);
         }
 
         bool isInteger() const override {
@@ -43,6 +46,15 @@ namespace c4::model::ctype {
         }
 
         virtual bool compatible(const CType* another) const override;
+        virtual bool equivalent(const CType* another) const { //As compatible, but requires the integer size to be the same
+            if(this->compatible(another)) {
+                auto casted = dynamic_cast<const BaseCType*>(another);
+                return this->t == casted->t;
+            }
+            else {
+                return false;
+            }
+        }
 
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;
     };

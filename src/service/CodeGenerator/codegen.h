@@ -2,10 +2,12 @@
 
 #include "../../model/ASTNode.h"
 #include "../../model/expression/IExpressionCodeGenVisitor.h"
+#include "../../model/expression/IExpression.h"
 #include "../../model/CType/BaseCType.h"
 #include "../../model/CType/CFunctionType.h"
 #include "../../model/CType/ParameterInfo.h"
 #include "../../model/CType/CTypedValue.h"
+
 
 #include <unordered_map>
 #include <iostream>
@@ -22,6 +24,8 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/IR/DataLayout.h"
+
 
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -90,14 +94,15 @@ class CodeGen : IExpressionCodeGenVisitor {
 
     //Helper functions
     AllocaInst* Alloca(Type* type);
-    // void dereferenceAndLoad(CTypedValue &ctv);
     Value* ptrToInt64(Value* value);
-    Value* intToBool(Value* value);
-    Value* evaluateCondition(CTypedValue& ctv);
-    void unifyIntegerSize(CTypedValue &lhs, CTypedValue &rhs);
+    Value* intToBool(Value* value, bool negated=false);
+    void evaluateCondition(CTypedValue& ctv, bool negated);
+    void unifyIntegerSize(CTypedValue &lhs, CTypedValue &rhs, BasicBlock* insertLeftHere, BasicBlock* insertRightHere);
+    void unifyIntegerSize(CTypedValue &lhs, CTypedValue &rhs); //Automatically uses current block for both
     void pointerAddInt(CTypedValue &base, const CTypedValue &index);
-
-
+    Value* funcToPtr(Value* func);
+    CTypedValue loadFromLValue(const IExpression& expr);
+    void convertToINT(CTypedValue& integer); //Argument must be integer type
 
 
 
@@ -125,7 +130,7 @@ class CodeGen : IExpressionCodeGenVisitor {
 
 public:
     CodeGen(const std::string& filename) 
-    : filename(filename), M(filename, ctx), builder(ctx), allocaBuilder(ctx)
+    : filename(filename), ctx(), M(filename, ctx), builder(ctx), allocaBuilder(ctx)
     {}
 
     int codeGenTest();

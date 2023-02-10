@@ -28,15 +28,19 @@ class CType {
                 throw std::logic_error("Decremented indirections below 0!");
             }
         }
+        //kind == CTypeKind::STRUCT && !isPointer();
         bool isStruct() const {
             return kind == CTypeKind::STRUCT && !isPointer();
         }
+        //kind == CTypeKind::FUNCTION && indirections <= 1;
         bool isFunc() const {
             return kind == CTypeKind::FUNCTION && indirections <= 1;
         }
+        //kind == CTypeKind::FUNCTION && indirections == 1;
         bool isFuncDesignator() const {
             return kind == CTypeKind::FUNCTION && indirections == 1;
         }
+        //kind == CTypeKind::FUNCTION && indirections == 0;
         bool isFuncNonDesignator() const {
             return kind == CTypeKind::FUNCTION && indirections == 0;
         }
@@ -46,8 +50,12 @@ class CType {
         bool isPointer() const {
             return indirections;
         }
+        
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const = 0;
         virtual bool compatible(const CType* another) const = 0;
+        virtual bool equivalent(const CType* another) const { //As compatible, but requires the integer size to be the same
+            return this->compatible(another);
+        }
         virtual std::shared_ptr<const CType> dereference() const = 0;
         virtual std::shared_ptr<const CType> addStar() const = 0;
     };
