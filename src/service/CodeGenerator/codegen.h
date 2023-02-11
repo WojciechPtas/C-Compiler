@@ -166,6 +166,16 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     llvm::IRBuilder<> builder, allocaBuilder;
     ErrorState state;
 
+
+    bool isError() {
+        return state != CodeGen::ErrorState::OK;
+    }
+
+    void setError(CodeGen::ErrorState state) {
+        this->state = state;
+        //insert big switch that prints the error here
+    }
+
     //Helper functions
 
     llvm::AllocaInst* Alloca(llvm::Type* type);
