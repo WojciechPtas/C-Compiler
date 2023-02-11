@@ -2,7 +2,7 @@
 
 #include <cctype>
 #include <string>
-
+#include <stdexcept>
 #include "../../service/io/IBufferedInputStream.h"
 #include "../../service/io/IInputStream.h"
 

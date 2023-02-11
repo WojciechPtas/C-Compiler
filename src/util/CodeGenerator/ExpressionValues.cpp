@@ -19,7 +19,7 @@
 using namespace llvm;
 using namespace c4::model::ctype;
 using c4::model::ConstantType;
-
+using namespace c4::model::expression;
 /*
 CTypedValues of type function can have either 0 or 1 indirections (functions or function designators)
 Functions can either be called(getLValue(), which works for both since they are the same: pointers to a code section) or evaluated(getRValue(), which should convert to function object and use getLvalue())

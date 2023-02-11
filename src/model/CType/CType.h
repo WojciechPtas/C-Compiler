@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-
+#include <stdexcept>
 //Few declarations to avoid including huge stuff every time
 namespace llvm {
     class LLVMContext;

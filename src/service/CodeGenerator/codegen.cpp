@@ -1,5 +1,7 @@
 #include "codegen.h"
-
+using namespace c4::model::ctype;
+using namespace c4::model::expression;
+using namespace llvm;
 
 AllocaInst* CodeGen::Alloca(Type* type) {
     AllocaInst* ret = allocaBuilder.CreateAlloca(type);
