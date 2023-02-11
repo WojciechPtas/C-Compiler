@@ -12,6 +12,14 @@ AllocaInst* CodeGen::Alloca(Type* type) {
     return ret;
 }
 
+AllocaInst* CodeGen::Alloca(const CType* type) {
+    return Alloca(type->getLLVMType(ctx));
+}
+
+AllocaInst* CodeGen::Alloca(std::shared_ptr<const CType> type) {
+    return Alloca(type->getLLVMType(ctx));
+}
+
 int CodeGen::codeGenTest() {
     
 
@@ -44,7 +52,7 @@ int CodeGen::codeGenTest() {
         &M
     );
 
-    scope.set(
+    scope.declareVar(
         funcName,
         CTypedValue(func, std::make_shared<CFunctionType>(funcType))
     );
@@ -82,7 +90,7 @@ int CodeGen::codeGenTest() {
         AllocaInst *lvalue = Alloca(arg->getType());
         builder.CreateStore(arg, lvalue);
         CTypedValue typedLvalue(lvalue, funcParams.types[i]);
-        scope.set(funcParams.names[i], typedLvalue); //Every time we use this we look at the map
+        scope.declareVar(funcParams.names[i], typedLvalue); //Every time we use this we look at the map
     }
 
     Value* LHS = builder.CreateLoad(scope["a"].getLLVMType(ctx), scope["a"].value);

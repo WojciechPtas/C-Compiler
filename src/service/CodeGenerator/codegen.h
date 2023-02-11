@@ -5,6 +5,7 @@
 #include "../../model/expression/IExpression.h"
 #include "../../model/CType/BaseCType.h"
 #include "../../model/CType/CFunctionType.h"
+#include "../../model/CType/CStructType.h"
 #include "../../model/CType/ParameterInfo.h"
 #include "../../model/CType/CTypedValue.h"
 
@@ -53,10 +54,16 @@
 
 
 class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::util::IASTVisitor {
-    //"Global" stuff
+    enum ErrorState { //For now pretty simple. Add states as desired, you'll associate a string to every one of them later.
+        OK=0,
+        ERROR
+    };
 
-    typedef std::unordered_map<std::string, c4::model::ctype::CTypedValue> Scope;
-    
+    struct Scope {
+        std::unordered_map<std::string, c4::model::ctype::CTypedValue> variableDeclars;
+        std::unordered_map<std::string, std::shared_ptr<const c4::model::ctype::CStructType>> structDeclars;
+    };
+
     class ScopeStack : std::vector<Scope> {
     public:
         ScopeStack() {
@@ -76,21 +83,33 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
         }
 
         c4::model::ctype::CTypedValue operator[](const std::string& name) const {
-            bool notFound = true;
-            for(auto it=rbegin(); notFound && it<rend(); it++) {
-                auto current = *it;
-                if(current.count(name)) {
-                    return (*current.find(name)).second;
+            for(auto it=rbegin(); it<rend(); it++) {
+                auto& currentVarDeclars = it->variableDeclars;
+                if(currentVarDeclars.count(name)) {
+                    return (*currentVarDeclars.find(name)).second;
                 }
             }
             //Not found!
-            throw std::logic_error("Name not present in the ScopeStack table");
-            return c4::model::ctype::CTypedValue(nullptr, nullptr);
+            throw std::logic_error("Name not present in the ScopeStack table. Check with count() before using the [] operator!");
+            return c4::model::ctype::CTypedValue::invalid();
         }
 
-        bool count(const std::string& name) const {
+        std::shared_ptr<const c4::model::ctype::CStructType> getStruct(const std::string& name) const {
             for(auto it=rbegin(); it<rend(); it++) {
-                auto current = *it;
+                auto& currentStructDeclars = it->structDeclars;
+                if(currentStructDeclars.count(name)) {
+                    return (*currentStructDeclars.find(name)).second;
+                }
+            }
+            //Not found!
+            throw std::logic_error("Name not present in the ScopeStack table. Check with count() before using the [] operator!");
+            return nullptr;
+        }
+
+        //Checks in all scopes
+        bool isVarDeclared(const std::string& name) const {
+            for(auto it=rbegin(); it<rend(); it++) {
+                auto& current = it->variableDeclars;
                 if(current.count(name)) {
                     return true;
                 }
@@ -98,9 +117,46 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
             return false;
         }
 
-        void set(const std::string& name, const c4::model::ctype::CTypedValue& val) {
-            back().insert({name, val});
+        //Checks in all scopes
+        bool isStructDeclared(const std::string& name) const {
+            for(auto it=rbegin(); it<rend(); it++) {
+                auto& current = it->structDeclars;
+                if(current.count(name)) {
+                    return true;
+                }
+            }
+            return false;
         }
+
+        //Only checks in current scope
+        bool varAlreadyDeclared(const std::string& name) const {
+            auto& topVarDeclars = back().variableDeclars;
+            return topVarDeclars.count(name);
+        }
+
+        //Only checks in current scope
+        bool structAlreadyDeclared(const std::string& name) const {
+            auto& topStructDeclars = back().structDeclars;
+            return topStructDeclars.count(name);
+        }
+
+        void declareVar(const std::string& name, const c4::model::ctype::CTypedValue& val) {
+            if(varAlreadyDeclared(name)) {
+                throw std::logic_error("Already declared in the same scope! Check this beforehand using varAlreadyDeclared()");
+            }
+
+            auto& topVarDeclars = back().variableDeclars;
+            topVarDeclars[name] = val;
+        }
+
+        void declareStruct(const std::string& name, std::shared_ptr<const c4::model::ctype::CStructType> val) {
+            if(structAlreadyDeclared(name)) {
+                throw std::logic_error("Already declared in the same scope! Check this beforehand using structAlreadyDeclared()");
+            }
+
+            auto& topStructDeclars = back().structDeclars;
+            topStructDeclars[name] = val;
+        } 
     };
 
     std::string filename;
@@ -108,12 +164,18 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     llvm::LLVMContext ctx;
     llvm::Module M; //1:1 with translation units i.e. source file 
     llvm::IRBuilder<> builder, allocaBuilder;
+    ErrorState state;
 
     //Helper functions
+
     llvm::AllocaInst* Alloca(llvm::Type* type);
+    llvm::AllocaInst* Alloca(const c4::model::ctype::CType* type);
+    llvm::AllocaInst* Alloca(std::shared_ptr<const c4::model::ctype::CType> type);
+
+    void evaluateCondition(c4::model::ctype::CTypedValue& ctv, bool negated);
+
     llvm::Value* ptrToInt64(llvm::Value* value);
     llvm::Value* intToBool(llvm::Value* value, bool negated=false);
-    void evaluateCondition(c4::model::ctype::CTypedValue& ctv, bool negated);
     void unifyIntegerSize(c4::model::ctype::CTypedValue &lhs, c4::model::ctype::CTypedValue &rhs, llvm::BasicBlock* insertLeftHere, llvm::BasicBlock* insertRightHere);
     void unifyIntegerSize(c4::model::ctype::CTypedValue &lhs, c4::model::ctype::CTypedValue &rhs); //Automatically uses current block for both
     void pointerAddInt(c4::model::ctype::CTypedValue &base, const c4::model::ctype::CTypedValue &index);
@@ -165,7 +227,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     void visit(const c4::model::declaration::StructUnionSpecifier & s)override; 
 public:
     CodeGen(const std::string& filename) 
-    : filename(filename), ctx(), M(filename, ctx), builder(ctx), allocaBuilder(ctx)
+    : filename(filename), ctx(), M(filename, ctx), builder(ctx), allocaBuilder(ctx), state(ErrorState::OK)
     {}
 
     int codeGenTest();

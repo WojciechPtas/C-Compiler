@@ -53,7 +53,7 @@ namespace c4::model::ctype {
         }
         
         uint getIndexOf(const std::string& fieldName) const {
-            return memberIndexes.find(name)->second;
+            return memberIndexes.find(fieldName)->second;
         }
 
         virtual bool compatible(const CType* another) const override;

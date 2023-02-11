@@ -208,7 +208,7 @@ CTypedValue CodeGen::visitLValue(const ConstantExpression &expr) {
     return CTypedValue::invalid();
 }
 CTypedValue CodeGen::visitLValue(const IdentifierExpression &expr) {
-    if(scope.count(expr.identifier)) {
+    if(scope.isVarDeclared(expr.identifier)) {
         return scope[expr.identifier];
     }
     else {
