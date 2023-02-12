@@ -4,7 +4,10 @@ using namespace c4::model::ctype;
 using namespace llvm;
 
 bool CStructType::compatible(const CType* another) const {
-    if(this->kind != another->kind || 
+    if(this == another) { //Same address!
+         return true;
+    }
+    else if(this->kind != another->kind || 
         this->indirections != another->indirections) {
         return false;
     }

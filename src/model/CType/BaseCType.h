@@ -14,20 +14,22 @@ namespace c4::model::ctype {
     public:
         const TypeSpecifier t;
 
+        //If you need a shared_ptr, consider using BaseCType::get() instead
         BaseCType(TypeSpecifier t, int indirections) 
         : CType(indirections, BASE), t(t) 
         {}
 
+        //If you need a shared_ptr, consider using BaseCType::get() instead
         BaseCType(TypeSpecifier t) 
         : BaseCType(t, 0) 
         {}
 
         virtual std::shared_ptr<const CType> dereference() const override {
-            return std::make_shared<BaseCType>(t, indirections-1);
+            return BaseCType::get(t, indirections-1);
         }
         
         virtual std::shared_ptr<const CType> addStar() const override {
-            return std::make_shared<BaseCType>(t, indirections+1);
+            return BaseCType::get(t, indirections+1);
         }
 
         static std::shared_ptr<const BaseCType> get(TypeSpecifier ts, int indirections) {

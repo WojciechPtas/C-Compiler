@@ -52,7 +52,7 @@ void CodeGen::convertToINT(CTypedValue& ctv) { //Argument must be integer type
 
 CTypedValue CodeGen::loadFromLValue(const IExpression& expr) {
     //Source of inefficiency, but at least it allows for good code recycling
-    //Since assignments have lvalue, and getting the lvalue computes side effect, to get the rvalue just load from its lvalue
+    //For assignments, since they have lvalue, and getting the lvalue computes side effect, to get the rvalue just load from its lvalue
     CTypedValue rvalue = expr.getLValue(*this);
     if(!rvalue.isValid()) {
         return CTypedValue::invalid();
