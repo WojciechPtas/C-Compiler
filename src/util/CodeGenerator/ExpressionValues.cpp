@@ -400,6 +400,7 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
 
             if(lhs.type->isFunc()) {
                 lhs.value = funcToPtr(lhs.value);
+                rhs.value = funcToPtr(rhs.value);
             }
             
             if(lhs.type->isPointer() || lhs.type->isFunc()) { //They're both pointers and of the same type
@@ -455,7 +456,7 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             }
 
             if(lhs.type->isFunc() || rhs.type->isFunc()) {
-                //Function pointer comparison
+                //Function pointer arithmetic
                 return CTypedValue::invalid();
             }
 
