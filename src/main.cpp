@@ -129,6 +129,29 @@ bool print_ast(const std::string& input) {
     //cout<< "Returned with:!" << re << "\n";
     return parser.print();
 }
+bool compile(std::string& input){
+    auto lexer = initializeLexer(input);
+
+    shared_ptr<Token> token;
+    
+    PrintVisitor pt(cout);
+    PrintVisitor pe(cerr);
+
+    auto mosaic = make_shared<MosaicInputStream<shared_ptr<Token>>>(lexer,1024);
+    //cout << "mosaic\n";
+    auto st = make_shared<DelimiterStream>(mosaic, TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
+    auto a=make_shared<State>(INITIAL_STATE);
+    auto lrparser = make_shared<ExpressionParser>(a);
+    LLParser parser(mosaic);
+    //cout << "parser\n";
+
+    //auto re =parser.parse();
+    //cout<< "Returned with:!" << re << "\n";
+    auto ast = parser.parse();
+    CodeGen g(input);
+    ast->accept(g);
+    return 1;
+}
 bool LRparse(const std::string& input) {
     auto lexer = initializeLexer(input);
     auto a=make_shared<State>(INITIAL_STATE);
@@ -169,8 +192,9 @@ int main(int argc, char* argv[]) {
         }
         else if(in =="--compile") {
             input= argv[i+1];
-            CodeGen cg(input);
-            return cg.codeGenTest();
+            //CodeGen cg(input);
+            //return cg.codeGenTest();
+            return compile(input);
         }
     }
     cerr << "No command given\n";

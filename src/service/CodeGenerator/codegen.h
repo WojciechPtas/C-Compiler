@@ -33,6 +33,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <stdexcept>
+#include <stack>
 //File printing
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
@@ -63,7 +64,6 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
         std::unordered_map<std::string, c4::model::ctype::CTypedValue> variableDeclars;
         std::unordered_map<std::string, std::shared_ptr<const c4::model::ctype::CStructType>> structDeclars;
     };
-
     class ScopeStack : std::vector<Scope> {
     public:
         ScopeStack() {
@@ -165,8 +165,10 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     llvm::Module M; //1:1 with translation units i.e. source file 
     llvm::IRBuilder<> builder, allocaBuilder;
     ErrorState state;
-
-
+    std::unordered_map<std::string, llvm::BasicBlock*> gotoLabels; //constructed in the first phase
+    std::stack<llvm::BasicBlock*> headerBlocks;
+    std::stack<llvm::BasicBlock*> afterBlocks;
+    bool FirstPhase;
     bool isError() {
         return state != CodeGen::ErrorState::OK;
     }
@@ -237,7 +239,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     void visit(const c4::model::declaration::StructUnionSpecifier & s)override; 
 public:
     CodeGen(const std::string& filename) 
-    : filename(filename), ctx(), M(filename, ctx), builder(ctx), allocaBuilder(ctx), state(ErrorState::OK)
+    : filename(filename), ctx(), M(filename, ctx), builder(ctx), allocaBuilder(ctx), state(ErrorState::OK), FirstPhase(false)
     {}
 
     int codeGenTest();
