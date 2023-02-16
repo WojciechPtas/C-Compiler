@@ -52,7 +52,7 @@ void CodeGen::convertToINT(CTypedValue& ctv) { //Argument must be integer type
 
 CTypedValue CodeGen::loadFromLValue(const IExpression& expr) {
     //Source of inefficiency, but at least it allows for good code recycling
-    //Since assignments have lvalue, and getting the lvalue computes side effect, to get the rvalue just load from its lvalue
+    //For assignments, since they have lvalue, and getting the lvalue computes side effect, to get the rvalue just load from its lvalue
     CTypedValue rvalue = expr.getLValue(*this);
     if(!rvalue.isValid()) {
         return CTypedValue::invalid();
@@ -400,6 +400,7 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
 
             if(lhs.type->isFunc()) {
                 lhs.value = funcToPtr(lhs.value);
+                rhs.value = funcToPtr(rhs.value);
             }
             
             if(lhs.type->isPointer() || lhs.type->isFunc()) { //They're both pointers and of the same type
@@ -455,7 +456,7 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             }
 
             if(lhs.type->isFunc() || rhs.type->isFunc()) {
-                //Function pointer comparison
+                //Function pointer arithmetic
                 return CTypedValue::invalid();
             }
 

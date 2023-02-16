@@ -5,7 +5,10 @@ using namespace c4::model::ctype;
 using namespace llvm;
 
 bool BaseCType::compatible(const CType* another) const {
-    if(this->kind != another->kind) {
+    if(this == another) { //Same address!
+         return true;
+    }
+    else if(this->kind != another->kind) {
         return false;
     }
     //else
