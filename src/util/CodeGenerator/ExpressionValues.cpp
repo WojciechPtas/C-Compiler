@@ -82,8 +82,8 @@ void CodeGen::pointerAddInt(CTypedValue &base, const CTypedValue &index) {
 //Doesn't check if they both are integers, it is assumed it already has been done
 void CodeGen::unifyIntegerSize(CTypedValue &lhs, CTypedValue &rhs, BasicBlock* insertLeftHere, BasicBlock* insertRightHere) {
     BasicBlock* oldInsertPoint = builder.GetInsertBlock();
-    Type* leftType = lhs.value->getType();
-    Type* rightType = rhs.value->getType();
+    Type* leftType = lhs.type->getLLVMType(ctx);
+    Type* rightType = rhs.type->getLLVMType(ctx);
     uint leftBits = leftType->getIntegerBitWidth();
     uint rightBits = leftType->getIntegerBitWidth();
 
@@ -184,7 +184,7 @@ CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
             //It would be nice to issue a warning in this case
             rhs.value = builder.CreateSExtOrTrunc(
                 rhs.value,
-                lhs.value->getType()
+                lhs.type->getLLVMType(ctx)
             );
             rhs.type = lhs.type;
         }
