@@ -1,19 +1,5 @@
-int (f(int x, int y))
+int ((f(int x, int y, char a)))
 {
-	{
-		struct S
-		{
-			int x;
-		} s;
-		((s.x) = x);
-		struct S (*p);
-		(p = (&s));
-		if (1)
-			return (-((*(&(s.x))) = ((sizeof (s.x)) * ((p->x) - y))));
-		else if (1)
-			return 1;
-		else {
-			return 0;
-		}
-	}
+	if(x=2);
 }
+	

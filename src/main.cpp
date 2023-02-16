@@ -149,6 +149,7 @@ bool compile(std::string& input){
     //cout<< "Returned with:!" << re << "\n";
     auto ast = parser.parse();
     CodeGen g(input);
+    if(ast!=nullptr)
     ast->accept(g);
     return 1;
 }
