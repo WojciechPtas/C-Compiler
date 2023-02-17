@@ -17,7 +17,6 @@ bool BaseCType::compatible(const CType* another) const {
         (this->t == casted->t || 
             (indirections == 0 && this->isInteger() && casted->isInteger())
         );
-    
 }
 
 Type* BaseCType::getLLVMType(LLVMContext &ctx) const {

@@ -7,37 +7,42 @@
 namespace c4::model::ctype {
     class CStructType : public CType {
         std::unordered_map<std::string, uint> memberIndexes;
+        const CStructType* originalStruct; //For compatiblity computation
 
     public:
-        const std::string name;
         const std::vector<std::string> fieldNames;
         const std::vector<std::shared_ptr<const CType>> fieldTypes;
 
-        CStructType(
-            const std::string &name,
+        CStructType( //Don't use this :)
             const std::vector<std::string> &fieldNames,
             const std::vector<std::shared_ptr<const CType>> &fieldTypes,
-            int indirections
+            int indirections,
+            CStructType* originalStruct
         ) 
-        : CType(indirections, STRUCT), name(name), fieldNames(fieldNames), fieldTypes(fieldTypes) {
+        : CType(indirections, STRUCT), fieldNames(fieldNames), fieldTypes(fieldTypes), originalStruct(originalStruct) {
             for(uint i=0; i<fieldNames.size(); i++) {
                 memberIndexes[fieldNames[i]] = i;
             }
         }
 
         CStructType(
-            const std::string &name,
+            const std::vector<std::string> &fieldNames,
+            const std::vector<std::shared_ptr<const CType>> &fieldTypes,
+            int indirections
+        ) : CStructType(fieldNames, fieldTypes, indirections, this) {}
+
+        CStructType(
             const std::vector<std::string> &fieldNames,
             const std::vector<std::shared_ptr<const CType>> &fieldTypes
         ) 
-        : CStructType(name, fieldNames, fieldTypes, 0) {}
+        : CStructType(fieldNames, fieldTypes, 0) {}
 
         virtual std::shared_ptr<const CType> dereference() const override {
-            return std::make_shared<CStructType>(name, fieldNames, fieldTypes, indirections-1);
+            return std::make_shared<CStructType>(fieldNames, fieldTypes, indirections-1, originalStruct);
         }
 
         virtual std::shared_ptr<const CType> addStar() const override {
-            return std::make_shared<CStructType>(name, fieldNames, fieldTypes, indirections+1);
+            return std::make_shared<CStructType>(fieldNames, fieldTypes, indirections+1, originalStruct);
         }
 
         bool isInteger() const override {
