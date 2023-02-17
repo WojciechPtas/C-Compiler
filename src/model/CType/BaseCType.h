@@ -47,16 +47,12 @@ namespace c4::model::ctype {
             return t == TypeSpecifier::BOOL;
         }
 
-        virtual bool compatible(const CType* another) const override;
-        virtual bool equivalent(const CType* another) const { //As compatible, but requires the integer size to be the same
-            if(this->compatible(another)) {
-                auto casted = dynamic_cast<const BaseCType*>(another);
-                return this->t == casted->t;
-            }
-            else {
-                return false;
-            }
+        bool isVoid() const override {
+            return t == TypeSpecifier::VOID;
         }
+
+        virtual bool compatible(const CType* another) const override;
+        virtual bool equivalent(const CType* another) const override;
 
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;
 

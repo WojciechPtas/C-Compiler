@@ -88,18 +88,6 @@ int CodeGen::codeGenTest() {
         NULL //Insert at the end
     );
 
-    // int merd(int, int);
-    // int (*merd2)(int, int);
-    // // (merd+1)(3,4); works!
-    // int *p;
-    // *(merd2+2);
-    // 2+merd2;
-    // // (merd2+1) = merd2;
-    // 2+p;
-    // int (**cazzo)(int, int);
-    // merd2(1, 1);
-    // (*merd2)(1,1);
-
     allocaBuilder.SetInsertPoint(funcAddBlockEntry);
     builder.SetInsertPoint(funcAddBlockEntry);
 

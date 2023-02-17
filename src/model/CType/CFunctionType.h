@@ -40,6 +40,10 @@ namespace c4::model::ctype {
             return false;
         }
 
+        bool isVoid() const override {
+            return false;
+        }
+
         virtual bool compatible(const CType* another) const override;
 
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;

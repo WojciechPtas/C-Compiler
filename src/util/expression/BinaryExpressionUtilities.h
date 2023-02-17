@@ -16,6 +16,11 @@ namespace c4 {
             const std::string stringify(
                 model::expression::BinaryExpressionType type
             );
+
+            const std::string stringifyExplicit(
+                model::expression::BinaryExpressionType type
+            );
+
         }
     }
 }

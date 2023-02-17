@@ -53,6 +53,10 @@ namespace c4::model::ctype {
             return false;
         }
 
+        bool isVoid() const override {
+            return false;
+        }
+
         bool hasMember(const std::string& fieldName) const {
             return memberIndexes.count(fieldName);
         }

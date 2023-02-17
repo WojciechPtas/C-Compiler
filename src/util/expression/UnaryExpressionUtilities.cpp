@@ -36,6 +36,18 @@ const string c4::util::expression::stringify(UnaryExpressionType type) {
     }
 }
 
+const string c4::util::expression::stringifyExplicit(UnaryExpressionType type) {
+    switch (type) {
+        case UnaryExpressionType::AdditiveInverse:  return "Int Negation";
+        case UnaryExpressionType::AddressOf:        return "Address Of";
+        case UnaryExpressionType::Indirection:      return "Dereference";
+        case UnaryExpressionType::LogicalInverse:   return "Logical Not";
+        case UnaryExpressionType::Sizeof:           return "Sizeof";
+        default:
+            throw logic_error("Unimplemented unary expression type");
+    }
+}
+
 static inline void _decomposeOne(
     set<UnaryExpressionType> &dst,
     UnaryExpressionType compoundType,

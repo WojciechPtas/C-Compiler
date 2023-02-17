@@ -15,6 +15,8 @@
 #include "../../model/expression/UnaryExpression.h"
 
 #include "../lexer/ReadUtilities.h"
+#include "../expression/BinaryExpressionUtilities.h"
+#include "../expression/UnaryExpressionUtilities.h"
 
 using namespace llvm;
 using namespace c4::model::ctype;
@@ -36,6 +38,20 @@ Dereferencing a function must yield its lvalue (as everything that asks for its 
 //     //It loads a value of the updated type using the old value as pointer. New value is updated with loaded value.
 //     ctv.value = builder.CreateLoad(ctv.getLLVMType(ctx), ctv.value);
 // }
+
+std::string scalarConditionErrorMsg(const std::string& variable, const std::string& op) {
+    std::string str = variable;
+    str.append(" is not a scalar condition in a ")
+        .append(op)
+        .append(" expression");
+    return str;
+}
+
+std::string noLValueErrorMsg(const std::string& expression) {
+    std::string str = expression;
+    str.append(" has no lvalue");
+    return str;
+}
 
 void CodeGen::convertToINT(CTypedValue& ctv) { //No checks performed. Argument must be integer type.
     ctv.type = BaseCType::get(TypeSpecifier::INT);
@@ -147,7 +163,7 @@ void CodeGen::evaluateCondition(CTypedValue& ctv, bool negated=false) {
             }
         }
         else {
-            //"Condition is not scalar!"
+            //Condition is not scalar! Report an error message on exit
             ctv = CTypedValue::invalid();
         }
     }
@@ -159,26 +175,24 @@ CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
         //Error if expression doesn't have lvalue AND there was no error before
         CTypedValue lhs = expr.left->getLValue(*this);
         CTypedValue rhs = expr.right->getRValue(*this);
-        if(!lhs.isValid()) {
-            return CTypedValue::invalid();
-        }
-        if(!rhs.isValid()) {
+        if(!lhs.isValid() || !rhs.isValid()) {
             return CTypedValue::invalid();
         }
 
         if(lhs.isConst()) {
-            //Lvalue is not modifiable
+            reportError(expr.firstTerminal, "Assignment of constant lvalue");
             return CTypedValue::invalid();
         }
 
         if(!lhs.type->compatible(rhs.type.get())) {
-            //Incompatible types
+            reportError(expr.firstTerminal, "Assignment of incompatible types");
             return CTypedValue::invalid();
         }
 
         if(lhs.type->isInteger()) {
             //Need to unify their sizes
             //It would be nice to issue a warning in this case
+            //The following instruction does nothing if they have the same size already
             rhs.value = builder.CreateSExtOrTrunc(
                 rhs.value,
                 lhs.type->getLLVMType(ctx)
@@ -189,19 +203,25 @@ CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
         builder.CreateStore(rhs.value, lhs.value);
         return lhs;
     }
-    //else expression has no lvalue
-    return CTypedValue::invalid();
+    else { //Expression has no lvalue
+        reportError(expr.firstTerminal, noLValueErrorMsg(c4::util::expression::stringifyExplicit(expr.type)));
+        return CTypedValue::invalid();
+    }
+    
 }
 CTypedValue CodeGen::visitLValue(const CallExpression &expr) {
     //has no lvalue
+    reportError(expr.firstTerminal, noLValueErrorMsg("CallExpression"));
     return CTypedValue::invalid();
 }
 CTypedValue CodeGen::visitLValue(const ConditionalExpression &expr) {
     //has no lvalue
+    reportError(expr.firstTerminal, noLValueErrorMsg("ConditionalExpression"));
     return CTypedValue::invalid();
 }
 CTypedValue CodeGen::visitLValue(const ConstantExpression &expr) {
     //has no lvalue
+    reportError(expr.firstTerminal, noLValueErrorMsg("ConstantExpression"));
     return CTypedValue::invalid();
 }
 CTypedValue CodeGen::visitLValue(const IdentifierExpression &expr) {
@@ -209,37 +229,35 @@ CTypedValue CodeGen::visitLValue(const IdentifierExpression &expr) {
         return scope[expr.identifier];
     }
     else {
-        //Undeclared
+        reportError(expr.firstTerminal, 
+            std::string("Undeclared variable ") + expr.identifier);
         return CTypedValue::invalid();
     }
 }
 CTypedValue CodeGen::visitLValue(const IndexExpression &expr) {
     CTypedValue base = expr.container->getRValue(*this); //RValue of container should be a pointer
     CTypedValue idx = expr.index->getRValue(*this);
-    if(!base.isValid()) {
+    if(!(base.isValid() && idx.isValid())) {
         //You can always obtain the rvalue of an expression. The only way you get invalid is if there was an error beforehand
-        return CTypedValue::invalid();
+        return CTypedValue::invalid(); 
     }
+    
     if(base.type->isFunc()) {
-        //Function pointer arithmetic not allowed
+        reportError(expr.firstTerminal, "Function pointer arithmetic not allowed (IndexExpression)");
         return CTypedValue::invalid();
     }
 
     if(!base.type->isPointer()) {
-        //Not a pointer!
+        reportError(expr.firstTerminal, "Base of IndexExpression is not a pointer");
         return CTypedValue::invalid();
     }
-    
-    if(!idx.isValid()) {
-        return CTypedValue::invalid(); 
-    }
     if(!idx.type->isInteger()) {
-        //idx not an integer!
+        reportError(expr.firstTerminal, "Index of IndexExpression is not an integer");
         return CTypedValue::invalid();
     }
 
     pointerAddInt(base, idx);
-    base.dereference();
+    base.dereference(); //Case in which it's a function pointer already covered
     //Type of indexedLValue has been dereferenced, but we still want its lvalue
     return base;
 }
@@ -259,7 +277,7 @@ CTypedValue CodeGen::visitLValue(const MemberExpression &expr) {
         }
 
         if(!base.type->isPointer()) {
-            //Dereferencing a non-struct-pointer
+            reportError(expr.firstTerminal, "Dereferencing a non-pointer in '->' member access");
             return CTypedValue::invalid();
         }
 
@@ -267,7 +285,7 @@ CTypedValue CodeGen::visitLValue(const MemberExpression &expr) {
     }
     
     if(!base.type->isStruct()) {
-        //set error is not a struct
+        reportError(expr.firstTerminal, "Member access of non-struct type");
         return CTypedValue::invalid();
     }
 
@@ -275,7 +293,7 @@ CTypedValue CodeGen::visitLValue(const MemberExpression &expr) {
     std::string memberName = expr.member->identifier;
     
     if(!structType->hasMember(memberName)) {
-        //set error has no member with name
+        reportError(expr.firstTerminal, std::string("Accessing nonexistent struct member ") + expr.member->identifier);
         return CTypedValue::invalid();
     }
 
@@ -287,6 +305,8 @@ CTypedValue CodeGen::visitLValue(const MemberExpression &expr) {
     
 }
 CTypedValue CodeGen::visitLValue(const SizeOfType &expr) {
+    //has no lvalue
+    reportError(expr.firstTerminal, noLValueErrorMsg("SizeOfType"));
     return CTypedValue::invalid();
 }
 CTypedValue CodeGen::visitLValue(const UnaryExpression &expr) {
@@ -299,7 +319,7 @@ CTypedValue CodeGen::visitLValue(const UnaryExpression &expr) {
         }
 
         if(!(ptr.type->isPointer() || ptr.type->isFunc())) {
-            //dereferenced something that's not a pointer
+            reportError(expr.firstTerminal, "Dereferencing a non-pointer");
             return CTypedValue::invalid();
         }
         if(!ptr.type->isFuncNonDesignator()) {
@@ -308,6 +328,7 @@ CTypedValue CodeGen::visitLValue(const UnaryExpression &expr) {
         return ptr; //Not a ptr anymore
     }
     //else this kind of expression has no lvalue
+    reportError(expr.firstTerminal, noLValueErrorMsg(c4::util::expression::stringifyExplicit(expr.type)));
     return CTypedValue::invalid();
 }
 
@@ -324,8 +345,13 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
         case BinaryExpressionType::LogicalAnd: {
             CTypedValue lhs = expr.left->getRValue(*this);
             evaluateCondition(lhs);
-            if(!lhs.isValid()) {
-                //Error encountered and reported
+            if(!lhs.isValid()) { 
+                reportError(expr.firstTerminal, 
+                    scalarConditionErrorMsg(
+                        "Lhs", 
+                        c4::util::expression::stringifyExplicit(expr.type)
+                    )
+                );
                 return CTypedValue::invalid();
             }
             Value* leftCond = lhs.value;
@@ -354,10 +380,15 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
 
             //Now we insert code that evaluates rhs only if lhs was true
             builder.SetInsertPoint(lazyEvalBlock);
-               CTypedValue rhs = expr.right->getRValue(*this);
+            CTypedValue rhs = expr.right->getRValue(*this);
             evaluateCondition(rhs);
             if(!rhs.isValid()) {
-                //Error encountered and reported
+                reportError(expr.firstTerminal, 
+                    scalarConditionErrorMsg(
+                        "Rhs", 
+                        c4::util::expression::stringifyExplicit(expr.type)
+                    )
+                );
                 return CTypedValue::invalid();
             }
             Value* rightCond = rhs.value;
@@ -588,6 +619,9 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
     CTypedValue cond = expr.condition->getRValue(*this);
     evaluateCondition(cond);
     if(!cond.isValid()) {
+        reportError(expr.firstTerminal, 
+            scalarConditionErrorMsg("Condition", "Conditional")
+        );
         return CTypedValue::invalid();
     }
 
@@ -735,6 +769,11 @@ CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
         case UnaryExpressionType::LogicalInverse: {
             CTypedValue operand = expr.expression->getRValue(*this);
             evaluateCondition(operand, true);
+            if(!operand.isValid()) {
+                reportError(expr.firstTerminal, 
+                    scalarConditionErrorMsg("Operand", "Logical Not")
+                );
+            }
             return operand;
         }
         case UnaryExpressionType::Sizeof: {
