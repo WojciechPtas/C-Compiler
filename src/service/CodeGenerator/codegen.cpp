@@ -3,8 +3,8 @@ using namespace c4::model::ctype;
 using namespace c4::model::expression;
 using namespace llvm;
 
-AllocaInst* CodeGen::Alloca(Type* type) {
-    AllocaInst* ret = allocaBuilder.CreateAlloca(type);
+AllocaInst* CodeGen::Alloca(Type* type, const std::string& name) {
+    AllocaInst* ret = allocaBuilder.CreateAlloca(type, nullptr, name);
     allocaBuilder.SetInsertPoint(
         allocaBuilder.GetInsertBlock(), 
         allocaBuilder.GetInsertBlock()->begin() 
@@ -12,12 +12,31 @@ AllocaInst* CodeGen::Alloca(Type* type) {
     return ret;
 }
 
-AllocaInst* CodeGen::Alloca(const CType* type) {
-    return Alloca(type->getLLVMType(ctx));
+AllocaInst* CodeGen::Alloca(const CType* type, const std::string& name) {
+    return Alloca(type->getLLVMType(ctx), name);
 }
 
-AllocaInst* CodeGen::Alloca(std::shared_ptr<const CType> type) {
-    return Alloca(type->getLLVMType(ctx));
+AllocaInst* CodeGen::Alloca(std::shared_ptr<const CType> type, const std::string& name) {
+    return Alloca(type->getLLVMType(ctx), name);
+}
+
+GlobalVariable* CodeGen::GlobalAlloca(Type* type, const std::string& name) {
+    return new GlobalVariable(
+        M                                 /* Module & */,
+        type                              /* Type * */,
+        false                             /* bool isConstant */,
+        GlobalValue::CommonLinkage        /* LinkageType */,
+        Constant::getNullValue(type)      /* Constant * Initializer */,
+        name                              /* const Twine &Name = "" */
+    );
+}
+
+GlobalVariable* CodeGen::GlobalAlloca(const CType* type, const std::string& name) {
+    return GlobalAlloca(type->getLLVMType(ctx), name);
+}
+
+GlobalVariable* CodeGen::GlobalAlloca(std::shared_ptr<const CType> type, const std::string& name) {
+    return GlobalAlloca(type->getLLVMType(ctx), name);
 }
 
 int CodeGen::codeGenTest() {
@@ -87,7 +106,7 @@ int CodeGen::codeGenTest() {
     for(uint i=0; i<funcParams.names.size(); i++) {
         Argument* arg = func->arg_begin()+i;
         arg->setName(funcParams.names[i]);
-        AllocaInst *lvalue = Alloca(arg->getType());
+        AllocaInst *lvalue = Alloca(arg->getType(), arg->getName().str());
         builder.CreateStore(arg, lvalue);
         CTypedValue typedLvalue(lvalue, funcParams.types[i]);
         scope.declareVar(funcParams.names[i], typedLvalue); //Every time we use this we look at the map
