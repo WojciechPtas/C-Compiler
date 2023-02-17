@@ -97,8 +97,8 @@ void CodeGen::visit(const c4::model::statement::JumpStatement& s){
                 }
                 else{
                     std::cout<<"err_values\n";
-                    if(currentFunc->retType->isInteger()) std::cout<<"1Int\n";
-                    if(val.type->isInteger()) std::cout<<"2Int\n";
+                    currentFunc->retType->print();
+                    val.type->print();
                     // error
                 }
             }
