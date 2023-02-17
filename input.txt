@@ -1,5 +1,4 @@
-int ((f(int x, int y, char a)))
-{
-	if(x=2);
+int (f(char a)){
+int x;
+x=2;
 }
-	

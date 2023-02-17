@@ -74,19 +74,43 @@ void CodeGen::visit(const c4::model::statement::IterationStatement& s){
 void CodeGen::visit(const c4::model::statement::JumpStatement& s){
     if(FirstPhase) return;
     if(s.k==kind::_goto){
-    if(gotoLabels.find(s.gotoIdentifier)!=gotoLabels.end()){
-        builder.CreateBr(gotoLabels[s.gotoIdentifier]);
-    }
-    else{
-        //report error
-    }
-    }
-    else if(s.k==kind::_return){
-        if(s.returnExpression!=nullptr){
-            
+        if(gotoLabels.find(s.gotoIdentifier)!=gotoLabels.end()){
+            builder.CreateBr(gotoLabels[s.gotoIdentifier]);
         }
         else{
-
+        //report error
+        }
+    }
+    else if(s.k==kind::_return){ // return;
+        std::cout<<"return"<<std::endl;;
+        auto ret = builder.GetInsertBlock()->getParent();
+        auto ret_type = ret->getReturnType();
+        if(s.returnExpression!=nullptr){
+            if(ret_type->isVoidTy()){
+                std::cout<<"err_isvoid\n";
+                // error
+            }
+            else{
+                CTypedValue val = s.returnExpression->getRValue(*this);
+                if(currentFunc->retType->compatible(val.type.get())){
+                    builder.CreateRet(val.value);
+                }
+                else{
+                    std::cout<<"err_values\n";
+                    if(currentFunc->retType->isInteger()) std::cout<<"1Int\n";
+                    if(val.type->isInteger()) std::cout<<"2Int\n";
+                    // error
+                }
+            }
+        }
+        else{
+            if(ret_type->isVoidTy()){
+                builder.CreateRetVoid();
+            }
+            else{
+                std::cout<<"err\n";
+                // error
+            }
         }
     }
     else if(s.k==kind::_break){
@@ -148,13 +172,13 @@ void CodeGen::visit(const c4::model::statement::SelectionStatement& s){
         BasicBlock* elseBlock = BasicBlock::Create(
             ctx,
             "else-block",
-            builder.GetInsertBlock()->getParent(),
+            /*builder.GetInsertBlock()->getParent(),*/
             NULL //Insert at the end
         );
         BasicBlock* endBlock = BasicBlock::Create(
             ctx,
             "if-end",
-            builder.GetInsertBlock()->getParent(),
+            /*builder.GetInsertBlock()->getParent(),*/
             NULL //Insert at the end
         );
         builder.CreateBr(ifHeader);
@@ -176,17 +200,16 @@ void CodeGen::visit(const c4::model::statement::SelectionStatement& s){
         if(s.thenStatement!=nullptr) s.thenStatement->accept(*this);
         builder.CreateBr(endBlock);
         if(s.elseStatement!=nullptr){
+            elseBlock->insertInto(builder.GetInsertBlock()->getParent());
             builder.SetInsertPoint(elseBlock);
             s.elseStatement->accept(*this);
             builder.CreateBr(endBlock);
         }
+        endBlock->insertInto(builder.GetInsertBlock()->getParent());
         builder.SetInsertPoint(endBlock);
     }
 }
-void CodeGen::visit(const c4::model::declaration::Declaration& s){
-    if(FirstPhase) return;
 
-}
 void CodeGen::visit(const c4::model::declaration::DeclarationSpecifier & s){
     auto a =s; // WE DO NOTHING
     return; 
@@ -301,13 +324,10 @@ Var buildVar(std::shared_ptr<Declarator> d, Var returnVal){
     return buildVar(d->dec,a); // a is a return type
 }
 void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
-    std::cout<< "Function Definition!\n";
-
     Var a =  buildFromDS(s.ds);
     auto f = buildVar(s.declarator,a);
     if(f.type==nullptr) std::cout<< "dupa1\n";
     auto fu = std::dynamic_pointer_cast<const CFunctionType>(f.type);
-    std::cout << "build dec\n";
     if(fu==nullptr) std::cout<< "dupa\n";
     Function* func = Function::Create(
         fu->getLLVMFuncType(ctx), 
@@ -316,6 +336,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
         &M
     );
     const std::vector<std::shared_ptr<const CType>> val =f.params->types;
+    currentFunc = std::make_shared<CFunctionType>(fu, val);
     scope.declareVar(
         f.name,
         CTypedValue(func, std::make_shared<CFunctionType>(fu, val))
@@ -345,9 +366,29 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
     }
     std::cout<<"Lets go statements!\n";
     s.statement->accept(*this);
+    if (builder.GetInsertBlock()->getTerminator() == nullptr) {
+        Type *CurFuncReturnType = builder.getCurrentFunctionReturnType();
+        if (CurFuncReturnType->isVoidTy()) {
+            builder.CreateRetVoid();
+        } else {
+            builder.CreateRet(Constant::getNullValue(CurFuncReturnType));
+    }
+  }
     gotoLabels.clear();
     verifyFunction(*func);
 
+}
+
+void CodeGen::visit(const c4::model::declaration::Declaration& s){
+    if(FirstPhase) return;
+    Var a =  buildFromDS(s.ds);
+    auto f = buildVar(s.declarator,a);
+    if(f.type==nullptr) std::cout<< "dupa1\n";
+    scope.declareVar(
+        f.name,
+        CTypedValue(nullptr,f.type)
+    );
+    AllocaInst *lvalue = Alloca(f.type->getLLVMType(ctx));
 }
 void CodeGen::visit(const c4::model::declaration::ParameterDeclaration& s){
     auto a =s; // WE DO NOTHING
@@ -368,7 +409,9 @@ void CodeGen::visit(const c4::model::declaration::Root & s){
     for(auto& a : s.definitions){
         a->accept(*this);
     }
-    verifyModule(this->M);
+    std::error_code EC;
+    raw_fd_ostream stream("output.txt", EC, llvm::sys::fs::OpenFlags::OF_Text);
+    verifyModule(this->M,&stream);
     M.dump();
 }
 void CodeGen::visit(const c4::model::declaration::StructDeclarationList & s){

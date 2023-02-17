@@ -169,6 +169,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     std::stack<llvm::BasicBlock*> headerBlocks;
     std::stack<llvm::BasicBlock*> afterBlocks;
     bool FirstPhase;
+    std::shared_ptr<c4::model::ctype::CFunctionType> currentFunc;
     bool isError() {
         return state != CodeGen::ErrorState::OK;
     }
