@@ -596,6 +596,18 @@ std::shared_ptr<LabeledStatement> c4::service::parser::LLParser::parseLabeledSta
     return std::make_shared<LabeledStatement>(a,b,first_token);
 }
 
+std::shared_ptr<TypeName> c4::service::parser::LLParser::parseTypeName()
+{
+    auto a = parseDeclarationSpecifier();
+    if(a==nullptr) return nullptr;
+    std::shared_ptr<Declarator> dec=nullptr;
+    if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))){
+        dec = parseDeclarator(true);
+        if(dec==nullptr) return nullptr;
+    }
+    return std::make_shared<TypeName>(a,dec);
+}
+
 bool c4::service::parser::LLParser::visit()
 {
     checkLookAhead(TokenKind::identifier);
