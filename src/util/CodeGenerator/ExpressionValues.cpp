@@ -85,7 +85,7 @@ void CodeGen::unifyIntegerSize(CTypedValue &lhs, CTypedValue &rhs, BasicBlock* i
     Type* leftType = lhs.type->getLLVMType(ctx);
     Type* rightType = rhs.type->getLLVMType(ctx);
     uint leftBits = leftType->getIntegerBitWidth();
-    uint rightBits = leftType->getIntegerBitWidth();
+    uint rightBits = rightType->getIntegerBitWidth();
 
     if(leftBits > rightBits) {
         builder.SetInsertPoint(insertRightHere);

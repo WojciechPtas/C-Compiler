@@ -84,6 +84,10 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
             pop_back();
         }
 
+        bool isGlobal() { //Returns true if the current scope is global
+            return this->size() == 1;
+        }
+
         c4::model::ctype::CTypedValue operator[](const std::string& name) const {
             for(auto it=rbegin(); it<rend(); it++) {
                 auto& currentVarDeclars = it->variableDeclars;
@@ -181,9 +185,15 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
 
     //Helper functions
 
-    llvm::AllocaInst* Alloca(llvm::Type* type);
-    llvm::AllocaInst* Alloca(const c4::model::ctype::CType* type);
-    llvm::AllocaInst* Alloca(std::shared_ptr<const c4::model::ctype::CType> type);
+    llvm::AllocaInst* Alloca(llvm::Type* type, const std::string& name);
+    llvm::AllocaInst* Alloca(const c4::model::ctype::CType* type, const std::string& name);
+    llvm::AllocaInst* Alloca(std::shared_ptr<const c4::model::ctype::CType> type, const std::string& name);
+    llvm::GlobalVariable* GlobalAlloca(llvm::Type* type, const std::string& name);
+    llvm::GlobalVariable* GlobalAlloca(const c4::model::ctype::CType* type, const std::string& name);
+    llvm::GlobalVariable* GlobalAlloca(std::shared_ptr<const c4::model::ctype::CType> type, const std::string& name);
+
+
+
 
     void evaluateCondition(c4::model::ctype::CTypedValue& ctv, bool negated);
 
