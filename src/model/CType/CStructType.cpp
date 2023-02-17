@@ -11,12 +11,9 @@ bool CStructType::compatible(const CType* another) const {
         this->indirections != another->indirections) {
         return false;
     }
-    // else return "none of them is anonymous " and "They have the same name"
+    // else return "they have the same originalStruct address"
     auto casted = dynamic_cast<const CStructType*>(another);
-    return (
-        (!this->name.empty()) && (!casted->name.empty()) &&
-        (casted->name.compare(this->name) == 0)
-    );
+    return (this->originalStruct == casted->originalStruct);
 }
 
 StructType* CStructType::getLLVMStructType(llvm::LLVMContext &ctx) const {
@@ -24,7 +21,7 @@ StructType* CStructType::getLLVMStructType(llvm::LLVMContext &ctx) const {
     for(auto& type : fieldTypes) {
         fields.push_back(type->getLLVMType(ctx));
     }
-    return StructType::create(ctx, fields, name);
+    return StructType::create(ctx, fields);
 }
 
 Type* CStructType::getLLVMType(llvm::LLVMContext &ctx) const {

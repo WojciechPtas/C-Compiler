@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <iostream>
 #include <stdexcept>
 //Few declarations to avoid including huge stuff every time
 namespace llvm {
@@ -58,5 +59,9 @@ class CType {
         }
         virtual std::shared_ptr<const CType> dereference() const = 0;
         virtual std::shared_ptr<const CType> addStar() const = 0;
+
+        virtual void print() const {
+            
+        }
     };
 }

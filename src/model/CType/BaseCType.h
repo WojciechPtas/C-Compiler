@@ -59,5 +59,32 @@ namespace c4::model::ctype {
         }
 
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;
+
+        virtual void print() const override {
+            switch(t) {
+                case TypeSpecifier::BOOL: {
+                    std::cerr << BOOL;
+                    break;
+                }
+                case TypeSpecifier::CHAR: {
+                    std::cerr << CHAR;
+                    break;
+                }
+                case TypeSpecifier::INT: {
+                    std::cerr << INT;
+                    break;
+                }
+                case TypeSpecifier::VOID : {
+                    std::cerr << VOID;
+                    break;
+                }
+                default: {
+
+                }
+            }
+            for (int i=0; i<indirections; i++) {
+                std::cerr << "*";
+            }
+        }
     };
 }
