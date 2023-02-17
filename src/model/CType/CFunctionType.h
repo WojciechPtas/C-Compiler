@@ -45,6 +45,7 @@ namespace c4::model::ctype {
         }
 
         virtual bool compatible(const CType* another) const override;
+        // bool conflicting(const CFunctionType* another) const;
 
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;
 
