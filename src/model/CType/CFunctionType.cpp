@@ -22,12 +22,18 @@ bool CFunctionType::compatible(const CType* another) const {
         (this->paramTypes.size() == casted->paramTypes.size()) &&
         (this->retType->equivalent(casted->retType.get()));
 
-    for(int i=paramTypes.size(); condition && i>0; i--) {
+    for(int i=paramTypes.size()-1; condition && i>=0; i--) {
         condition = condition && 
             this->paramTypes[i]->equivalent(casted->paramTypes[i].get());
     }
     return condition;
 }
+
+bool CFunctionType::equivalent(const CType* another) const {
+    return this->indirections == another->indirections && 
+        this->compatible(another);
+}
+
 
 // //Returns true if the two functions have conflicting types, i.e. no declaration of both under the same name can coexist
 // bool CFunctionType::conflicting(const CFunctionType* another) const {
