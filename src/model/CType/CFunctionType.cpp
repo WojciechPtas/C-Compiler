@@ -29,6 +29,15 @@ bool CFunctionType::compatible(const CType* another) const {
     return condition;
 }
 
+// //Returns true if the two functions have conflicting types, i.e. no declaration of both under the same name can coexist
+// bool CFunctionType::conflicting(const CFunctionType* another) const {
+//     if(this->compatible(another)) {
+//         return false;
+//     }
+    
+
+// }
+
 Type* CFunctionType::getLLVMType(llvm::LLVMContext &ctx) const {
     // if(indirections <= 0) {
     //     throw std::logic_error("Function designators cannot have 0 indirections");
