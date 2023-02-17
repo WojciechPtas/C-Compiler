@@ -295,16 +295,7 @@ Var buildVar(std::shared_ptr<Declarator> d, Var returnVal);
 
 Var buildParam(std::shared_ptr<ParameterDeclaration> param){
     auto base = buildFromDS(param->type);
-    if (param->dec == nullptr ){
-        auto a = std::dynamic_pointer_cast<const BaseCType>(base.type);
-        if(!a){
-            
-        }
-    }
-    else{
-
-    }
-
+    return param->dec == nullptr ? base :   buildVar(param->dec,base);
     // std::cout << "param built\n";
 }
 // DONE!
@@ -314,7 +305,6 @@ ParametersInfo buildParameters(std::shared_ptr<ParameterTypeList> params){
     std::vector<std::string> names;
     for(const auto& a : params->params){
         auto variable = buildParam(a);
-        if(variable.type==nullptr) continue;
         vec.push_back(variable.type);
         names.push_back(variable.name);
     }
@@ -371,20 +361,58 @@ Var buildVar(std::shared_ptr<Declarator> d, Var returnVal){
 void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
     Var a =  buildFromDS(s.ds);
     auto f = buildVar(s.declarator,a);
-    if(f.type==nullptr) std::cout<< "dupa1\n";
+    if(f.type==nullptr){
+        reportError(s.firstTerminal, "Not a valid type");
+    }
     auto fu = std::dynamic_pointer_cast<const CFunctionType>(f.type);
-    if(fu==nullptr) std::cout<< "dupa\n";
+    if(fu==nullptr){
+        reportError(s.firstTerminal,"Not a function type.");
+        return;
+    }
+    for(int i=0;i<f.params->types.size();i++){
+        if(f.params->types[i]->isVoid()){
+            if(f.params->types.size()==1){
+                f.params->types.clear();
+                f.params->names.clear();
+                fu=std::make_shared<const CFunctionType>(fu->retType,f.params->types);
+            }
+            else{
+                reportError(s.firstTerminal,"Invalid parameter declaration");
+                return;
+            }
+        }
+    }
     Function* func = Function::Create(
         fu->getLLVMFuncType(ctx), 
         GlobalValue::ExternalLinkage,
         f.name,
         &M
     );
+    const std::vector<std::shared_ptr<const CType>> val =f.params->types;
     currentFunc = fu;
-    scope.declareVar(
-        f.name,
-        CTypedValue(func, fu)
+    if(scope.varAlreadyDeclared(f.name)){
+        CTypedValue fun = scope[f.name];
+        std::cout<<"before\n";
+        if(!fun.type->equivalent(&(*fu))){ // ???
+            std::cout<<"after\n";
+            reportError(s.firstTerminal,"Redefinition of incompatible type!");
+            return;
+        }
+        else{
+            Value* a = fun.value;
+            std::cout<<"after\n";
+            /*auto val_func = dynamic_cast<llvm::Function*>(a);
+            if(val_func==nullptr){
+
+            }*/
+        }
+
+    }else{
+        scope.declareVar(
+            f.name,
+            CTypedValue(func, fu)
     );
+    }
     scope.pushScope();
 
     BasicBlock* funcAddBlockEntry = BasicBlock::Create(
@@ -398,17 +426,21 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
     FirstPhase=true;
     s.statement->accept(*this);
     FirstPhase=false;
-    // std::cout << "after first run\n";
-    // std::cout<<"Lets go statements!\n";
     for(uint i=0; i<fu->paramTypes.size(); i++) {
+        if(f.params->names[i]==""){
+            reportError(s.firstTerminal,"Parameter without name");
+        }
         Argument* arg = func->arg_begin()+i;
         arg->setName(f.params->names[i]);
         AllocaInst *lvalue = Alloca(arg->getType(), f.params->names[i]);
         builder.CreateStore(arg, lvalue);
         CTypedValue typedLvalue(lvalue, f.params->types[i]);
+        if(scope.varAlreadyDeclared(f.params->names[i])){
+            reportError(s.firstTerminal, "Redeclaration of parameter");
+            continue;
+        }
         scope.declareVar(f.params->names[i], typedLvalue); //Every time we use this we look at the map
     }
-    // std::cout<<"Lets go statements!\n";
     s.statement->accept(*this);
     if (builder.GetInsertBlock()->getTerminator() == nullptr) {
         Type *CurFuncReturnType = builder.getCurrentFunctionReturnType();
@@ -435,19 +467,20 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
 
     auto fu = std::dynamic_pointer_cast<const CFunctionType>(f.type);
     if(fu!=nullptr){
-    Function* func = Function::Create(
-        fu->getLLVMFuncType(ctx), 
-        GlobalValue::ExternalLinkage,
-        f.name,
-        &M
-    );
-    currentFunc = fu;
-    scope.declareVar(
-        f.name,
-        CTypedValue(func, fu)
-    );
+        Function* func = Function::Create(
+            fu->getLLVMFuncType(ctx), 
+            GlobalValue::ExternalLinkage,
+            f.name,
+            &M
+        );
+        const std::vector<std::shared_ptr<const CType>> val =f.params->types;
+        currentFunc = fu;
+        scope.declareVar(
+            f.name,
+            CTypedValue(func, fu)
+        );
+    return;
     }
-    else{
     if(scope.varAlreadyDeclared(f.name)){
             std::string msg="Variable with name: " + f.name + " was already declared in this scope";
             reportError(s.firstTerminal,msg);
@@ -465,7 +498,6 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                     CTypedValue(GlobalAlloca(f.type->getLLVMType(ctx),f.name),f.type)
                 );
         }
-    }
     }
 }
 void CodeGen::visit(const c4::model::declaration::ParameterDeclaration& s){
