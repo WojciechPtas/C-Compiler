@@ -67,15 +67,15 @@ namespace c4::model::ctype {
                     break;
                 }
                 case TypeSpecifier::CHAR: {
-                    std::cerr << BOOL;
+                    std::cerr << CHAR;
                     break;
                 }
                 case TypeSpecifier::INT: {
-                    std::cerr << BOOL;
+                    std::cerr << INT;
                     break;
                 }
                 case TypeSpecifier::VOID : {
-                    std::cerr << BOOL;
+                    std::cerr << VOID;
                     break;
                 }
                 default: {
