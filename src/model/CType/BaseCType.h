@@ -63,19 +63,19 @@ namespace c4::model::ctype {
         virtual void print() const override {
             switch(t) {
                 case TypeSpecifier::BOOL: {
-                    std::cerr << BOOL;
+                    std::cerr << "bool";
                     break;
                 }
                 case TypeSpecifier::CHAR: {
-                    std::cerr << CHAR;
+                    std::cerr << "char";
                     break;
                 }
                 case TypeSpecifier::INT: {
-                    std::cerr << INT;
+                    std::cerr << "int";
                     break;
                 }
                 case TypeSpecifier::VOID : {
-                    std::cerr << VOID;
+                    std::cerr << "void";
                     break;
                 }
                 default: {
