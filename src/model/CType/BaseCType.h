@@ -40,15 +40,15 @@ namespace c4::model::ctype {
         }
 
         bool isInteger() const override {
-            return (t == TypeSpecifier::INT) || (t == TypeSpecifier::CHAR) || (t == TypeSpecifier::BOOL);
+            return indirections == 0 && (t == TypeSpecifier::INT) || (t == TypeSpecifier::CHAR) || (t == TypeSpecifier::BOOL);
         }
 
         bool isBool() const override {
-            return t == TypeSpecifier::BOOL;
+            return t == TypeSpecifier::BOOL && indirections == 0;
         }
 
         bool isVoid() const override {
-            return t == TypeSpecifier::VOID;
+            return t == TypeSpecifier::VOID && indirections == 0;
         }
 
         virtual bool compatible(const CType* another) const override;
