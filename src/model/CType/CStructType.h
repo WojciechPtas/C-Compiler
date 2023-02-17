@@ -17,9 +17,9 @@ namespace c4::model::ctype {
             const std::vector<std::string> &fieldNames,
             const std::vector<std::shared_ptr<const CType>> &fieldTypes,
             int indirections,
-            CStructType* originalStruct
+            const CStructType* originalStruct
         ) 
-        : CType(indirections, STRUCT), fieldNames(fieldNames), fieldTypes(fieldTypes), originalStruct(originalStruct) {
+        : CType(indirections, STRUCT), originalStruct(originalStruct), fieldNames(fieldNames), fieldTypes(fieldTypes) {
             for(uint i=0; i<fieldNames.size(); i++) {
                 memberIndexes[fieldNames[i]] = i;
             }
