@@ -17,14 +17,14 @@ bool CFunctionType::compatible(const CType* another) const {
     }
     //else
     const CFunctionType* casted = dynamic_cast<const CFunctionType*>(another);
-    
+    //Ret type and parameters must be equivalent!
     bool condition = 
         (this->paramTypes.size() == casted->paramTypes.size()) &&
-        (this->retType->compatible(casted->retType.get()));
+        (this->retType->equivalent(casted->retType.get()));
 
     for(int i=paramTypes.size(); condition && i>0; i--) {
         condition = condition && 
-            this->paramTypes[i]->compatible(casted->paramTypes[i].get());
+            this->paramTypes[i]->equivalent(casted->paramTypes[i].get());
     }
     return condition;
 }

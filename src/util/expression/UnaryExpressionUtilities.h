@@ -16,6 +16,12 @@ namespace c4 {
             const std::string stringify(
                 model::expression::UnaryExpressionType type
             );
+
+            //Will print AddressOf instead of '&'
+            const std::string stringifyExplicit(
+                model::expression::UnaryExpressionType type
+            );
+
         }
     }
 }

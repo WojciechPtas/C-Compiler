@@ -44,6 +44,22 @@ const string c4::util::expression::stringify(BinaryExpressionType type) {
     }
 }
 
+const string c4::util::expression::stringifyExplicit(BinaryExpressionType type) {
+    switch (type) {
+        case BinaryExpressionType::Assignment:      return "Assignment";
+        case BinaryExpressionType::Equal:           return "Equal";
+        case BinaryExpressionType::LessThan:        return "Less Than";
+        case BinaryExpressionType::LogicalAnd:      return "Logical And";
+        case BinaryExpressionType::LogicalOr:       return "Logical Or";
+        case BinaryExpressionType::Multiplication:  return "Multiplication";
+        case BinaryExpressionType::Subtraction:     return "Subtraction";
+        case BinaryExpressionType::Sum:             return "Addition";
+        case BinaryExpressionType::Unequal:         return "Unequal";
+        default:
+            throw logic_error("Unimplemented binary expression type");
+    }
+}
+
 static inline void _decomposeOne(
     set<BinaryExpressionType> &dst,
     BinaryExpressionType compoundType,

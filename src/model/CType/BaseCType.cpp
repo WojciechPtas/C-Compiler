@@ -19,6 +19,16 @@ bool BaseCType::compatible(const CType* another) const {
         );
 }
 
+bool BaseCType::equivalent(const CType* another) const { //As compatible, but requires the integer size to be the same
+    if(this->compatible(another)) {
+        auto casted = dynamic_cast<const BaseCType*>(another);
+        return this->t == casted->t;
+    }
+    else {
+        return false;
+    }
+}
+
 Type* BaseCType::getLLVMType(LLVMContext &ctx) const {
     if(indirections) {
         return PointerType::getUnqual(ctx);

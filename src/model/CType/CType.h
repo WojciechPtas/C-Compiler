@@ -48,6 +48,9 @@ class CType {
 
         virtual bool isInteger() const = 0; 
         virtual bool isBool() const = 0; 
+        virtual bool isVoid() const = 0;
+
+        //This does not classify functions as pointer, but does so on function pointers (designators) 
         bool isPointer() const {
             return indirections;
         }
