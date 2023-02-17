@@ -17,7 +17,6 @@ void CodeGen::visit(const c4::model::statement::CompoundStatement& s){
 // CODEGEN EXPR
 void CodeGen::visit(const c4::model::statement::ExpressionStatement& s){
     if(FirstPhase) return;
-    std::cout<<"expression stmt\n";
     if(s.expr==nullptr) return;
     s.expr->getRValue(*this);
 }
@@ -57,7 +56,7 @@ void CodeGen::visit(const c4::model::statement::IterationStatement& s){
         CTypedValue cond = s.expr->getRValue(*this);
         evaluateCondition(cond,false);
         if(!cond.isValid()) {
-            std::cout<<"Invalid!\n";
+            reportError(s.firstTerminal,"Not scalar condition.");
             //err
         }
         builder.CreateCondBr(cond.value,whileBody,afterWhile);
@@ -76,29 +75,41 @@ void CodeGen::visit(const c4::model::statement::JumpStatement& s){
     if(s.k==kind::_goto){
         if(gotoLabels.find(s.gotoIdentifier)!=gotoLabels.end()){
             builder.CreateBr(gotoLabels[s.gotoIdentifier]);
+        BasicBlock* deadBlock = BasicBlock::Create(
+            ctx,
+            "dead-block",
+            builder.GetInsertBlock()->getParent(),
+            NULL //Insert at the end
+        );
+        builder.SetInsertPoint(deadBlock);
         }
         else{
-        //report error
+            std::string msg = "Label with this name: " + s.gotoIdentifier + " was not declared.";
+            reportError(s.firstTerminal,msg);
         }
     }
     else if(s.k==kind::_return){ // return;
-        std::cout<<"return"<<std::endl;;
         auto ret = builder.GetInsertBlock()->getParent();
         auto ret_type = ret->getReturnType();
         if(s.returnExpression!=nullptr){
             if(ret_type->isVoidTy()){
-                std::cout<<"err_isvoid\n";
-                // error
+                reportError(s.firstTerminal,"Return statement with expression in void type function");
             }
             else{
                 CTypedValue val = s.returnExpression->getRValue(*this);
                 if(currentFunc->retType->compatible(val.type.get())){
                     builder.CreateRet(val.value);
+                    BasicBlock* deadBlock = BasicBlock::Create(
+                        ctx,
+                        "dead-block",
+                        builder.GetInsertBlock()->getParent(),
+                        NULL //Insert at the end
+                        );
+                    builder.SetInsertPoint(deadBlock);
                 }
                 else{
-                    std::cout<<"err_values\n";
-                    currentFunc->retType->print();
-                    val.type->print();
+                    reportError(s.firstTerminal,"Return statement with wrong type expression");
+
                     // error
                 }
             }
@@ -106,46 +117,70 @@ void CodeGen::visit(const c4::model::statement::JumpStatement& s){
         else{
             if(ret_type->isVoidTy()){
                 builder.CreateRetVoid();
+                BasicBlock* deadBlock = BasicBlock::Create(
+                        ctx,
+                        "dead-block",
+                        builder.GetInsertBlock()->getParent(),
+                        NULL //Insert at the end
+                        );
+                builder.SetInsertPoint(deadBlock);
             }
             else{
-                std::cout<<"err\n";
-                // error
+                reportError(s.firstTerminal, "Empty return statement in non-void function");
             }
         }
     }
     else if(s.k==kind::_break){
         if(afterBlocks.size()!=0){
             builder.CreateBr(afterBlocks.top());
+            BasicBlock* deadBlock = BasicBlock::Create(
+                        ctx,
+                        "dead-block",
+                        builder.GetInsertBlock()->getParent(),
+                        NULL //Insert at the end
+                        );
+                    builder.SetInsertPoint(deadBlock);
             return;
+        }
+        else{
+            reportError(s.firstTerminal,"Break outside the loop");
         }
     }
     else{ // _continue
         if(headerBlocks.size()!=0){
             builder.CreateBr(headerBlocks.top());
+            BasicBlock* deadBlock = BasicBlock::Create(
+                        ctx,
+                        "dead-block",
+                        builder.GetInsertBlock()->getParent(),
+                        NULL //Insert at the end
+                        );
+            builder.SetInsertPoint(deadBlock);
             return;
         }
         else{
-            // report error
+            reportError(s.firstTerminal,"Continue outside the loop.");
         }
     }
 }
 void CodeGen::visit(const c4::model::statement::LabeledStatement& s){
-    std::cout<<"Labeled stmt\n";
     if(FirstPhase){
         BasicBlock* jumpBlock = BasicBlock::Create(
             ctx,
             s.identifier,
-            builder.GetInsertBlock()->getParent(),
+            /*builder.GetInsertBlock()->getParent(),*/
             NULL //Insert at the end
         );
         if(gotoLabels.find(s.identifier)!=gotoLabels.end()){
-            //report error
+            std::string msg= "Label with name: "+s.identifier+" was already declared.";
+            reportError(s.firstTerminal, msg);
         }
         else{
             gotoLabels[s.identifier]=jumpBlock;
         }
     }
     else{
+        gotoLabels[s.identifier]->insertInto(builder.GetInsertBlock()->getParent());
         builder.CreateBr(gotoLabels[s.identifier]);
         builder.SetInsertPoint(gotoLabels[s.identifier]);
     }
@@ -187,8 +222,7 @@ void CodeGen::visit(const c4::model::statement::SelectionStatement& s){
         CTypedValue cond = s.ifExpr->getRValue(*this);
         evaluateCondition(cond,false);
         if(!cond.isValid()) {
-            std::cout<<"Invalid!\n";
-            //err
+            reportError(s.firstTerminal,"Condition is not scalar");
         }
         if(s.elseStatement!=nullptr){
             builder.CreateCondBr(cond.value,thenBlock,elseBlock);
@@ -261,11 +295,11 @@ Var buildVar(std::shared_ptr<Declarator> d, Var returnVal);
 Var buildParam(std::shared_ptr<ParameterDeclaration> param){
     auto base = buildFromDS(param->type);
     return buildVar(param->dec,base);
-    std::cout << "param built\n";
+    // std::cout << "param built\n";
 }
 // DONE!
 ParametersInfo buildParameters(std::shared_ptr<ParameterTypeList> params){
-    std::cout<<"Build params\n";
+    // std::cout<<"Build params\n";
     std::vector<std::shared_ptr<const CType>> vec;
     std::vector<std::string> names;
     for(const auto& a : params->params){
@@ -284,7 +318,7 @@ bool isEmpty(std::shared_ptr<DirectDeclarator2> d){
     return d->declarator==nullptr && d->list==nullptr;
 }
 Var buildVar(std::shared_ptr<DirectDeclarator> p, Var returnVal){
-    std::cout<<"Direct declarator\n";
+    //std::cout<<"Direct declarator\n";
     if(isEmpty(p->direct_declarator)){
         if(p->declarator!=nullptr){
             return buildVar(p->declarator,returnVal);
@@ -312,7 +346,7 @@ Var buildVar(std::shared_ptr<DirectDeclarator> p, Var returnVal){
 }
 // DONE!
 Var buildVar(std::shared_ptr<Pointer> p, Var returnVal){
-    std::cout<<"pointer\n";
+    //std::cout<<"pointer\n";
     if(p==nullptr)
     return returnVal;
     returnVal.type=returnVal.type->addStar();
@@ -336,7 +370,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
         &M
     );
     const std::vector<std::shared_ptr<const CType>> val =f.params->types;
-    currentFunc = std::make_shared<CFunctionType>(fu, val);
+    currentFunc = fu;
     scope.declareVar(
         f.name,
         CTypedValue(func, std::make_shared<CFunctionType>(fu, val))
@@ -354,8 +388,8 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
     FirstPhase=true;
     s.statement->accept(*this);
     FirstPhase=false;
-    std::cout << "after first run\n";
-    std::cout<<"Lets go statements!\n";
+    // std::cout << "after first run\n";
+    // std::cout<<"Lets go statements!\n";
     for(uint i=0; i<fu->paramTypes.size(); i++) {
         Argument* arg = func->arg_begin()+i;
         arg->setName(f.params->names[i]);
@@ -364,7 +398,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
         CTypedValue typedLvalue(lvalue, f.params->types[i]);
         scope.declareVar(f.params->names[i], typedLvalue); //Every time we use this we look at the map
     }
-    std::cout<<"Lets go statements!\n";
+    // std::cout<<"Lets go statements!\n";
     s.statement->accept(*this);
     if (builder.GetInsertBlock()->getTerminator() == nullptr) {
         Type *CurFuncReturnType = builder.getCurrentFunctionReturnType();
@@ -378,17 +412,22 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
     verifyFunction(*func);
 
 }
-
+// GLOBAL LINKEAGE
 void CodeGen::visit(const c4::model::declaration::Declaration& s){
     if(FirstPhase) return;
     Var a =  buildFromDS(s.ds);
     auto f = buildVar(s.declarator,a);
     if(f.type==nullptr) std::cout<< "dupa1\n";
+    if(scope.varAlreadyDeclared(f.name)){
+        std::string msg="Variable with name: " + f.name + " was already declared in this scope";
+        reportError(s.firstTerminal,msg);
+    }
+    else{
     scope.declareVar(
         f.name,
-        CTypedValue(nullptr,f.type)
+        CTypedValue(Alloca(f.type->getLLVMType(ctx)),f.type)
     );
-    AllocaInst *lvalue = Alloca(f.type->getLLVMType(ctx));
+    }
 }
 void CodeGen::visit(const c4::model::declaration::ParameterDeclaration& s){
     auto a =s; // WE DO NOTHING
@@ -405,14 +444,14 @@ void CodeGen::visit(const c4::model::declaration::Pointer& s){
     return; 
 }
 void CodeGen::visit(const c4::model::declaration::Root & s){
-    std::cout <<"Root\n";
+    // std::cout <<"Root\n";
     for(auto& a : s.definitions){
         a->accept(*this);
     }
     std::error_code EC;
     raw_fd_ostream stream("output.txt", EC, llvm::sys::fs::OpenFlags::OF_Text);
     verifyModule(this->M,&stream);
-    M.dump();
+    if(!isError()) M.dump();
 }
 void CodeGen::visit(const c4::model::declaration::StructDeclarationList & s){
     auto a =s; // WE DO NOTHING

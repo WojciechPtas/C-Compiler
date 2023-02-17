@@ -1,4 +1,13 @@
-int (f(char a)){
-int x;
-x=2;
+int main(char a,char b, int c){
+if(1){
+return 1;
+}
+else return 2;
+break;
+continue;
+goto aaa;
+char a;
+char a;
+return &a;
+return;
 }

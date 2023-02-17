@@ -38,6 +38,8 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 
+
+#include "../../util/token/PrintVisitor.h"
 // #include "llvm/IR/DataLayout.h" //to compute size of types?
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -169,10 +171,8 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     std::stack<llvm::BasicBlock*> headerBlocks;
     std::stack<llvm::BasicBlock*> afterBlocks;
     bool FirstPhase;
-    std::shared_ptr<c4::model::ctype::CFunctionType> currentFunc;
-    bool isError() {
-        return state != CodeGen::ErrorState::OK;
-    }
+    std::shared_ptr<const c4::model::ctype::CFunctionType> currentFunc;
+
 
     void setError(CodeGen::ErrorState state) {
         this->state = state;
@@ -196,8 +196,13 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     c4::model::ctype::CTypedValue loadFromLValue(const c4::model::expression::IExpression& expr);
     void convertToINT(c4::model::ctype::CTypedValue& integer); //Argument must be integer type
 
-
-
+    void reportError(std::shared_ptr<const c4::model::token::Token> token, std::string errorMessage){
+        c4::util::token::PrintVisitor v(std::cerr);
+        v.printPosition(*token);
+        std::cerr<<"error: " <<errorMessage<<"\n";
+        setError(CodeGen::ErrorState::ERROR);
+    }
+    
 
     //Visitor declarations
     virtual c4::model::ctype::CTypedValue visitLValue(const c4::model::expression::BinaryExpression &expr) override;
@@ -242,6 +247,8 @@ public:
     CodeGen(const std::string& filename) 
     : filename(filename), ctx(), M(filename, ctx), builder(ctx), allocaBuilder(ctx), state(ErrorState::OK), FirstPhase(false)
     {}
-
+    bool isError() {
+        return state != CodeGen::ErrorState::OK;
+    }
     int codeGenTest();
 };
