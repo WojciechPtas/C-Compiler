@@ -270,6 +270,7 @@ struct Var{
 
 Var buildFromDS(std::shared_ptr<DeclarationSpecifier> ds){
     Var a;
+    a.name="";
     switch(ds->keyword){
             case Keyword::Int:
             a.type= std::make_shared<const BaseCType>(TypeSpecifier::INT);
@@ -294,7 +295,7 @@ Var buildVar(std::shared_ptr<Declarator> d, Var returnVal);
 
 Var buildParam(std::shared_ptr<ParameterDeclaration> param){
     auto base = buildFromDS(param->type);
-    return buildVar(param->dec,base);
+    return param->dec == nullptr ? base :   buildVar(param->dec,base);
     // std::cout << "param built\n";
 }
 // DONE!
@@ -323,7 +324,7 @@ Var buildVar(std::shared_ptr<DirectDeclarator> p, Var returnVal){
         if(p->declarator!=nullptr){
             return buildVar(p->declarator,returnVal);
         }
-        else if(p->identifier!=""){
+        else {
             returnVal.name=p->identifier;
             return returnVal;
         }
@@ -338,7 +339,7 @@ Var buildVar(std::shared_ptr<DirectDeclarator> p, Var returnVal){
         if(p->declarator!=nullptr){
             return buildVar(p->declarator,returnVal);
         }
-        else if(p->identifier!=""){
+        else {
             returnVal.name=p->identifier;
             return returnVal;
         }
@@ -393,7 +394,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
     for(uint i=0; i<fu->paramTypes.size(); i++) {
         Argument* arg = func->arg_begin()+i;
         arg->setName(f.params->names[i]);
-        AllocaInst *lvalue = Alloca(arg->getType());
+        AllocaInst *lvalue = Alloca(arg->getType(), f.params->names[i]);
         builder.CreateStore(arg, lvalue);
         CTypedValue typedLvalue(lvalue, f.params->types[i]);
         scope.declareVar(f.params->names[i], typedLvalue); //Every time we use this we look at the map
@@ -412,21 +413,32 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
     verifyFunction(*func);
 
 }
-// GLOBAL LINKEAGE
 void CodeGen::visit(const c4::model::declaration::Declaration& s){
     if(FirstPhase) return;
-    Var a =  buildFromDS(s.ds);
-    auto f = buildVar(s.declarator,a);
+    Var f =  buildFromDS(s.ds);
+    if (s.declarator!=nullptr)
+    f = buildVar(s.declarator,f);
+    else{
+        reportError(s.firstTerminal,"Declaration with declarator is not allowed.");
+    }
     if(f.type==nullptr) std::cout<< "dupa1\n";
     if(scope.varAlreadyDeclared(f.name)){
-        std::string msg="Variable with name: " + f.name + " was already declared in this scope";
-        reportError(s.firstTerminal,msg);
-    }
+            std::string msg="Variable with name: " + f.name + " was already declared in this scope";
+            reportError(s.firstTerminal,msg);
+        }
     else{
-    scope.declareVar(
-        f.name,
-        CTypedValue(Alloca(f.type->getLLVMType(ctx)),f.type)
-    );
+        if(!scope.isGlobal()){
+            scope.declareVar(
+                    f.name,
+                    CTypedValue(Alloca(f.type->getLLVMType(ctx),f.name),f.type)
+                );
+        }
+        else{
+            scope.declareVar(
+                    f.name,
+                    CTypedValue(GlobalAlloca(f.type->getLLVMType(ctx),f.name),f.type)
+                );
+        }
     }
 }
 void CodeGen::visit(const c4::model::declaration::ParameterDeclaration& s){

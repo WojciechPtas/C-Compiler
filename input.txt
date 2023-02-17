@@ -1,13 +1,6 @@
-int main(char a,char b, int c){
-if(1){
-return 1;
-}
-else return 2;
-break;
-continue;
-goto aaa;
-char a;
-char a;
-return &a;
-return;
+int main(char *,char b, int c){
+int f;
+int as;
+as=2;
+f=241*4*2*4*5+12+233-11*as;
 }
