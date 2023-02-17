@@ -22,18 +22,13 @@ using c4::model::ConstantType;
 using namespace c4::model::expression;
 /*
 CTypedValues of type function can have either 0 or 1 indirections (functions or function designators)
-Functions can either be called(getLValue(), which works for both since they are the same: pointers to a code section) or evaluated(getRValue(), which should convert to function object and use getLvalue())
-Plain functions (not designators) are not assignable
-Pointer arithmetic on functions should work the same, and functions designators will be converted to functions
-I'd say: don't allow function pointer operations at all. If needed, a bitcast should do the job
+Functions can either be called(getRValue(), which works for both since they are the same: pointers to a code section) or evaluated(still getRValue(), which should convert to function object and use getLvalue())
+Plain functions (not designators) are not assignable: getLValue() returns the same as getRValue() for functionNonDesignators, but they can't be modified(a check is made for assignments)
+Pointer arithmetic on functions is not allowed, but function pointer comparisons work
 
 Dereferencing a function must yield its lvalue (as everything that asks for its rvalue should do) and its type must not be dereferenced
 */
 
-//TODO error handling
-//Need to check if it's a function, to treat it accordingly
-//For integers, rvalue loading should produce an int
-//For integers, be sure the value is truncated accordingly if necessary before storing
 
 // void CodeGen::dereferenceAndLoad(CTypedValue &ctv) {
 //     ctv.type = ctv.type->dereference();
@@ -42,7 +37,7 @@ Dereferencing a function must yield its lvalue (as everything that asks for its 
 //     ctv.value = builder.CreateLoad(ctv.getLLVMType(ctx), ctv.value);
 // }
 
-void CodeGen::convertToINT(CTypedValue& ctv) { //Argument must be integer type
+void CodeGen::convertToINT(CTypedValue& ctv) { //No checks performed. Argument must be integer type.
     ctv.type = BaseCType::get(TypeSpecifier::INT);
     ctv.value = builder.CreateSExtOrTrunc(
         ctv.value,
@@ -64,10 +59,11 @@ CTypedValue CodeGen::loadFromLValue(const IExpression& expr) {
     return rvalue;
 }
 
-Value* CodeGen::funcToPtr(Value* func) {
+Value* CodeGen::funcToPtr(Value* func) { //No checks performed. Must be function.
     return builder.CreateBitCast(func, PointerType::getUnqual(ctx));
 }
 
+//No checks performed.
 //Will use the GEP instruction with side effect to base, but its type is not changed
 void CodeGen::pointerAddInt(CTypedValue &base, const CTypedValue &index) {
     std::vector<Value*> indices;
@@ -79,7 +75,7 @@ void CodeGen::pointerAddInt(CTypedValue &base, const CTypedValue &index) {
     );
 }
 
-//Doesn't check if they both are integers, it is assumed it already has been done
+//No checks performed. Both are assumed to be of integer type.
 void CodeGen::unifyIntegerSize(CTypedValue &lhs, CTypedValue &rhs, BasicBlock* insertLeftHere, BasicBlock* insertRightHere) {
     BasicBlock* oldInsertPoint = builder.GetInsertBlock();
     Type* leftType = lhs.type->getLLVMType(ctx);
@@ -110,7 +106,7 @@ void CodeGen::unifyIntegerSize(CTypedValue &lhs, CTypedValue &rhs) {
     unifyIntegerSize(lhs, rhs, builder.GetInsertBlock(), builder.GetInsertBlock());
 }
 
-
+//No checks performed. Must be a ptr.
 Value* CodeGen::ptrToInt64(Value* value) {
     value = builder.CreatePtrToInt(
         value,
@@ -119,6 +115,7 @@ Value* CodeGen::ptrToInt64(Value* value) {
     return value;
 }
 
+//No checks performed. Must be an integer
 Value* CodeGen::intToBool(Value* value, bool negated) {
     uint bitwidth = value->getType()->getIntegerBitWidth();
     if(negated) {
@@ -130,8 +127,8 @@ Value* CodeGen::intToBool(Value* value, bool negated) {
     return value;
 }
 
-//Helper function to generate code that checks if an integer/pointer is equal to 0
-//Checks included
+//Generate code that checks if an integer/pointer is equal to 0. If errors are encountered, it's invalid.
+//Checks included :)
 void CodeGen::evaluateCondition(CTypedValue& ctv, bool negated=false) {
     if(ctv.isValid()) {
         if(ctv.type->isFunc()) {
@@ -150,7 +147,7 @@ void CodeGen::evaluateCondition(CTypedValue& ctv, bool negated=false) {
             }
         }
         else {
-            //Condition is not scalar!
+            //"Condition is not scalar!"
             ctv = CTypedValue::invalid();
         }
     }
