@@ -1,6 +1,28 @@
-int main(char *,char b, int c){
-int f;
-int as;
-as=2;
-f=241*4*2*4*5+12+233-11*as;
+
+
+
+int (main(void*))
+{
+	int a;
+	int b;
+	{
+		(a = 1);
+	}
+	(b = (a * 2));
+	if ((a < b)) {
+		while(1)// (((a < (sizeof b)) || (!(b == (f(23, (sizeof(int))))))))
+foo:
+			break;
+	} else if (0) {
+		//char (*c);
+		while (1) {
+			(c = "bla");
+			continue;
+		}
+	} else
+		goto end;
+bar:
+end:
+	return 0;
 }
+

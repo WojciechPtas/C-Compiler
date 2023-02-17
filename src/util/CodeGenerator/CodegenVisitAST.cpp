@@ -295,7 +295,16 @@ Var buildVar(std::shared_ptr<Declarator> d, Var returnVal);
 
 Var buildParam(std::shared_ptr<ParameterDeclaration> param){
     auto base = buildFromDS(param->type);
-    return param->dec == nullptr ? base :   buildVar(param->dec,base);
+    if (param->dec == nullptr ){
+        auto a = std::dynamic_pointer_cast<const BaseCType>(base.type);
+        if(!a){
+            
+        }
+    }
+    else{
+
+    }
+
     // std::cout << "param built\n";
 }
 // DONE!
@@ -305,6 +314,7 @@ ParametersInfo buildParameters(std::shared_ptr<ParameterTypeList> params){
     std::vector<std::string> names;
     for(const auto& a : params->params){
         auto variable = buildParam(a);
+        if(variable.type==nullptr) continue;
         vec.push_back(variable.type);
         names.push_back(variable.name);
     }
@@ -370,11 +380,10 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
         f.name,
         &M
     );
-    const std::vector<std::shared_ptr<const CType>> val =f.params->types;
     currentFunc = fu;
     scope.declareVar(
         f.name,
-        CTypedValue(func, std::make_shared<CFunctionType>(fu, val))
+        CTypedValue(func, fu)
     );
     scope.pushScope();
 
@@ -421,7 +430,24 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
     else{
         reportError(s.firstTerminal,"Declaration with declarator is not allowed.");
     }
+
     if(f.type==nullptr) std::cout<< "dupa1\n";
+
+    auto fu = std::dynamic_pointer_cast<const CFunctionType>(f.type);
+    if(fu!=nullptr){
+    Function* func = Function::Create(
+        fu->getLLVMFuncType(ctx), 
+        GlobalValue::ExternalLinkage,
+        f.name,
+        &M
+    );
+    currentFunc = fu;
+    scope.declareVar(
+        f.name,
+        CTypedValue(func, fu)
+    );
+    }
+    else{
     if(scope.varAlreadyDeclared(f.name)){
             std::string msg="Variable with name: " + f.name + " was already declared in this scope";
             reportError(s.firstTerminal,msg);
@@ -439,6 +465,7 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                     CTypedValue(GlobalAlloca(f.type->getLLVMType(ctx),f.name),f.type)
                 );
         }
+    }
     }
 }
 void CodeGen::visit(const c4::model::declaration::ParameterDeclaration& s){
