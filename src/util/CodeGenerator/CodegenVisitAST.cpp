@@ -634,3 +634,14 @@ void CodeGen::visit(const c4::model::declaration::TypeName &s)
     auto a =s; // WE DO NOTHING
 return;
 }
+
+
+std::shared_ptr<const c4::model::ctype::CType> CodeGen::getCtype(std::shared_ptr<c4::model::declaration::TypeName> &s)
+{
+    Var a;
+    a = buildDeclarationFromDS(s->ds);
+    if(s->declarator!=nullptr){
+        a = buildVar(s->declarator,a);
+    }
+    return a.type;
+}
