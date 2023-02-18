@@ -206,6 +206,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     std::stack<llvm::BasicBlock*> headerBlocks;
     std::stack<llvm::BasicBlock*> afterBlocks;
     bool FirstPhase;
+    bool SecondPhase;
     std::shared_ptr<const c4::model::ctype::CFunctionType> currentFunc;
 
 
@@ -288,7 +289,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
 
 public:
     CodeGen(const std::string& filename) 
-    : filename(filename), ctx(), M(filename, ctx), builder(ctx), allocaBuilder(ctx), state(ErrorState::OK), FirstPhase(false)
+    : filename(filename), ctx(), M(filename, ctx), builder(ctx), allocaBuilder(ctx), state(ErrorState::OK), FirstPhase(false), SecondPhase(false)
     {
         size_t extensionDotPos = this->filename.rfind('.');
         if(extensionDotPos == std::string::npos) { //Not found 

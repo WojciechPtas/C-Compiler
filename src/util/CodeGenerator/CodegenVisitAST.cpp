@@ -7,8 +7,14 @@ using namespace c4::model::ctype;
 using namespace llvm;
 // DONE
 void CodeGen::visit(const c4::model::statement::CompoundStatement& s){
+    if(SecondPhase) return;
+    SecondPhase= true;
     scope.pushScope();
     for(auto& a : s.block_of_statements){
+        a->accept(*this);
+    }
+    SecondPhase=false;
+     for(auto& a : s.block_of_statements){
         a->accept(*this);
     }
     scope.popScope();
@@ -16,13 +22,13 @@ void CodeGen::visit(const c4::model::statement::CompoundStatement& s){
 }
 // CODEGEN EXPR
 void CodeGen::visit(const c4::model::statement::ExpressionStatement& s){
-    if(FirstPhase) return;
+    if(FirstPhase||SecondPhase) return;
     if(s.expr==nullptr) return;
     s.expr->getRValue(*this);
 }
 // CODEGEN EXPR
 void CodeGen::visit(const c4::model::statement::IterationStatement& s){
-    if(FirstPhase){
+    if(FirstPhase||SecondPhase){
     if(s.statement!=nullptr){
         s.statement->accept(*this);
         }
@@ -74,7 +80,7 @@ void CodeGen::visit(const c4::model::statement::IterationStatement& s){
     }
 }
 void CodeGen::visit(const c4::model::statement::JumpStatement& s){
-    if(FirstPhase) return;
+    if(FirstPhase||SecondPhase) return;
     if(s.k==kind::_goto){
         if(gotoLabels.find(s.gotoIdentifier)!=gotoLabels.end()){
             builder.CreateBr(gotoLabels[s.gotoIdentifier]);
@@ -167,6 +173,11 @@ void CodeGen::visit(const c4::model::statement::JumpStatement& s){
     }
 }
 void CodeGen::visit(const c4::model::statement::LabeledStatement& s){
+    if(SecondPhase) {
+        s.statement->accept(*this);
+        return;
+    }
+
     if(FirstPhase){
         BasicBlock* jumpBlock = BasicBlock::Create(
             ctx,
@@ -190,7 +201,7 @@ void CodeGen::visit(const c4::model::statement::LabeledStatement& s){
     s.statement->accept(*this);
 }
 void CodeGen::visit(const c4::model::statement::SelectionStatement& s){
-    if(FirstPhase){
+    if(FirstPhase||SecondPhase){
         if(s.thenStatement!=nullptr) s.thenStatement->accept(*this);
         if(s.elseStatement!=nullptr) s.elseStatement->accept(*this);
     }
@@ -320,9 +331,16 @@ ParametersInfo buildStruct(std::shared_ptr<StructDeclarationList> s){
 }
 Var buildStruct(std::shared_ptr<StructUnionSpecifier> s){
     Var a;
-    a.structname=s->name;    
-    auto p = buildStruct(s->declarations);
-    a.type=std::make_shared<const CStructType>(p.names,p.types);
+    a.structname=s->name;
+    if(s->declarations!=nullptr){    
+        auto p = buildStruct(s->declarations);
+        a.type=std::make_shared<const CStructType>(p.names,p.types);
+    }
+    else{
+        std::vector<std::string> names;
+        std::vector<std::shared_ptr<const CType>> types;
+        a.type=std::make_shared<const CStructType>(names,types);
+    }
     return a;
 }
 Var buildDeclarationFromDS(std::shared_ptr<DeclarationSpecifier> ds){
@@ -532,14 +550,84 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
     if (s.declarator!=nullptr)
     f = buildVar(s.declarator,f);
     else{
+        if(!(f.type->isStruct()))
         reportError(s.firstTerminal,"Declaration with declarator is not allowed.");
     }
 
     if(f.type==nullptr) std::cout<< "dupa1\n";
     if(f.type->isStruct()){
-
+        auto fu = std::dynamic_pointer_cast<const CStructType>(f.type);
+        if(fu==nullptr) {
+            std::cout << "dupa\n"; 
+            return;
+        }
+        if(fu->fieldNames.empty() && SecondPhase){
+            scope.declareStruct(f.structname);
+            return;
+        }
+        else if(SecondPhase && !fu->fieldNames.empty()){
+            if(f.structname=="") return;
+            if(scope.structAlreadyDefined(f.structname)){
+                reportError(s.firstTerminal,"Redefinition of struct!");
+                return;
+            }
+            scope.defineStruct(f.structname, fu);
+            return;
+        }
+        else if(fu->fieldNames.empty() && !SecondPhase){
+            if(f.structname!=""){
+                if(scope.isStructDefined(f.structname)){
+                    auto a = scope[f.structname];
+                    if(scope.isGlobal()){
+                        scope.declareVar(f.name, CTypedValue(GlobalAlloca(fu,f.name),fu));
+                    }
+                    else{
+                        scope.declareVar(f.name, CTypedValue(Alloca(fu,f.name),fu));
+                    }
+                }
+                else{
+                    if(fu->indirections==0){
+                    reportError(s.firstTerminal, "Missing definition for struct.");
+                    return;
+                    }
+                    scope.declareStruct(f.name);
+                    if(scope.isGlobal()){
+                        scope.declareVar(f.name, CTypedValue(GlobalAlloca(fu,f.name),fu));
+                    }
+                    else{
+                        scope.declareVar(f.name, CTypedValue(Alloca(fu,f.name),fu));
+                    }
+                }
+            }
+        }        
+        else{
+            if(f.structname!=""){
+                if(scope.isStructDefined(f.structname)){
+                    if(scope.isGlobal()){
+                        scope.declareVar(f.name, CTypedValue(GlobalAlloca(fu,f.name),fu));
+                    }
+                    else{
+                        scope.declareVar(f.name, CTypedValue(Alloca(fu,f.name),fu));
+                    }
+                }
+                else{
+                    // cannot happen
+                    return;
+                }
+            }
+            else{
+                // Anonymous struct
+                if(scope.isGlobal()){
+                        scope.declareVar(f.name, CTypedValue(GlobalAlloca(fu,f.name),fu));
+                    }
+                    else{
+                        scope.declareVar(f.name, CTypedValue(Alloca(fu,f.name),fu));
+                    }
+            }
+        }
     }
     else if(f.type->isFuncNonDesignator()){
+        if(SecondPhase) return;
         auto fu = std::dynamic_pointer_cast<const CFunctionType>(f.type);
         for(uint i=0;i<f.params->types.size();i++){
             if(f.params->types[i]->isVoid()){
@@ -552,8 +640,8 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                     reportError(s.firstTerminal,"Invalid parameter declaration");
                     return;
                 }
+            }
         }
-    }
         if(scope.isVarDeclared(f.name)){
             CTypedValue fun = scope[f.name];
             if(!fun.type->equivalent(&(*fu))){ // ???
@@ -578,6 +666,7 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
         } 
     }
     else{
+        if(SecondPhase) return;
         if(scope.varAlreadyDeclared(f.name)){
                 std::string msg="Variable with name: " + f.name + " was already declared in this scope";
                 reportError(s.firstTerminal,msg);
@@ -601,12 +690,10 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
 void CodeGen::visit(const c4::model::declaration::ParameterDeclaration& s){
     auto a =s; // WE DO NOTHING
     return; 
-
 }
 void CodeGen::visit(const c4::model::declaration::ParameterTypeList& s){
     auto a =s; // WE DO NOTHING
     return; 
-
 }
 void CodeGen::visit(const c4::model::declaration::Pointer& s){
     auto a =s; // WE DO NOTHING
@@ -625,14 +712,10 @@ void CodeGen::visit(const c4::model::declaration::StructDeclarationList & s){
 void CodeGen::visit(const c4::model::declaration::StructUnionSpecifier & s){
     auto a =s; // WE DO NOTHING
     return;
-
-
 }
-
-void CodeGen::visit(const c4::model::declaration::TypeName &s)
-{
+void CodeGen::visit(const c4::model::declaration::TypeName &s){
     auto a =s; // WE DO NOTHING
-return;
+    return;
 }
 
 
