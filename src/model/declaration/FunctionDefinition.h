@@ -17,8 +17,7 @@ namespace c4 {
                 FunctionDefinition(
                     std::shared_ptr<DeclarationSpecifier> ds,
                     std::shared_ptr<Declarator> dec,
-                    std::shared_ptr<statement::CompoundStatement> statement,
-                    std::shared_ptr<token::Token> token=nullptr 
+                    std::shared_ptr<statement::CompoundStatement> statement
                     ): IDeclaration(ds->firstTerminal),ds(ds), declarator(dec), statement(statement) {};
                 void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);

@@ -264,10 +264,15 @@ void CodeGen::visit(const c4::model::declaration::DirectDeclarator2& s){
 
 struct Var{
     std::string name;
+    std::string structname="";
     std::shared_ptr<const CType> type;
     std::shared_ptr<ParametersInfo> params;
 };
-
+Var buildParam(std::shared_ptr<ParameterDeclaration> param);
+ParametersInfo buildParameters(std::shared_ptr<ParameterTypeList> params);
+Var buildVar(std::shared_ptr<DirectDeclarator> p, Var returnVal);
+Var buildVar(std::shared_ptr<Pointer> p, Var returnVal);
+Var buildVar(std::shared_ptr<Declarator> d, Var returnVal);
 Var buildFromDS(std::shared_ptr<DeclarationSpecifier> ds){
     Var a;
     a.name="";
@@ -287,11 +292,55 @@ Var buildFromDS(std::shared_ptr<DeclarationSpecifier> ds){
     }
     return a;
 }
-Var buildParam(std::shared_ptr<ParameterDeclaration> param);
-ParametersInfo buildParameters(std::shared_ptr<ParameterTypeList> params);
-Var buildVar(std::shared_ptr<DirectDeclarator> p, Var returnVal);
-Var buildVar(std::shared_ptr<Pointer> p, Var returnVal);
-Var buildVar(std::shared_ptr<Declarator> d, Var returnVal);
+Var buildfromDeclaration(std::shared_ptr<Declaration> d){
+    Var a = buildFromDS(d->ds);
+    a = buildVar(d->declarator,a);
+    return a;
+}
+ParametersInfo buildStruct(std::shared_ptr<StructDeclarationList> s){
+    Var field;
+    std::vector<std::string> names;
+    std::vector<std::shared_ptr<const CType>> fields;
+    for(auto& a : s->declarations){
+        field = buildfromDeclaration(a);
+        names.push_back(field.name);
+        fields.push_back(field.type);
+    }
+    ParametersInfo p;
+    p.names=names;
+    p.types=fields;
+    return p;
+}
+Var buildStruct(std::shared_ptr<StructUnionSpecifier> s){
+    Var a;
+    a.structname=s->name;    
+    auto p = buildStruct(s->declarations);
+    a.type=std::make_shared<const CStructType>(p.names,p.types);
+    return a;
+}
+Var buildDeclarationFromDS(std::shared_ptr<DeclarationSpecifier> ds){
+    Var a;
+    a.name="";
+    switch(ds->keyword){
+            case Keyword::Int:
+            a.type= std::make_shared<const BaseCType>(TypeSpecifier::INT);
+            break;
+            case Keyword::Char:
+            a.type= std::make_shared<const BaseCType>(TypeSpecifier::CHAR);
+            break;
+            case Keyword::Void:
+            a.type= std::make_shared<const BaseCType>(TypeSpecifier::VOID);
+            break;
+            case Keyword::Struct:
+            a=buildStruct(ds->structorunion);
+            break;
+            default:
+            a.type= nullptr;
+            break;
+    }
+    return a;
+}
+
 
 Var buildParam(std::shared_ptr<ParameterDeclaration> param){
     auto base = buildFromDS(param->type);
@@ -382,32 +431,49 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
             }
         }
     }
-    Function* func = Function::Create(
-        fu->getLLVMFuncType(ctx), 
-        GlobalValue::ExternalLinkage,
-        f.name,
-        &M
-    );
+    // Function* func = Function::Create(
+    //     fu->getLLVMFuncType(ctx), 
+    //     GlobalValue::ExternalLinkage,
+    //     f.name,
+    //     &M
+    // );
     const std::vector<std::shared_ptr<const CType>> val =f.params->types;
     currentFunc = fu;
-    if(scope.varAlreadyDeclared(f.name)){
+    Function* func=nullptr;
+    std::cout<<"here: " + f.name;
+    if(scope.isVarDeclared(f.name)){
         CTypedValue fun = scope[f.name];
-        std::cout<<"before\n";
         if(!fun.type->equivalent(&(*fu))){ // ???
-            std::cout<<"after\n";
             reportError(s.firstTerminal,"Redefinition of incompatible type!");
             return;
         }
         else{
+            if(fun.type->isFuncNonDesignator()){
             Value* a = fun.value;
+            std::cout<<"before\n";
+            Function* val_func = static_cast<llvm::Function*>(a);
             std::cout<<"after\n";
-            /*auto val_func = dynamic_cast<llvm::Function*>(a);
-            if(val_func==nullptr){
-
-            }*/
+            if(val_func!=nullptr){
+                if(val_func->isDeclaration()){
+                    func = val_func;
+                }
+                else{
+                    reportError(s.firstTerminal,"Redefinition of a function!");
+                }
+            }
+            else{
+                // hopefully we never get there
+            }
+            }
         }
 
-    }else{
+    } else{
+        func = Function::Create(
+        fu->getLLVMFuncType(ctx), 
+        GlobalValue::ExternalLinkage,
+        f.name,
+        &M
+        );
         scope.declareVar(
             f.name,
             CTypedValue(func, fu)
@@ -456,7 +522,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
 }
 void CodeGen::visit(const c4::model::declaration::Declaration& s){
     if(FirstPhase) return;
-    Var f =  buildFromDS(s.ds);
+    Var f =  buildDeclarationFromDS(s.ds);
     if (s.declarator!=nullptr)
     f = buildVar(s.declarator,f);
     else{
@@ -464,39 +530,65 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
     }
 
     if(f.type==nullptr) std::cout<< "dupa1\n";
+    if(f.type->isStruct()){
 
-    auto fu = std::dynamic_pointer_cast<const CFunctionType>(f.type);
-    if(fu!=nullptr){
-        Function* func = Function::Create(
-            fu->getLLVMFuncType(ctx), 
-            GlobalValue::ExternalLinkage,
-            f.name,
-            &M
-        );
-        const std::vector<std::shared_ptr<const CType>> val =f.params->types;
-        currentFunc = fu;
-        scope.declareVar(
-            f.name,
-            CTypedValue(func, fu)
-        );
-    return;
     }
-    if(scope.varAlreadyDeclared(f.name)){
-            std::string msg="Variable with name: " + f.name + " was already declared in this scope";
-            reportError(s.firstTerminal,msg);
+    else if(f.type->isFuncNonDesignator()){
+        auto fu = std::dynamic_pointer_cast<const CFunctionType>(f.type);
+        for(int i=0;i<f.params->types.size();i++){
+            if(f.params->types[i]->isVoid()){
+                if(f.params->types.size()==1){
+                    f.params->types.clear();
+                    f.params->names.clear();
+                    fu=std::make_shared<const CFunctionType>(fu->retType,f.params->types);
+                }
+                else{
+                    reportError(s.firstTerminal,"Invalid parameter declaration");
+                    return;
+                }
         }
+    }
+        if(scope.isVarDeclared(f.name)){
+            CTypedValue fun = scope[f.name];
+            if(!fun.type->equivalent(&(*fu))){ // ???
+                reportError(s.firstTerminal,"Redeclaration of incompatible type!");
+            }
+            else{
+                // Function was already declared, dont have to do anything;
+            }
+        }else{
+            Function* func = Function::Create(
+                fu->getLLVMFuncType(ctx), 
+                GlobalValue::ExternalLinkage,
+                f.name,
+                &M
+                );
+            const std::vector<std::shared_ptr<const CType>> val =f.params->types;
+            currentFunc = fu;
+            scope.declareVar(
+                f.name,
+                CTypedValue(func, fu)
+                );
+        } 
+    }
     else{
-        if(!scope.isGlobal()){
-            scope.declareVar(
-                    f.name,
-                    CTypedValue(Alloca(f.type->getLLVMType(ctx),f.name),f.type)
-                );
-        }
+        if(scope.varAlreadyDeclared(f.name)){
+                std::string msg="Variable with name: " + f.name + " was already declared in this scope";
+                reportError(s.firstTerminal,msg);
+            }
         else{
-            scope.declareVar(
-                    f.name,
-                    CTypedValue(GlobalAlloca(f.type->getLLVMType(ctx),f.name),f.type)
-                );
+            if(!scope.isGlobal()){
+                scope.declareVar(
+                        f.name,
+                        CTypedValue(Alloca(f.type->getLLVMType(ctx),f.name),f.type)
+                    );
+            }
+            else{
+                scope.declareVar(
+                        f.name,
+                        CTypedValue(GlobalAlloca(f.type->getLLVMType(ctx),f.name),f.type)
+                    );
+            }
         }
     }
 }
@@ -530,5 +622,13 @@ void CodeGen::visit(const c4::model::declaration::StructDeclarationList & s){
 }
 void CodeGen::visit(const c4::model::declaration::StructUnionSpecifier & s){
     auto a =s; // WE DO NOTHING
-    return; 
-} 
+    return;
+
+
+}
+
+void CodeGen::visit(const c4::model::declaration::TypeName &s)
+{
+    auto a =s; // WE DO NOTHING
+return;
+}

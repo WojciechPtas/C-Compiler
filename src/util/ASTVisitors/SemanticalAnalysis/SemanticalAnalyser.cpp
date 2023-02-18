@@ -234,3 +234,9 @@ void c4::util::sema::SemanticalAnalyser::visit(const model::declaration::StructU
     auto a= s;
 
 }
+
+void c4::util::sema::SemanticalAnalyser::visit(const model::declaration::TypeName &s)
+{
+    auto a =s;
+    return;
+}

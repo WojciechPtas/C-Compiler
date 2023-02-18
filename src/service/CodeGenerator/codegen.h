@@ -29,6 +29,7 @@
 #include "../../model/declaration/StructDeclarationList.h"
 #include "../../model/declaration/StructUnionSpecifier.h"
 #include "../../model/declaration/ParameterDeclaration.h"
+#include "../../model/declaration/TypeName.h"
 
 #include <unordered_map>
 #include <iostream>
@@ -283,6 +284,8 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     void visit(const c4::model::declaration::Root & s)override;
     void visit(const c4::model::declaration::StructDeclarationList & s)override;
     void visit(const c4::model::declaration::StructUnionSpecifier & s)override; 
+    void visit(const c4::model::declaration::TypeName & s) override;
+
 public:
     CodeGen(const std::string& filename) 
     : filename(filename), ctx(), M(filename, ctx), builder(ctx), allocaBuilder(ctx), state(ErrorState::OK), FirstPhase(false)
