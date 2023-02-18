@@ -1,4 +1,5 @@
 #include "PrintVisitor.h"
+#include "../ASTVisitors/PrettyPrintingVisitor/PrettyPrintingVisitor.h"
 
 using namespace c4::model;
 using namespace c4::model::expression;
@@ -174,17 +175,12 @@ void PrintVisitor::visit(const SizeOfType &expr) {
     this->outputStream << " --- ";
     #endif
 
-    this->outputStream << token::stringify(expr.type);
+    // pretty::PrettyPrintinVisitor ppv(this->outputStream);
+    // expr.type->accept(ppv);
 
     
 
-    this->outputStream << "))";
-}
-
-void PrintVisitor::visit(const TypeInSizeof &expr) {
-    (void) expr;
-
-    this->outputStream << "(should never print)";
+    this->outputStream << "??))";
 }
 
 void PrintVisitor::visit(const UnaryExpression &expr) {

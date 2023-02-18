@@ -141,17 +141,6 @@ namespace c4 {
                             this->state.gotoAfterUnary.find(sizeOf)->second;
                     }
 
-                    void visit(
-                        const expression::TypeInSizeof &expr
-                    ) override {
-                        (void) expr;
-
-                        this->checkAndSetExecuted();
-
-                        this->determinedState = 
-                            this->state.gotoAfterType;
-                    }
-
                 private:
                     const State &state;
                     std::weak_ptr<const State> determinedState;

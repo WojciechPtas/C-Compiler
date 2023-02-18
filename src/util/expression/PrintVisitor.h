@@ -18,7 +18,6 @@
 #include "UnaryExpressionUtilities.h"
 #include "../token/KeywordUtilities.h"
 #include "../../model/expression/CallExpression.h"
-#include "../../model/expression/TypeInSizeof.h"
 
 //perhaps useless now
 #include "../token/PrintVisitor.h"
@@ -66,10 +65,6 @@ namespace c4 {
 
                 void visit(
                     const model::expression::SizeOfType &expr
-                ) override;
-
-                void visit(
-                    const model::expression::TypeInSizeof &expr
                 ) override;
 
                 void visit(

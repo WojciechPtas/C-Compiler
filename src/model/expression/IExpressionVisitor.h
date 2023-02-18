@@ -27,7 +27,6 @@ namespace c4 {
                 virtual void visit(const IdentifierExpression &expr) = 0;
                 virtual void visit(const IndexExpression &expr) = 0;
                 virtual void visit(const MemberExpression &expr) = 0;
-                virtual void visit(const TypeInSizeof &expr) = 0;
                 virtual void visit(const SizeOfType &expr) = 0;
                 virtual void visit(const UnaryExpression &expr) = 0;
             };

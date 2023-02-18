@@ -3,21 +3,18 @@
 #include <memory>
 
 #include "IExpression.h"
-#include "../token/Keyword.h"
-
+#include "../declaration/TypeName.h"
 namespace c4 {
     namespace model {
         namespace expression {
             class SizeOfType : public IExpression {
             public:
-                const token::Keyword type;
+                std::shared_ptr<const model::declaration::TypeName> type;
 
                 SizeOfType(
-                    const token::Keyword type,
-                    const std::shared_ptr<const model::token::Token>& firstTerminal
-                ) : IExpression(firstTerminal), type(type) {
-                    //must make sure it is a type!
-                }
+                    const std::shared_ptr<const model::declaration::TypeName> &type,
+                    const std::shared_ptr<const model::token::Token> &firstTerminal
+                ) : IExpression(firstTerminal), type(type) {}
 
                 ~SizeOfType() { }
 

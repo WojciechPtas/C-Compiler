@@ -99,9 +99,6 @@ bool parse(const std::string& input) {
 
     auto mosaic = make_shared<MosaicInputStream<shared_ptr<Token>>>(lexer,1024);
     //cout << "mosaic\n";
-    auto st = make_shared<DelimiterStream>(mosaic, TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
-    auto a=make_shared<State>(INITIAL_STATE);
-    auto lrparser = make_shared<ExpressionParser>(a);
     LLParser parser(mosaic);
     //cout << "parser\n";
 
@@ -119,9 +116,6 @@ bool print_ast(const std::string& input) {
 
     auto mosaic = make_shared<MosaicInputStream<shared_ptr<Token>>>(lexer,1024);
     //cout << "mosaic\n";
-    auto st = make_shared<DelimiterStream>(mosaic, TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
-    auto a=make_shared<State>(INITIAL_STATE);
-    auto lrparser = make_shared<ExpressionParser>(a);
     LLParser parser(mosaic);
     //cout << "parser\n";
 
@@ -141,8 +135,9 @@ bool compile(std::string& input){
     //cout << "mosaic\n";
     auto st = make_shared<DelimiterStream>(mosaic, TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
     auto a=make_shared<State>(INITIAL_STATE);
-    auto lrparser = make_shared<ExpressionParser>(a);
     LLParser parser(mosaic);
+    auto lrparser = make_shared<ExpressionParser>(a, &parser);
+
     //cout << "parser\n";
 
     //auto re =parser.parse();
@@ -156,9 +151,13 @@ bool compile(std::string& input){
 bool LRparse(const std::string& input) {
     auto lexer = initializeLexer(input);
     auto a=make_shared<State>(INITIAL_STATE);
-    auto lrparser = make_shared<ExpressionParser>(a);
+
+    auto mosaic = make_shared<MosaicInputStream<shared_ptr<Token>>>(lexer,1024);
+    LLParser parser(mosaic);
     
-    auto expr = lrparser->parse(*lexer);
+    auto lrparser = make_shared<ExpressionParser>(a, &parser);
+    
+    auto expr = lrparser->parse(*mosaic);
     
     if(expr == nullptr) {
         c4::util::token::PrintVisitor pt(std::cerr);

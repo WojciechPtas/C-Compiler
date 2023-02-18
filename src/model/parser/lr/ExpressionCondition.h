@@ -19,8 +19,7 @@ namespace c4 {
                     Index         = 0x20,
                     Member        = 0x40,
                     Unary         = 0x80,
-                    CallArguments = 0x100,
-                    TypeInSizeof = 0x200
+                    CallArguments = 0x100
                 };
 
                 struct ExpressionCondition {

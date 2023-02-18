@@ -103,7 +103,6 @@ namespace c4 {
                     std::weak_ptr<const State> gotoAfterConstant;
                     std::weak_ptr<const State> gotoAfterIdentifier;
                     std::weak_ptr<const State> gotoAfterIndex;
-                    std::weak_ptr<const State> gotoAfterType;
                     std::unordered_map<expression::BinaryExpressionType, std::weak_ptr<const State>> gotoAfterBinary;
                     std::unordered_map<expression::MemberExpressionType, std::weak_ptr<const State>> gotoAfterMember;
                     std::unordered_map<expression::UnaryExpressionType, std::weak_ptr<const State>> gotoAfterUnary;

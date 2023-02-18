@@ -8,7 +8,6 @@
 #include "../../../model/expression/MemberExpression.h"
 #include "../../../model/expression/UnaryExpression.h"
 #include "../../../model/expression/CallExpression.h"
-#include "../../../model/expression/TypeInSizeof.h"
 #include "../../../model/expression/SizeOfType.h"
 
 
@@ -77,10 +76,6 @@ MAKE_STATE(_unaryLogicNegationReductionOrPostfix);
 MAKE_STATE(_unaryLogicNegationState);
 MAKE_STATE(_unarySizeOfReductionOrPostfix);
 MAKE_STATE(_unarySizeOfState);
-MAKE_STATE(_parenthesesExpressionOrType);
-MAKE_STATE(_typeInSizeofReduction);
-MAKE_STATE(_sizeOfType);
-MAKE_STATE(_sizeOfTypeReduction);
 
 //CallExpression states
 MAKE_STATE(_callLeftParenthesis);
@@ -110,7 +105,6 @@ static shared_ptr<const IExpression> _reduceConditional(
 
 static unique_ptr<const IExpression> _reduceConstant(const Token &token);
 static unique_ptr<const IExpression> _reduceIdentifier(const Token &token);
-static unique_ptr<const IExpression> _reduceType(const Token &token);
 static shared_ptr<const IExpression> _reduceIndex(
     vector<shared_ptr<const IExpression>> consumed,
     std::vector<std::shared_ptr<const Token>>& tokens
@@ -130,11 +124,6 @@ static shared_ptr<const IExpression> _reduceParentheses(
 static shared_ptr<const IExpression> _reduceUnary(
     vector<shared_ptr<const IExpression>> consumed,
     UnaryExpressionType type,
-    std::vector<std::shared_ptr<const Token>>& tokens
-);
-
-static shared_ptr<const IExpression> _reduceSizeofType(
-    vector<shared_ptr<const IExpression>> consumed,
     std::vector<std::shared_ptr<const Token>>& tokens
 );
 
@@ -614,67 +603,9 @@ static shared_ptr<const State> _initialize() {
 
     // State: _unarySizeOfState
 
-    _addUnaryShiftsNoParenthesis(*_unarySizeOfState);
-    _unarySizeOfState->addShift(
-        PUNCTUATOR_TOKEN(Punctuator::LeftParenthesis),
-        _parenthesesExpressionOrType
-    );
+    _addUnaryShifts(*_unarySizeOfState);
+
     _unarySizeOfState->addJump(ANY_EXPRESSION, _unarySizeOfReductionOrPostfix);
-
-    //State: _parenthesesExpressionOrType
-
-    //Just like leftParenthesisState
-    _addUnaryShifts(*_parenthesesExpressionOrType);
-    _parenthesesExpressionOrType->addJump(
-        ANY_EXPRESSION,
-        _operatorOrRightParenthesisState
-    );
-
-    //Possibility of reading a type
-    
-    _parenthesesExpressionOrType->addShift(
-        KEYWORD_TOKEN(
-            Keyword::Char |
-            Keyword::Double |
-            Keyword::Float | 
-            Keyword::Int |
-            Keyword::Long |
-            Keyword::Short |
-            Keyword::Void |
-            Keyword::__Bool
-        ),
-        _typeInSizeofReduction,
-        _reduceType
-    );
-
-    _parenthesesExpressionOrType->addJump(
-        TYPE_IN_SIZEOF,
-        _sizeOfType
-    );
-    
-
-    //State: _typeInSizeofReduction
-    //This trick allows us to portray any kind of Keyword word
-
-    _typeInSizeofReduction->addReduction(
-        ANY_TOKEN,
-        1
-    );
-
-    //State: _sizeOfType
-
-    _sizeOfType->addShift(
-        PUNCTUATOR_TOKEN(Punctuator::RightParenthesis),
-        _sizeOfTypeReduction
-    );
-
-    //State: _sizeOfTypeReduction
-
-    _sizeOfTypeReduction->addReduction(
-        ANY_TOKEN,
-        4, 1,
-        _reduceSizeofType
-    );
 
 
 //CALLEXPRESSION
@@ -835,13 +766,6 @@ static unique_ptr<const IExpression> _reduceIdentifier(const Token &token) {
     );
 }
 
-static unique_ptr<const IExpression> _reduceType(const Token &token) {
-    // Invariant:   The token argument (aka lookahead) is a KeywordToken.
-
-    auto typeToken = dynamic_cast<const KeywordToken&>(token);
-    return make_unique<TypeInSizeof>(typeToken.keyword);
-}
-
 static shared_ptr<const IExpression> _reduceIndex(
     vector<shared_ptr<const IExpression>> consumed,
     std::vector<std::shared_ptr<const Token>>& tokens
@@ -896,15 +820,6 @@ static shared_ptr<const IExpression> _reduceUnary(
     // Invariant:   consumed constains exactly one expression.
 
     return make_unique<UnaryExpression>(type, consumed[0], tokens.front());
-}
-
-static shared_ptr<const IExpression> _reduceSizeofType(
-    vector<shared_ptr<const IExpression>> consumed,
-    std::vector<std::shared_ptr<const Token>>& tokens
-) {
-    // Invariant:   consumed constains exactly one TypeInSizeof
-    auto typeInSizeof = dynamic_pointer_cast<const TypeInSizeof, const IExpression>(consumed[0]);
-    return make_unique<SizeOfType>(typeInSizeof->type, tokens.front());
 }
 
 //Invariant: consumed.size() == 1

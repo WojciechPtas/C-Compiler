@@ -5,16 +5,15 @@
 #include "IExpressionVisitor.h"
 #include "IExpressionCodeGenVisitor.h"
 #include "../token/Token.h"
+#include "../ASTNode.h"
 
 namespace c4 {
     namespace model {
         namespace expression {
-            class IExpression {
+            class IExpression : public model::IASTNode {
             public:
-                std::shared_ptr<const model::token::Token> firstTerminal = nullptr;
-
                 IExpression(const std::shared_ptr<const model::token::Token> firstTerminal)
-                : firstTerminal(firstTerminal) {}
+                : model::IASTNode(firstTerminal) {}
 
                 virtual ~IExpression() { }
                 virtual void accept(IExpressionVisitor &visitor) const = 0;
@@ -25,6 +24,11 @@ namespace c4 {
                 virtual bool isTerminal() const {
                     return false;
                 }
+
+                virtual void accept(util::IASTVisitor& visitor) const override {
+                    throw std::logic_error("Use IExprVisitor for visitors instead");
+                }
+
             };
         }
     }

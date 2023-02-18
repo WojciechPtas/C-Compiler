@@ -32,13 +32,6 @@ namespace c4 {
                     model::expression::MemberExpressionType(0),
                     model::expression::UnaryExpressionType(0)
                 };
-
-                const model::parser::lr::ExpressionCondition TYPE_IN_SIZEOF = {
-                    model::parser::lr::ExpressionType::TypeInSizeof,
-                    model::expression::BinaryExpressionType(0),
-                    model::expression::MemberExpressionType(0),
-                    model::expression::UnaryExpressionType(0)
-                };
             }
         }
     }

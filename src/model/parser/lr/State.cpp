@@ -136,14 +136,6 @@ void State::addJump(
             this->gotoAfterUnary[op] = nextState;
         }
     }
-
-    if ((typeMask & ExpressionType::TypeInSizeof) == ExpressionType::TypeInSizeof) {
-        if (!this->gotoAfterType.expired()) {
-            throw logic_error("Goto installed already");
-        }
-        
-        this->gotoAfterType = nextState;
-    }
 }
 
 void State::addReduction(
