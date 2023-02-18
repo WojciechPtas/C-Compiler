@@ -440,7 +440,6 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
     const std::vector<std::shared_ptr<const CType>> val =f.params->types;
     currentFunc = fu;
     Function* func=nullptr;
-    std::cout<<"here: " + f.name;
     if(scope.isVarDeclared(f.name)){
         CTypedValue fun = scope[f.name];
         if(!fun.type->equivalent(&(*fu))){ // ???
