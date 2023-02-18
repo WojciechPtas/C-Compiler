@@ -47,9 +47,40 @@ std::string scalarConditionErrorMsg(const std::string& variable, const std::stri
     return str;
 }
 
+std::string illegalOperatorUseErrorMsg(const std::string& op, const std::string& type1, const std::string& type2) {
+    std::string str = "Illegal use of ";
+    str.append(op)
+        .append(" on ")
+        .append(type1)
+        .append(" and ")
+        .append(type2);
+    return str;
+}
+
+std::string illegalOperatorUseErrorMsg(const std::string& op, const std::string& type) {
+    std::string str = "Illegal use of ";
+    str.append(op)
+        .append(" on ")
+        .append(type);
+    return str;
+}
+
+std::string illegalOperatorUseErrorMsg(const std::string& op) {
+    std::string str = "Illegal use of ";
+    str.append(op)
+        .append(" here");
+    return str;
+}
+
 std::string noLValueErrorMsg(const std::string& expression) {
     std::string str = expression;
     str.append(" has no lvalue");
+    return str;
+}
+
+std::string incompatibleOperandsErrorMsg(const std::string& expression) {
+    std::string str = "Incompatible operands in ";
+    str.append(expression);
     return str;
 }
 
@@ -185,7 +216,12 @@ CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
         }
 
         if(!lhs.type->compatible(rhs.type.get())) {
-            reportError(expr.firstTerminal, "Assignment of incompatible types");
+            reportError(
+                expr.firstTerminal, 
+                incompatibleOperandsErrorMsg(
+                    c4::util::expression::stringifyExplicit(expr.type)
+                )
+            );
             return CTypedValue::invalid();
         }
 
@@ -344,6 +380,10 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             //Continue with logicalAnd
         case BinaryExpressionType::LogicalAnd: {
             CTypedValue lhs = expr.left->getRValue(*this);
+            if(!lhs.isValid()) {
+                return CTypedValue::invalid();
+            }
+
             evaluateCondition(lhs);
             if(!lhs.isValid()) { 
                 reportError(expr.firstTerminal, 
@@ -354,8 +394,8 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
                 );
                 return CTypedValue::invalid();
             }
-            Value* leftCond = lhs.value;
 
+            Value* leftCond = lhs.value;
             BasicBlock* leftEvalBlock = builder.GetInsertBlock();
             Function* currentFunction = leftEvalBlock->getParent();
 
@@ -380,7 +420,12 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
 
             //Now we insert code that evaluates rhs only if lhs was true
             builder.SetInsertPoint(lazyEvalBlock);
+            
             CTypedValue rhs = expr.right->getRValue(*this);
+            if(!rhs.isValid()) {
+                return CTypedValue::invalid();
+            }
+
             evaluateCondition(rhs);
             if(!rhs.isValid()) {
                 reportError(expr.firstTerminal, 
@@ -391,6 +436,7 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
                 );
                 return CTypedValue::invalid();
             }
+
             Value* rightCond = rhs.value;
             Value* result = (expr.type == BinaryExpressionType::LogicalAnd) ?
                 builder.CreateAnd(leftCond, rightCond) :
@@ -422,7 +468,12 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             }
 
             if(!lhs.compatible(rhs)) {
-                //Comparison of incompatible type
+                reportError(
+                    expr.firstTerminal, 
+                    incompatibleOperandsErrorMsg(
+                        c4::util::expression::stringifyExplicit(expr.type)
+                    )
+                );
                 return CTypedValue::invalid();
             }
 
@@ -439,12 +490,14 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             }
 
             else if(!lhs.type->isInteger()) {
-                //Comparison cannot be done with values of this type
+                reportError(expr.firstTerminal, "Comparisons are not defined over values of this type");
                 return CTypedValue::invalid();
             }
             
             unifyIntegerSize(lhs, rhs);
-            CTypedValue result(nullptr, std::make_shared<BaseCType>(TypeSpecifier::BOOL));
+            CTypedValue result;
+            result.type = BaseCType::get(TypeSpecifier::BOOL);
+
             switch(expr.type) {
                 case BinaryExpressionType::Equal: {
                     result.value = builder.CreateICmpEQ(
@@ -484,10 +537,9 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             }
 
             if(lhs.type->isFunc() || rhs.type->isFunc()) {
-                //Function pointer arithmetic
+                reportError(expr.firstTerminal, "Arithmetic over incomplete objects (e.g. functions) is not allowed");
                 return CTypedValue::invalid();
             }
-
 
             if(lhs.type->isInteger() && rhs.type->isInteger()) {
                 CTypedValue result;
@@ -514,7 +566,14 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             }
             else if(lhs.type->isPointer() && rhs.type->isInteger()) {
                 if(expr.type == BinaryExpressionType::Multiplication) {
-                    //Multiplication of pointer with an integer
+                    reportError(
+                        expr.firstTerminal, 
+                        illegalOperatorUseErrorMsg(
+                            c4::util::expression::stringifyExplicit(expr.type),
+                            "Pointer",
+                            "Integer"
+                        )
+                    );
                     return CTypedValue::invalid();
                 }
                 else if(expr.type == BinaryExpressionType::Subtraction) {
@@ -525,11 +584,25 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             }
             else if(lhs.type->isInteger() && rhs.type->isPointer()) {
                 if(expr.type == BinaryExpressionType::Multiplication) {
-                    //Multiplication of pointer with an integer
+                    reportError(
+                        expr.firstTerminal, 
+                        illegalOperatorUseErrorMsg(
+                            c4::util::expression::stringifyExplicit(expr.type),
+                            "Integer",
+                            "Pointer"
+                        )
+                    );
                     return CTypedValue::invalid();
                 }
                 else if(expr.type == BinaryExpressionType::Subtraction) {
-                    //Subtracting a pointer from an integer
+                    reportError(
+                        expr.firstTerminal, 
+                        illegalOperatorUseErrorMsg(
+                            c4::util::expression::stringifyExplicit(expr.type),
+                            "Integer",
+                            "Pointer"
+                        )
+                    );
                     return CTypedValue::invalid();
                 }
                 pointerAddInt(rhs, lhs);
@@ -547,12 +620,24 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
                     );
                 }
                 else {
-                    //Non-sub arithmetic not allowed between pointers
+                    reportError(
+                        expr.firstTerminal, 
+                        illegalOperatorUseErrorMsg(
+                            c4::util::expression::stringifyExplicit(expr.type),
+                            "Pointer",
+                            "Pointer"
+                        )
+                    );
                     return CTypedValue::invalid();
                 }
             }
             else {
-                //Operator in incompatible with the operands
+                reportError(
+                        expr.firstTerminal, 
+                        illegalOperatorUseErrorMsg(
+                            c4::util::expression::stringifyExplicit(expr.type)
+                        )
+                    );
                 return CTypedValue::invalid();
             }
         }
@@ -570,12 +655,12 @@ CTypedValue CodeGen::visitRValue(const CallExpression &expr) {
     }
 
     if(!called.type->isFunc()) {
-        //Calling something that's not a function
+        reportError(expr.firstTerminal, "Calling a non-function object");
         return CTypedValue::invalid(); 
     }
     auto funcType = std::dynamic_pointer_cast<const CFunctionType, const CType>(called.type);
     if(expr.arguments.arguments.size() != funcType->paramTypes.size()) {
-        //Different number of parameters
+        reportError(expr.firstTerminal, "Incorrect number of parameters in function call");        
         return CTypedValue::invalid();
     }
 
@@ -589,7 +674,10 @@ CTypedValue CodeGen::visitRValue(const CallExpression &expr) {
         }
         //I check if they have compatible types
         if(!funcType->paramTypes[i]->compatible(argRvalue.type.get())) {
-            //Incompatible types in function call
+            reportError(expr.firstTerminal, 
+                std::string("Incompatible parameters at position ")
+                    .append(std::to_string(i))
+                    .append(" of function call (starting from 0)"));
             return CTypedValue::invalid();
         }
         if(argRvalue.type->isInteger()) {
@@ -617,6 +705,10 @@ CTypedValue CodeGen::visitRValue(const CallExpression &expr) {
 }
 CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
     CTypedValue cond = expr.condition->getRValue(*this);
+    if(!cond.isValid()) {
+        return CTypedValue::invalid();
+    }
+    
     evaluateCondition(cond);
     if(!cond.isValid()) {
         reportError(expr.firstTerminal, 
@@ -655,7 +747,10 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
     }
 
     if(!leftExpr.compatible(rightExpr)) {
-        //Left and right of Conditional Expressions not compatible
+        reportError(
+            expr.firstTerminal, 
+            incompatibleOperandsErrorMsg("Conditional Expression")
+        );
         return CTypedValue::invalid();
     }
 
@@ -746,7 +841,10 @@ CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
                 return CTypedValue::invalid();
             }
             if(!positive.type->isInteger()) {
-                //Negating a non-integer
+                reportError(
+                    expr.firstTerminal,
+                    illegalOperatorUseErrorMsg(c4::util::expression::stringifyExplicit(expr.type))
+                );
                 return CTypedValue::invalid();
             }
             convertToINT(positive);
@@ -768,10 +866,13 @@ CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
         }
         case UnaryExpressionType::LogicalInverse: {
             CTypedValue operand = expr.expression->getRValue(*this);
+            if(!operand.isValid()) {
+                return CTypedValue::invalid();
+            }
             evaluateCondition(operand, true);
             if(!operand.isValid()) {
                 reportError(expr.firstTerminal, 
-                    scalarConditionErrorMsg("Operand", "Logical Not")
+                    scalarConditionErrorMsg("Operand", c4::util::expression::stringifyExplicit(expr.type))
                 );
             }
             return operand;
@@ -787,6 +888,8 @@ CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
             //Since computing types is tied with generating code, I need to do this trick
             builder.SetInsertPoint(deadBlock);
             CTypedValue operand = expr.expression->getRValue(*this);
+            TypeSize size = M.getDataLayout().getTypeAllocSize(operand.value->getType());
+            deadBlock->eraseFromParent();
             builder.SetInsertPoint(currentBlock);
 
             if(!operand.isValid()) {
@@ -794,14 +897,20 @@ CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
             }
 
             if(operand.type->isFunc()) {
-                //Size of function object not allowed
+                reportError(
+                    expr.firstTerminal,
+                    illegalOperatorUseErrorMsg(
+                        c4::util::expression::stringifyExplicit(expr.type),
+                        "Function"
+                    )
+                );
                 return CTypedValue::invalid();
             }
 
             return CTypedValue(
                 ConstantInt::get(
                     IntegerType::getInt32Ty(ctx),
-                    M.getDataLayout().getTypeAllocSize(operand.value->getType())
+                    size
                 ),
                 BaseCType::get(TypeSpecifier::INT)
             );
