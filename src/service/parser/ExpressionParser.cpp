@@ -129,8 +129,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
                         std::shared_ptr<const Token> sizeOfToken = tokens.back();
                         tokens.pop_back();
 
-                        std::shared_ptr<model::declaration::TypeName> tn = llparser->parseTypeName();
-                        std::shared_ptr<const SizeOfType> sizeOfExpr = std::make_shared<const SizeOfType>(tn, sizeOfToken);
+                        std::shared_ptr<const SizeOfType> sizeOfExpr = std::make_shared<const SizeOfType>(type_name, sizeOfToken);
                         expressions.push_back(sizeOfExpr);
                     }
                 }

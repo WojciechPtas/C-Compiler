@@ -26,6 +26,7 @@ namespace c4 {
                 }
 
                 virtual void accept(util::IASTVisitor& visitor) const override {
+                    (void) visitor;
                     throw std::logic_error("Use IExprVisitor for visitors instead");
                 }
 

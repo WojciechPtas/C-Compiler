@@ -175,12 +175,10 @@ void PrintVisitor::visit(const SizeOfType &expr) {
     this->outputStream << " --- ";
     #endif
 
-    // pretty::PrettyPrintinVisitor ppv(this->outputStream);
-    // expr.type->accept(ppv);
+    pretty::PrettyPrintinVisitor ppv(this->outputStream);
+    expr.type->accept(ppv);
 
-    
-
-    this->outputStream << "??))";
+    this->outputStream << "))";
 }
 
 void PrintVisitor::visit(const UnaryExpression &expr) {
