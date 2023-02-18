@@ -104,7 +104,11 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
             for(auto it=rbegin(); it<rend(); it++) {
                 auto& currentStructDeclars = it->structDeclars;
                 if(currentStructDeclars.count(name)) {
-                    return (*currentStructDeclars.find(name)).second;
+                    auto &retvalue = (*currentStructDeclars.find(name)).second;
+                    if(retvalue == nullptr) {
+                        std::cerr << "Warning, got a declared but not defined struct type";
+                    }
+                    return retvalue;
                 }
             }
             //Not found!
@@ -134,6 +138,17 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
             return false;
         }
 
+        //Checks in all scopes
+        bool isStructDefined(const std::string& name) const {
+            for(auto it=rbegin(); it<rend(); it++) {
+                auto& current = it->structDeclars;
+                if(current.count(name)) {
+                    return current.find(name)->second != nullptr;
+                }
+            }
+            return false;
+        }
+
         //Only checks in current scope
         bool varAlreadyDeclared(const std::string& name) const {
             auto& topVarDeclars = back().variableDeclars;
@@ -146,6 +161,13 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
             return topStructDeclars.count(name);
         }
 
+        //Only checks in current scope
+        bool structAlreadyDefined(const std::string& name) const {
+            auto& topStructDeclars = back().structDeclars;
+            return topStructDeclars.count(name) && 
+                topStructDeclars.find(name)->second != nullptr;
+        }
+
         void declareVar(const std::string& name, const c4::model::ctype::CTypedValue& val) {
             if(varAlreadyDeclared(name)) {
                 throw std::logic_error("Already declared in the same scope! Check this beforehand using varAlreadyDeclared()");
@@ -155,11 +177,19 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
             topVarDeclars[name] = val;
         }
 
-        void declareStruct(const std::string& name, std::shared_ptr<const c4::model::ctype::CStructType> val) {
-            if(structAlreadyDeclared(name)) {
-                throw std::logic_error("Already declared in the same scope! Check this beforehand using structAlreadyDeclared()");
+        //Does nothing if struct was already declared/defined in this current scope
+        void declareStruct(const std::string& name) {
+            if(!structAlreadyDeclared(name)) {
+                auto& topStructDeclars = back().structDeclars;
+                topStructDeclars[name] = nullptr;
             }
+        }
 
+        //Check structAlreadyDefined() before using this one
+        void defineStruct(const std::string& name, std::shared_ptr<const c4::model::ctype::CStructType> val) {
+            if(structAlreadyDefined(name)) {
+                throw std::logic_error("Struct already defined in the same scope! Check this beforehand using structAlreadyDefined()");
+            }
             auto& topStructDeclars = back().structDeclars;
             topStructDeclars[name] = val;
         } 
