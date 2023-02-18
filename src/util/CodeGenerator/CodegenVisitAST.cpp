@@ -54,6 +54,9 @@ void CodeGen::visit(const c4::model::statement::IterationStatement& s){
         builder.SetInsertPoint(whileHeader);
        
         CTypedValue cond = s.expr->getRValue(*this);
+        if(!cond.isValid()){
+            return;
+        }
         evaluateCondition(cond,false);
         if(!cond.isValid()) {
             reportError(s.firstTerminal,"Not scalar condition.");
@@ -220,9 +223,13 @@ void CodeGen::visit(const c4::model::statement::SelectionStatement& s){
         builder.SetInsertPoint(ifHeader);
        
         CTypedValue cond = s.ifExpr->getRValue(*this);
+        if(!cond.isValid()){
+            return;
+        }
         evaluateCondition(cond,false);
         if(!cond.isValid()) {
-            reportError(s.firstTerminal,"Condition is not scalar");
+            reportError(s.firstTerminal,"Not scalar condition.");
+            //err
         }
         if(s.elseStatement!=nullptr){
             builder.CreateCondBr(cond.value,thenBlock,elseBlock);
