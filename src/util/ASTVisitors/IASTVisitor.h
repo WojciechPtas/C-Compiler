@@ -13,6 +13,7 @@ namespace c4::model::declaration{
     class Root;
     class StructDeclarationList;
     class StructUnionSpecifier;
+    class TypeName;
 }
 
 
@@ -47,6 +48,7 @@ namespace c4::util{
         virtual void visit(const model::declaration::Root & s)=0;
         virtual void visit(const model::declaration::StructDeclarationList & s)=0;
         virtual void visit(const model::declaration::StructUnionSpecifier & s)=0; 
+        virtual void visit(const model::declaration::TypeName & s) =0;
 
     };
 

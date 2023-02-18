@@ -1,9 +1,22 @@
-int a();
-int a(){
-	return 1;
+int x(void){
+	int a;
+	a = x();
 }
-int (f(int x, int y))
-{
-			char *c;
-			//c="asd";
+int printf(int a);
+int a(int b){
+if(1){
+b=2;
+}
+else{
+b=3;
+}
+char c;
+aa:c='c';
+c = x() * b;
+return 0;
+while(1){
+	break;
+}
+goto aa;
+return 1;
 }

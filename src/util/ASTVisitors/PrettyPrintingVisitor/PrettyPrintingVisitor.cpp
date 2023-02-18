@@ -365,3 +365,14 @@ void c4::util::pretty::PrettyPrintinVisitor::visit(const StructUnionSpecifier &s
     os << "}";
     }
 }
+
+void c4::util::pretty::PrettyPrintinVisitor::visit(const model::declaration::TypeName &s)
+{
+    s.ds->accept(*this);
+    
+    if(s.declarator!=nullptr){
+        os<<" ";
+        s.declarator->accept(*this);
+    }
+    return;
+}

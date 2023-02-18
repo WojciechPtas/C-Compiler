@@ -20,6 +20,8 @@
 #include "../../../model/declaration/StructDeclarationList.h"
 #include "../../../model/declaration/StructUnionSpecifier.h"
 #include "../../../model/declaration/ParameterDeclaration.h"
+#include "../../../model/declaration/TypeName.h"
+
 
 namespace c4::util::pretty
 {
@@ -55,5 +57,6 @@ namespace c4::util::pretty
         void visit(const model::declaration::Root & s)override;
         void visit(const model::declaration::StructDeclarationList & s)override;
         void visit(const model::declaration::StructUnionSpecifier & s)override; 
+        void visit(const model::declaration::TypeName & s) override;
     };
 } // namespace c4::model::statement
