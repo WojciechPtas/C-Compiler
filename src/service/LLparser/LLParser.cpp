@@ -20,6 +20,16 @@ std::shared_ptr<Token> LLParser::lastTokenRead() {
     return token;
 }
 
+std::shared_ptr<IDeclaration> c4::service::parser::LLParser::parseAndGetAST()
+{
+    auto a =this->parse();
+    if(a==nullptr){
+        util::token::PrintVisitor v(std::cerr);
+        v.printPosition(*token);
+        std::cerr<<"error: wrong token\n";
+    }
+    return a;
+}
 
 // DONE!
 bool LLParser::checkLookAhead(TokenKind k, SpecifiedToken s)
