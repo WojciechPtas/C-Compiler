@@ -58,7 +58,7 @@
 
 
 class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::util::IASTVisitor {
-    enum ErrorState { //For now pretty simple. Add states as desired, you'll associate a string to every one of them later.
+    enum class ErrorState { //For now pretty simple. Add states as desired, you'll associate a string to every one of them later.
         OK=0,
         ERROR
     };
@@ -289,9 +289,21 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
 public:
     CodeGen(const std::string& filename) 
     : filename(filename), ctx(), M(filename, ctx), builder(ctx), allocaBuilder(ctx), state(ErrorState::OK), FirstPhase(false)
-    {}
+    {
+        size_t extensionDotPos = this->filename.rfind('.');
+        if(extensionDotPos == std::string::npos) { //Not found 
+            this->filename.append(".ll");
+        }
+        else {
+            this->filename.erase(extensionDotPos); //From that position onwards
+            this->filename.append(".ll");
+        }
+    }
+    
     bool isError() {
         return state != CodeGen::ErrorState::OK;
     }
     int codeGenTest();
+    void printIR(bool debug);
+
 };

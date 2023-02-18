@@ -18,6 +18,7 @@
 #include "util/parser/lr/StateUtilities.h"
 #include "service/parser/ExpressionParser.h"
 #include "util/expression/PrintVisitor.h"
+#include "util/ASTVisitors/PrettyPrintingVisitor/PrettyPrintingVisitor.h"
 #include "service/LLparser/LLParser.h"
 
 #include "service/CodeGenerator/codegen.h"
@@ -89,65 +90,44 @@ bool tokenize(const std::string &input) {
     return retval;
 }
 
-bool parse(const std::string& input) {
+
+
+std::shared_ptr<c4::model::declaration::IDeclaration> genAST(const std::string& input) {
     auto lexer = initializeLexer(input);
-
-    shared_ptr<Token> token;
-    
-    PrintVisitor pt(cout);
-    PrintVisitor pe(cerr);
-
     auto mosaic = make_shared<MosaicInputStream<shared_ptr<Token>>>(lexer,1024);
-    //cout << "mosaic\n";
     LLParser parser(mosaic);
-    //cout << "parser\n";
-
-    //auto re =parser.parse();
-    //cout<< "Returned with:!" << re << "\n";
-    return parser.run();
+    return parser.parseAndGetAST();
 }
-bool print_ast(const std::string& input) {
-    auto lexer = initializeLexer(input);
 
-    shared_ptr<Token> token;
-    
-    PrintVisitor pt(cout);
-    PrintVisitor pe(cerr);
-
-    auto mosaic = make_shared<MosaicInputStream<shared_ptr<Token>>>(lexer,1024);
-    //cout << "mosaic\n";
-    LLParser parser(mosaic);
-    //cout << "parser\n";
-
-    //auto re =parser.parse();
-    //cout<< "Returned with:!" << re << "\n";
-    return parser.print();
+enum class ParseCodeGenMode {
+    PARSE,
+    PRINT,
+    CODEGEN,
+    DEBUG_CODEGEN
+};
+bool parseAndCodeGen(const std::string& input, ParseCodeGenMode mode) {
+    auto AST = genAST(input);
+    bool failed = AST == nullptr;
+    if(!failed) {
+        CodeGen g(input);
+        AST->accept(g);
+        if(g.isError()) {
+            failed = true;
+        }
+        else {
+            if(mode == ParseCodeGenMode::PRINT) {
+                c4::util::pretty::PrettyPrintinVisitor ppv(std::cout);
+                AST->accept(ppv);
+            }
+            if(mode == ParseCodeGenMode::CODEGEN || mode == ParseCodeGenMode::DEBUG_CODEGEN) {
+                g.printIR(mode == ParseCodeGenMode::DEBUG_CODEGEN);
+            }
+        }
+    }
+    return failed;
 }
-bool compile(std::string& input){
-    auto lexer = initializeLexer(input);
 
-    shared_ptr<Token> token;
-    
-    PrintVisitor pt(cout);
-    PrintVisitor pe(cerr);
 
-    auto mosaic = make_shared<MosaicInputStream<shared_ptr<Token>>>(lexer,1024);
-    //cout << "mosaic\n";
-    auto st = make_shared<DelimiterStream>(mosaic, TokenKind::punctuator,SpecifiedToken(Punctuator::Semicolon));
-    auto a=make_shared<State>(INITIAL_STATE);
-    LLParser parser(mosaic);
-    auto lrparser = make_shared<ExpressionParser>(a, &parser);
-
-    //cout << "parser\n";
-
-    //auto re =parser.parse();
-    //cout<< "Returned with:!" << re << "\n";
-    auto ast = parser.parse();
-    CodeGen g(input);
-    if(ast!=nullptr)
-    ast->accept(g);
-    return 1;
-}
 bool LRparse(const std::string& input) {
     auto lexer = initializeLexer(input);
     auto a=make_shared<State>(INITIAL_STATE);
@@ -180,11 +160,11 @@ int main(int argc, char* argv[]) {
         }
         else if(in =="--parse" && i < argc-1){
             input= argv[i+1];
-            return parse(input);
+            return parseAndCodeGen(input, ParseCodeGenMode::PARSE);
         }
         else if(in=="--print-ast"){
             input= argv[i+1];
-            return print_ast(input);
+            return parseAndCodeGen(input, ParseCodeGenMode::PRINT);
         }
         else if(in =="--lrparse" && i < argc-1){
             input= argv[i+1];
@@ -192,9 +172,11 @@ int main(int argc, char* argv[]) {
         }
         else if(in =="--compile") {
             input= argv[i+1];
-            //CodeGen cg(input);
-            //return cg.codeGenTest();
-            return compile(input);
+            return parseAndCodeGen(input, ParseCodeGenMode::CODEGEN);
+        }
+        else if(in =="--dcompile") {
+            input= argv[i+1];
+            return parseAndCodeGen(input, ParseCodeGenMode::DEBUG_CODEGEN);
         }
     }
     cerr << "No command given\n";

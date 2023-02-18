@@ -418,7 +418,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
         reportError(s.firstTerminal,"Not a function type.");
         return;
     }
-    for(int i=0;i<f.params->types.size();i++){
+    for(uint i=0;i<f.params->types.size();i++){
         if(f.params->types[i]->isVoid()){
             if(f.params->types.size()==1){
                 f.params->types.clear();
@@ -534,7 +534,7 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
     }
     else if(f.type->isFuncNonDesignator()){
         auto fu = std::dynamic_pointer_cast<const CFunctionType>(f.type);
-        for(int i=0;i<f.params->types.size();i++){
+        for(uint i=0;i<f.params->types.size();i++){
             if(f.params->types[i]->isVoid()){
                 if(f.params->types.size()==1){
                     f.params->types.clear();
@@ -610,10 +610,6 @@ void CodeGen::visit(const c4::model::declaration::Root & s){
     for(auto& a : s.definitions){
         a->accept(*this);
     }
-    std::error_code EC;
-    raw_fd_ostream stream("output.txt", EC, llvm::sys::fs::OpenFlags::OF_Text);
-    verifyModule(this->M,&stream);
-    if(!isError()) M.dump();
 }
 void CodeGen::visit(const c4::model::declaration::StructDeclarationList & s){
     auto a =s; // WE DO NOTHING

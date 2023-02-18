@@ -3,6 +3,15 @@ using namespace c4::model::ctype;
 using namespace c4::model::expression;
 using namespace llvm;
 
+void CodeGen::printIR(bool debug) {
+    std::error_code EC;
+    raw_fd_ostream stream(filename, EC, llvm::sys::fs::OpenFlags::OF_Text);
+    if (debug) {
+        verifyModule(M, &stream);
+    }
+    M.print(stream, nullptr, false, debug);
+}
+
 AllocaInst* CodeGen::Alloca(Type* type, const std::string& name) {
     AllocaInst* ret = allocaBuilder.CreateAlloca(type, nullptr, name);
     allocaBuilder.SetInsertPoint(
