@@ -51,6 +51,10 @@ namespace c4::model::ctype {
             return false;
         }
 
+        bool isComplete() const override {
+            return true;
+        }
+
         virtual bool compatible(const CType* another) const override;
         virtual bool equivalent(const CType* another) const override;
         // bool conflicting(const CFunctionType* another) const;
