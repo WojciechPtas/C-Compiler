@@ -5,7 +5,7 @@ using namespace c4::model::token;
 using namespace c4::model::declaration;
 using namespace c4::model::ctype;
 using namespace llvm;
-// DONE
+
 void CodeGen::visit(const c4::model::statement::CompoundStatement& s){
     if(SecondPhase) return;
     SecondPhase = true;
@@ -20,13 +20,11 @@ void CodeGen::visit(const c4::model::statement::CompoundStatement& s){
     scope.popScope();
     return;
 }
-// CODEGEN EXPR
 void CodeGen::visit(const c4::model::statement::ExpressionStatement& s){
     if(FirstPhase||SecondPhase||isError()) return;
     if(s.expr==nullptr) return;
     s.expr->getRValue(*this);
 }
-// CODEGEN EXPR
 void CodeGen::visit(const c4::model::statement::IterationStatement& s){
     if(FirstPhase||SecondPhase){
     if(s.statement!=nullptr){
@@ -264,7 +262,6 @@ void CodeGen::visit(const c4::model::statement::SelectionStatement& s){
         builder.SetInsertPoint(endBlock);
     }
 }
-
 void CodeGen::visit(const c4::model::declaration::DeclarationSpecifier & s){
     auto a =s; // WE DO NOTHING
     return; 
@@ -281,20 +278,7 @@ void CodeGen::visit(const c4::model::declaration::DirectDeclarator2& s){
     auto a =s; // WE DO NOTHING
     return; 
 }
-
-
-struct Var{
-    std::string name;
-    std::string structname="";
-    std::shared_ptr<CType> type;
-    std::shared_ptr<ParametersInfo> params;
-};
-Var buildParam(std::shared_ptr<ParameterDeclaration> param);
-ParametersInfo buildParameters(std::shared_ptr<ParameterTypeList> params);
-Var buildVar(std::shared_ptr<DirectDeclarator> p, Var returnVal);
-Var buildVar(std::shared_ptr<Pointer> p, Var returnVal);
-Var buildVar(std::shared_ptr<Declarator> d, Var returnVal);
-Var buildFromDS(std::shared_ptr<DeclarationSpecifier> ds){
+CodeGen::Var CodeGen::buildFromDS(std::shared_ptr<DeclarationSpecifier> ds){
     Var a;
     a.name="";
     switch(ds->keyword){
@@ -313,7 +297,7 @@ Var buildFromDS(std::shared_ptr<DeclarationSpecifier> ds){
     }
     return a;
 }
-Var buildfromDeclaration(std::shared_ptr<Declaration> d){
+CodeGen::Var CodeGen::buildfromDeclaration(std::shared_ptr<Declaration> d){
     Var a = buildFromDS(d->ds);
     if(d->declarator!=nullptr){
     a = buildVar(d->declarator,a);
@@ -323,12 +307,79 @@ Var buildfromDeclaration(std::shared_ptr<Declaration> d){
     }
     return a;
 }
-ParametersInfo buildStruct(std::shared_ptr<StructDeclarationList> s){
+ParametersInfo CodeGen::buildStruct(std::shared_ptr<StructDeclarationList> s){
     Var field;
     std::vector<std::string> names;
     std::vector<std::shared_ptr<const CType>> fields;
+    // FIRST RUN
     for(auto& a : s->declarations){
-        field = buildfromDeclaration(a);
+        field = buildDeclarationFromDS(a->ds);
+        if(field.type->isStruct()){
+            auto stru = std::dynamic_pointer_cast<CStructType>(field.type);
+            if(stru==nullptr) continue;;
+            if(stru->getFieldNames().empty()){
+                scope.declareStruct(field.structname);
+            }
+            else if(!stru->getFieldNames().empty()){
+                if(field.structname=="") continue;; // anonymous struct
+                std::unordered_set<std::string>se(stru->getFieldNames().begin(),stru->getFieldNames().end());
+                if(se.size()!=stru->getFieldNames().size()){
+                    reportError(a->firstTerminal, "Two fields with the same name");
+                    continue;
+                }
+                if(scope.structAlreadyDefined(field.structname)){
+                    reportError(a->firstTerminal,"Redefinition of struct!");
+                    continue;
+                }
+                scope.defineStruct(field.structname, stru);
+            }
+        }
+    }
+    // SECOND RUN
+    for(auto& a : s->declarations){
+        field = buildDeclarationFromDS(a->ds);
+        if(field.type->isStruct()){
+            auto fu = std::dynamic_pointer_cast<CStructType>(field.type);
+            if (a->declarator!=nullptr){
+                field = buildVar(a->declarator,field);
+            }
+            else{
+                continue;
+            }
+            if(field.structname!=""){ // anonymous struct
+                if(scope.isStructDefined(field.structname)){
+                    std::shared_ptr<const CType> b = scope.getStruct(field.structname);
+                    for(int i =0; i< field.type->indirections; i++){
+                        b=b->addStar();
+                    }
+                    names.push_back(field.name);
+                    fields.push_back(b);
+                    continue;
+                }
+                else{
+                    if(field.type->indirections==0){
+                        reportError(a->firstTerminal, "Missing definition for struct.");
+                        continue;
+                    }
+                    std::shared_ptr<const CType> b = scope.getStruct(field.structname);
+                    for(int i =0; i< field.type->indirections; i++){
+                        b=b->addStar();
+                    }
+                    scope.declareStruct(field.structname);
+                    names.push_back(field.name);
+                    fields.push_back(field.type);
+                    continue;
+                }
+            }
+        }
+        else{
+            if(a->declarator!=nullptr){
+                field = buildVar(a->declarator,field);
+            }else{
+                reportError(a->firstTerminal, "Declarations without declarators are not allowed,");
+                continue;
+            }
+        }
         names.push_back(field.name);
         fields.push_back(field.type);
     }
@@ -337,22 +388,29 @@ ParametersInfo buildStruct(std::shared_ptr<StructDeclarationList> s){
     p.types=fields;
     return p;
 }
-Var buildStruct(std::shared_ptr<StructUnionSpecifier> s){
+CodeGen::Var CodeGen::buildStruct(std::shared_ptr<StructUnionSpecifier> s){
     Var a;
     a.name="";
     a.structname=s->name;
+    scope.declareStruct(a.structname);
+    scope.pushScope();
     if(s->declarations!=nullptr){    
         auto p = buildStruct(s->declarations);
         a.type=CStructType::get(p.names,p.types, a.structname);
     }
     else{
-        // std::vector<std::string> names;
-        // std::vector<std::shared_ptr<const CType>> types;
         a.type=CStructType::undefined();
     }
+    scope.popScope();
+    // if(!scope.structAlreadyDefined(a.structname)){
+    //     scope.defineStruct(a.structname,std::dynamic_pointer_cast<CStructType>(a.type));
+    // }
+    // else{
+    //     reportError(s->firstTerminal, "redefinition of a strut.");
+    // }
     return a;
 }
-Var buildDeclarationFromDS(std::shared_ptr<DeclarationSpecifier> ds){
+CodeGen::Var CodeGen::buildDeclarationFromDS(std::shared_ptr<DeclarationSpecifier> ds){
     Var a;
     a.name="";
     switch(ds->keyword){
@@ -376,13 +434,13 @@ Var buildDeclarationFromDS(std::shared_ptr<DeclarationSpecifier> ds){
 }
 
 
-Var buildParam(std::shared_ptr<ParameterDeclaration> param){
+CodeGen::Var CodeGen::buildParam(std::shared_ptr<ParameterDeclaration> param){
     auto base = buildFromDS(param->type);
     return param->dec == nullptr ? base :   buildVar(param->dec,base);
     // std::cout << "param built\n";
 }
 // DONE!
-ParametersInfo buildParameters(std::shared_ptr<ParameterTypeList> params){
+ParametersInfo CodeGen::buildParameters(std::shared_ptr<ParameterTypeList> params){
     // std::cout<<"Build params\n";
     std::vector<std::shared_ptr<const CType>> vec;
     std::vector<std::string> names;
@@ -401,7 +459,7 @@ bool isEmpty(std::shared_ptr<DirectDeclarator2> d){
     if(d==nullptr) return true;
     return d->declarator==nullptr && d->list==nullptr;
 }
-Var buildVar(std::shared_ptr<DirectDeclarator> p, Var returnVal){
+CodeGen::Var CodeGen::buildVar(std::shared_ptr<DirectDeclarator> p, Var returnVal){
     //std::cout<<"Direct declarator\n";
     if(isEmpty(p->direct_declarator)){
         if(p->declarator!=nullptr){
@@ -429,7 +487,7 @@ Var buildVar(std::shared_ptr<DirectDeclarator> p, Var returnVal){
     }
 }
 // DONE!
-Var buildVar(std::shared_ptr<Pointer> p, Var returnVal){
+CodeGen::Var CodeGen::buildVar(std::shared_ptr<Pointer> p, Var returnVal){
     //std::cout<<"pointer\n";
     if(p==nullptr)
     return returnVal;
@@ -437,7 +495,7 @@ Var buildVar(std::shared_ptr<Pointer> p, Var returnVal){
     return buildVar(p->ptr,returnVal);
 }
 // DONE!
-Var buildVar(std::shared_ptr<Declarator> d, Var returnVal){
+CodeGen::Var CodeGen::buildVar(std::shared_ptr<Declarator> d, Var returnVal){
     auto a = buildVar(d->ptr,returnVal);
     return buildVar(d->dec,a); // a is a return type
 }
@@ -587,11 +645,8 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                     f = buildVar(s.declarator,f);
                 }
                 else{
-                        //if(!(f.type->isStruct()))
-                        //reportError(s.firstTerminal,"Declaration with declarator is not allowed.");
                         return;
                     }
-             //(fu->fieldNames.empty() && !SecondPhase){
             if(f.structname!=""){ // anonymous struct
                 if(scope.isStructDefined(f.structname)){
                     std::shared_ptr<const CType> a = scope.getStruct(f.structname);
@@ -626,12 +681,13 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                     else{
                         scope.declareVar(f.name, CTypedValue(Alloca(fu,f.name),fu));
                     }
-            }\
+            }
             return;
          } 
     }
+    if(SecondPhase) return;
     if (s.declarator!=nullptr)
-    f = buildVar(s.declarator,f);
+        f = buildVar(s.declarator,f);
     else{
         if(!(f.type->isStruct()))
         reportError(s.firstTerminal,"Declaration with declarator is not allowed.");
@@ -639,31 +695,6 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
     if(f.type==nullptr) std::cout<< "dupa1\n";
     if(f.type->isStruct()){
         return;
-        // else{
-        //     if(f.structname!=""){
-        //         if(scope.isStructDefined(f.structname)){
-        //             if(scope.isGlobal()){
-        //                 scope.declareVar(f.name, CTypedValue(GlobalAlloca(fu,f.name),fu));
-        //             }
-        //             else{
-        //                 scope.declareVar(f.name, CTypedValue(Alloca(fu,f.name),fu));
-        //             }
-        //         }
-        //         else{
-        //             // cannot happen
-        //             return;
-        //         }
-        //     }
-        //     else{
-        //         // Anonymous struct
-        //         if(scope.isGlobal()){
-        //                 scope.declareVar(f.name, CTypedValue(GlobalAlloca(fu,f.name),fu));
-        //             }
-        //             else{
-        //                 scope.declareVar(f.name, CTypedValue(Alloca(fu,f.name),fu));
-        //             }
-        //     }
-        // }
     }
     else if(f.type->isFuncNonDesignator()){
         if(SecondPhase) return;
@@ -739,7 +770,6 @@ void CodeGen::visit(const c4::model::declaration::Pointer& s){
     return; 
 }
 void CodeGen::visit(const c4::model::declaration::Root & s){
-    // std::cout <<"Root\n";
     SecondPhase = true;
     for(auto& a : s.definitions){
         a->accept(*this);
@@ -761,8 +791,6 @@ void CodeGen::visit(const c4::model::declaration::TypeName &s){
     auto a =s; // WE DO NOTHING
     return;
 }
-
-
 std::shared_ptr<const c4::model::ctype::CType> CodeGen::getCtype(const std::shared_ptr<const c4::model::declaration::TypeName> &s)
 {
     Var a;

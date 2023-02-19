@@ -63,7 +63,12 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
         OK=0,
         ERROR
     };
-
+    struct Var{
+    std::string name;
+    std::string structname="";
+    std::shared_ptr<c4::model::ctype::CType> type;
+    std::shared_ptr<c4::model::ctype::ParametersInfo> params;
+};
     struct Scope {
         std::unordered_map<std::string, c4::model::ctype::CTypedValue> variableDeclars;
         std::unordered_map<std::string, std::shared_ptr<c4::model::ctype::CStructType>> structDeclars;
@@ -292,6 +297,19 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     void visit(const c4::model::declaration::StructDeclarationList & s)override;
     void visit(const c4::model::declaration::StructUnionSpecifier & s)override; 
     void visit(const c4::model::declaration::TypeName & s) override;
+
+
+
+    Var buildParam(std::shared_ptr<c4::model::declaration::ParameterDeclaration> param);
+    c4::model::ctype::ParametersInfo buildParameters(std::shared_ptr<c4::model::declaration::ParameterTypeList> params);
+    Var buildVar(std::shared_ptr<c4::model::declaration::DirectDeclarator> p, Var returnVal);
+    Var buildVar(std::shared_ptr<c4::model::declaration::Pointer> p, Var returnVal);
+    Var buildVar(std::shared_ptr<c4::model::declaration::Declarator> d, Var returnVal);
+    Var buildFromDS(std::shared_ptr<c4::model::declaration::DeclarationSpecifier> ds);
+    Var buildDeclarationFromDS(std::shared_ptr<c4::model::declaration::DeclarationSpecifier> ds);
+    Var buildStruct(std::shared_ptr<c4::model::declaration::StructUnionSpecifier> s);
+    c4::model::ctype::ParametersInfo buildStruct(std::shared_ptr<c4::model::declaration::StructDeclarationList> s);
+    Var buildfromDeclaration(std::shared_ptr<c4::model::declaration::Declaration> d);
 
 public:
     CodeGen(const std::string& filename) 
