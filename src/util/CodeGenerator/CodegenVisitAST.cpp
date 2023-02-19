@@ -106,6 +106,9 @@ void CodeGen::visit(const c4::model::statement::JumpStatement& s){
             }
             else{
                 CTypedValue val = s.returnExpression->getRValue(*this);
+                if(!val.isValid()) {
+                    return;
+                }
                 if(currentFunc->retType->compatible(val.type.get())){
                     builder.CreateRet(val.value);
                     BasicBlock* deadBlock = BasicBlock::Create(
@@ -283,7 +286,7 @@ void CodeGen::visit(const c4::model::declaration::DirectDeclarator2& s){
 struct Var{
     std::string name;
     std::string structname="";
-    std::shared_ptr<const CType> type;
+    std::shared_ptr<CType> type;
     std::shared_ptr<ParametersInfo> params;
 };
 Var buildParam(std::shared_ptr<ParameterDeclaration> param);
@@ -296,13 +299,13 @@ Var buildFromDS(std::shared_ptr<DeclarationSpecifier> ds){
     a.name="";
     switch(ds->keyword){
             case Keyword::Int:
-            a.type= std::make_shared<const BaseCType>(TypeSpecifier::INT);
+            a.type= BaseCType::get(TypeSpecifier::INT);
             break;
             case Keyword::Char:
-            a.type= std::make_shared<const BaseCType>(TypeSpecifier::CHAR);
+            a.type= BaseCType::get(TypeSpecifier::CHAR);
             break;
             case Keyword::Void:
-            a.type= std::make_shared<const BaseCType>(TypeSpecifier::VOID);
+            a.type= BaseCType::get(TypeSpecifier::VOID);
             break;
             default:
             a.type= nullptr;
@@ -340,12 +343,12 @@ Var buildStruct(std::shared_ptr<StructUnionSpecifier> s){
     a.structname=s->name;
     if(s->declarations!=nullptr){    
         auto p = buildStruct(s->declarations);
-        a.type=std::make_shared<const CStructType>(p.names,p.types);
+        a.type=CStructType::get(p.names,p.types);
     }
     else{
-        std::vector<std::string> names;
-        std::vector<std::shared_ptr<const CType>> types;
-        a.type=std::make_shared<const CStructType>(names,types);
+        // std::vector<std::string> names;
+        // std::vector<std::shared_ptr<const CType>> types;
+        a.type=CStructType::undefined();
     }
     return a;
 }
@@ -354,13 +357,13 @@ Var buildDeclarationFromDS(std::shared_ptr<DeclarationSpecifier> ds){
     a.name="";
     switch(ds->keyword){
             case Keyword::Int:
-            a.type= std::make_shared<const BaseCType>(TypeSpecifier::INT);
+            a.type= BaseCType::get(TypeSpecifier::INT);
             break;
             case Keyword::Char:
-            a.type= std::make_shared<const BaseCType>(TypeSpecifier::CHAR);
+            a.type= BaseCType::get(TypeSpecifier::CHAR);
             break;
             case Keyword::Void:
-            a.type= std::make_shared<const BaseCType>(TypeSpecifier::VOID);
+            a.type= BaseCType::get(TypeSpecifier::VOID);
             break;
             case Keyword::Struct:
             a=buildStruct(ds->structorunion);
@@ -414,7 +417,7 @@ Var buildVar(std::shared_ptr<DirectDeclarator> p, Var returnVal){
             // Hurray it is a func!
             auto params = buildParameters(p->direct_declarator->list);
             returnVal.params=std::make_shared<ParametersInfo>(params);
-            returnVal.type=std::make_shared<const CFunctionType>(returnVal.type,returnVal.params->types);
+            returnVal.type=CFunctionType::get(returnVal.type,returnVal.params->types);
         }
         if(p->declarator!=nullptr){
             return buildVar(p->declarator,returnVal);
@@ -455,7 +458,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
             if(f.params->types.size()==1){
                 f.params->types.clear();
                 f.params->names.clear();
-                fu=std::make_shared<const CFunctionType>(fu->retType,f.params->types);
+                fu=CFunctionType::get(fu->retType,f.params->types);
             }
             else{
                 reportError(s.firstTerminal,"Invalid parameter declaration");
@@ -556,19 +559,19 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
     Var f =  buildDeclarationFromDS(s.ds);
     if(f.type==nullptr) std::cout<<"not working\n";
     if(f.type->isStruct()){
-        auto fu = std::dynamic_pointer_cast<const CStructType>(f.type);
+        auto fu = std::dynamic_pointer_cast<CStructType>(f.type);
         if(fu==nullptr) {
             std::cout << "dupa\n"; 
             return;
         }
-        if(fu->fieldNames.empty() && SecondPhase){
+        if(fu->getFieldNames().empty() && SecondPhase){
             scope.declareStruct(f.structname);
             return;
         }
-        else if(SecondPhase && !fu->fieldNames.empty()){
+        else if(SecondPhase && !fu->getFieldNames().empty()){
             if(f.structname=="") return; // anonymous struct
-            std::set<std::string>se(fu->fieldNames.begin(),fu->fieldNames.end());
-            if(se.size()!=fu->fieldNames.size()){
+            std::unordered_set<std::string>se(fu->getFieldNames().begin(),fu->getFieldNames().end());
+            if(se.size()!=fu->getFieldNames().size()){
                 reportError(s.firstTerminal, "Two fields with the same name");
                 return;
             }
@@ -670,7 +673,7 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                 if(f.params->types.size()==1){
                     f.params->types.clear();
                     f.params->names.clear();
-                    fu=std::make_shared<const CFunctionType>(fu->retType,f.params->types);
+                    fu=CFunctionType::get(fu->retType,f.params->types);
                 }
                 else{
                     reportError(s.firstTerminal,"Invalid parameter declaration");

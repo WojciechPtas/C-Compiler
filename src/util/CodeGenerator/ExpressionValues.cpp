@@ -336,7 +336,7 @@ CTypedValue CodeGen::visitLValue(const MemberExpression &expr) {
     uint memberIndex = structType->getIndexOf(memberName);
 
     Value* value = builder.CreateStructGEP(base.getLLVMType(ctx), base.value, memberIndex);
-    std::shared_ptr<const CType> type = structType->fieldTypes[memberIndex];
+    std::shared_ptr<const CType> type = structType->getFieldTypes()[memberIndex];
     return CTypedValue(value, type);
     
 }
@@ -353,7 +353,8 @@ CTypedValue CodeGen::visitLValue(const UnaryExpression &expr) {
         if(!ptr.isValid()) {
             return CTypedValue::invalid();
         }
-
+std::cout << "But first, a word from our sponsor: ";
+    ptr.type->print();
         if(!(ptr.type->isPointer() || ptr.type->isFunc())) {
             reportError(expr.firstTerminal, "Dereferencing a non-pointer");
             return CTypedValue::invalid();

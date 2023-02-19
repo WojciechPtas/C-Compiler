@@ -60,10 +60,13 @@ class CType {
         virtual bool equivalent(const CType* another) const { //As compatible, but requires the integer size to be the same
             return this->compatible(another);
         }
-        virtual std::shared_ptr<const CType> dereference() const = 0;
-        virtual std::shared_ptr<const CType> addStar() const = 0;
+        virtual std::shared_ptr<CType> dereference() const = 0;
+        virtual std::shared_ptr<CType> addStar() const = 0;
 
         virtual void print() const {
+            for (int i = 0; i < indirections; i++) {
+                std::cout << "*";
+            }
             
         }
     };

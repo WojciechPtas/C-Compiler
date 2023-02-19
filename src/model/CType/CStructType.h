@@ -7,29 +7,25 @@
 namespace c4::model::ctype {
     class CStructType : public CType {
         std::unordered_map<std::string, uint> memberIndexes;
-        const CStructType* originalStruct; //For compatiblity computation
+        CStructType* originalStruct;
+        llvm::StructType* cachedType = nullptr;
+        bool defined;
+        std::vector<std::string> fieldNames;
+        std::vector<std::shared_ptr<const CType>> fieldTypes;
 
     public:
-        const std::vector<std::string> fieldNames;
-        const std::vector<std::shared_ptr<const CType>> fieldTypes;
-
-        CStructType( //Don't use this :)
-            const std::vector<std::string> &fieldNames,
-            const std::vector<std::shared_ptr<const CType>> &fieldTypes,
-            int indirections,
-            const CStructType* originalStruct
-        ) 
-        : CType(indirections, STRUCT), originalStruct(originalStruct), fieldNames(fieldNames), fieldTypes(fieldTypes) {
-            for(uint i=0; i<fieldNames.size(); i++) {
-                memberIndexes[fieldNames[i]] = i;
-            }
-        }
+        //For undeclared CStructTypes
+        CStructType(int indirections) : CType(indirections, STRUCT), originalStruct(this), defined(false) {}
+        CStructType() : CStructType(0) {}
 
         CStructType(
             const std::vector<std::string> &fieldNames,
             const std::vector<std::shared_ptr<const CType>> &fieldTypes,
             int indirections
-        ) : CStructType(fieldNames, fieldTypes, indirections, this) {}
+        ) 
+        :  CStructType(indirections) {
+            define(fieldNames, fieldTypes);
+        }
 
         CStructType(
             const std::vector<std::string> &fieldNames,
@@ -37,12 +33,64 @@ namespace c4::model::ctype {
         ) 
         : CStructType(fieldNames, fieldTypes, 0) {}
 
-        virtual std::shared_ptr<const CType> dereference() const override {
-            return std::make_shared<CStructType>(fieldNames, fieldTypes, indirections-1, originalStruct);
+        CStructType(const CStructType& other, int indirections) : CType(indirections, STRUCT), originalStruct(other.originalStruct) {}
+        CStructType(const CStructType& other) : CType(other.indirections, STRUCT), originalStruct(other.originalStruct) {}
+
+        const std::vector<std::string>& getFieldNames() const {
+            return originalStruct->fieldNames;
         }
 
-        virtual std::shared_ptr<const CType> addStar() const override {
-            return std::make_shared<CStructType>(fieldNames, fieldTypes, indirections+1, originalStruct);
+        const std::vector<std::shared_ptr<const CType>>& getFieldTypes() const {
+            return originalStruct->fieldTypes;
+        }
+         ;
+        
+        static std::shared_ptr<CStructType> get(
+            const std::vector<std::string> &fieldNames,
+            const std::vector<std::shared_ptr<const CType>> &fieldTypes
+        ) {
+            return std::make_shared<CStructType>(fieldNames, fieldTypes);
+        }
+
+        virtual std::shared_ptr<CType> dereference() const override {
+            return std::make_shared<CStructType>(*this, indirections-1);
+        }
+
+        virtual std::shared_ptr<CType> addStar() const override {
+            return std::make_shared<CStructType>(*this, indirections+1);
+        }
+
+        static std::shared_ptr<CStructType> undefined() {
+            return std::make_shared<CStructType>();
+        }
+
+        void define(
+            const std::vector<std::string> &fieldNames,
+            const std::vector<std::shared_ptr<const CType>> &fieldTypes
+        ) {
+            if(!this->isOriginal()) {
+                throw std::logic_error("Defining non-original struct!");
+            }
+            if(this->isDefined()) { //Already
+                throw std::logic_error("Redefining struct!");
+            }
+            this->defined = true;
+            this->fieldNames = fieldNames;
+            this->fieldTypes = fieldTypes;
+            for(uint i=0; i<fieldNames.size(); i++) {
+                this->memberIndexes[fieldNames[i]] = i;
+            }
+        }
+
+        void define(std::shared_ptr<const CStructType> from) {
+            if(!from->isDefined()) {
+                throw std::logic_error("Defining from undeclared struct!");
+            }
+            if(!from->isOriginal()) {
+                throw std::logic_error("Defining from non-original struct!");
+            }
+
+            define(from->fieldNames, from->fieldTypes);
         }
 
         bool isInteger() const override {
@@ -57,17 +105,31 @@ namespace c4::model::ctype {
             return false;
         }
 
+        bool isDefined() const {
+            return originalStruct->defined;
+        }
+
+        bool isOriginal() const {
+            return this == originalStruct;
+        }
+
         bool hasMember(const std::string& fieldName) const {
-            return memberIndexes.count(fieldName);
+            return originalStruct->memberIndexes.count(fieldName);
         }
         
         uint getIndexOf(const std::string& fieldName) const {
-            return memberIndexes.find(fieldName)->second;
+            return originalStruct->memberIndexes.find(fieldName)->second;
         }
 
         virtual bool compatible(const CType* another) const override;
         llvm::StructType* getLLVMStructType(llvm::LLVMContext &ctx) const; //THIS WILL NOT DISCRIMINATE BETWEEN IF POINTER OR NOT, DO NECESSARY CHECKS BEFORE USING THIS
+        llvm::StructType* getLLVMStructType(llvm::LLVMContext &ctx); //THIS WILL NOT DISCRIMINATE BETWEEN IF POINTER OR NOT, DO NECESSARY CHECKS BEFORE USING THIS
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;
+        llvm::Type* getLLVMType(llvm::LLVMContext &ctx) ; //Updates cache
         
+        void print() const override {
+            std::cout << "STRUCT";
+            CType::print();
+        }
     };
 }

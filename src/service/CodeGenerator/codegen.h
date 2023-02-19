@@ -35,7 +35,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <stack>
-#include <set>
+#include <unordered_set>
 //File printing
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
@@ -66,7 +66,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
 
     struct Scope {
         std::unordered_map<std::string, c4::model::ctype::CTypedValue> variableDeclars;
-        std::unordered_map<std::string, std::shared_ptr<const c4::model::ctype::CStructType>> structDeclars;
+        std::unordered_map<std::string, std::shared_ptr<c4::model::ctype::CStructType>> structDeclars;
     };
     class ScopeStack : std::vector<Scope> {
     public:
@@ -145,7 +145,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
             for(auto it=rbegin(); it<rend(); it++) {
                 auto& current = it->structDeclars;
                 if(current.count(name)) {
-                    return current.find(name)->second != nullptr;
+                    return current.find(name)->second->isDefined();
                 }
             }
             return false;
@@ -167,7 +167,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
         bool structAlreadyDefined(const std::string& name) const {
             auto& topStructDeclars = back().structDeclars;
             return topStructDeclars.count(name) && 
-                topStructDeclars.find(name)->second != nullptr;
+                topStructDeclars.find(name)->second->isDefined();
         }
 
         void declareVar(const std::string& name, const c4::model::ctype::CTypedValue& val) {
@@ -183,17 +183,22 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
         void declareStruct(const std::string& name) {
             if(!structAlreadyDeclared(name)) {
                 auto& topStructDeclars = back().structDeclars;
-                topStructDeclars[name] = nullptr;
+                topStructDeclars[name] = c4::model::ctype::CStructType::undefined();
             }
         }
 
         //Check structAlreadyDefined() before using this one
-        void defineStruct(const std::string& name, std::shared_ptr<const c4::model::ctype::CStructType> val) {
+        void defineStruct(const std::string& name, std::shared_ptr<c4::model::ctype::CStructType> val) {
             if(structAlreadyDefined(name)) {
                 throw std::logic_error("Struct already defined in the same scope! Check this beforehand using structAlreadyDefined()");
             }
             auto& topStructDeclars = back().structDeclars;
-            topStructDeclars[name] = val;
+            if(structAlreadyDeclared(name)) {
+                topStructDeclars[name]->define(val);
+            }
+            else {
+                topStructDeclars[name] = val;
+            }
         } 
     };
 

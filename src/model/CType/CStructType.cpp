@@ -17,6 +17,13 @@ bool CStructType::compatible(const CType* another) const {
 }
 
 StructType* CStructType::getLLVMStructType(llvm::LLVMContext &ctx) const {
+    if(originalStruct->cachedType) {
+        return originalStruct->cachedType;
+    }
+    else if(!isOriginal()) {
+        return originalStruct->getLLVMStructType(ctx);
+    }
+    //else
     std::vector<Type*> fields;
     for(auto& type : fieldTypes) {
         fields.push_back(type->getLLVMType(ctx));
@@ -24,7 +31,20 @@ StructType* CStructType::getLLVMStructType(llvm::LLVMContext &ctx) const {
     return StructType::create(ctx, fields);
 }
 
+StructType* CStructType::getLLVMStructType(llvm::LLVMContext &ctx) {
+    return originalStruct->cachedType = const_cast<const CStructType*>(this)->getLLVMStructType(ctx);
+}
+
 Type* CStructType::getLLVMType(llvm::LLVMContext &ctx) const {
+    if(indirections > 0) {
+        return PointerType::getUnqual(ctx);
+    }
+    else {
+        return getLLVMStructType(ctx);
+    }
+}
+
+Type* CStructType::getLLVMType(llvm::LLVMContext &ctx) {//Updates cache
     if(indirections > 0) {
         return PointerType::getUnqual(ctx);
     }

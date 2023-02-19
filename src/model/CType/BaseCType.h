@@ -24,18 +24,18 @@ namespace c4::model::ctype {
         : BaseCType(t, 0) 
         {}
 
-        virtual std::shared_ptr<const CType> dereference() const override {
+        virtual std::shared_ptr<CType> dereference() const override {
             return BaseCType::get(t, indirections-1);
         }
         
-        virtual std::shared_ptr<const CType> addStar() const override {
+        virtual std::shared_ptr<CType> addStar() const override {
             return BaseCType::get(t, indirections+1);
         }
 
-        static std::shared_ptr<const BaseCType> get(TypeSpecifier ts, int indirections) {
-            return std::make_shared<const BaseCType>(ts, indirections);
+        static std::shared_ptr<BaseCType> get(TypeSpecifier ts, int indirections) {
+            return std::make_shared<BaseCType>(ts, indirections);
         }
-        static std::shared_ptr<const BaseCType> get(TypeSpecifier ts) {
+        static std::shared_ptr<BaseCType> get(TypeSpecifier ts) {
             return BaseCType::get(ts, 0);
         }
 
@@ -59,28 +59,26 @@ namespace c4::model::ctype {
         virtual void print() const override {
             switch(t) {
                 case TypeSpecifier::BOOL: {
-                    std::cerr << "bool";
+                    std::cout << "bool";
                     break;
                 }
                 case TypeSpecifier::CHAR: {
-                    std::cerr << "char";
+                    std::cout << "char";
                     break;
                 }
                 case TypeSpecifier::INT: {
-                    std::cerr << "int";
+                    std::cout << "int";
                     break;
                 }
                 case TypeSpecifier::VOID : {
-                    std::cerr << "void";
+                    std::cout << "void";
                     break;
                 }
                 default: {
 
                 }
             }
-            for (int i=0; i<indirections; i++) {
-                std::cerr << "*";
-            }
+            this->CType::print();
         }
     };
 }

@@ -22,12 +22,19 @@ namespace c4::model::ctype {
             const std::vector<std::shared_ptr<const CType>> &paramTypes
         ) : CFunctionType(retType, paramTypes, 0) {}
 
-        virtual std::shared_ptr<const CType> dereference() const override {
+        static std::shared_ptr<CFunctionType> get(
+            std::shared_ptr<const CType> retType,
+            const std::vector<std::shared_ptr<const CType>> &paramTypes
+        ) {
+            return std::make_shared<CFunctionType>(retType, paramTypes);
+        }
+
+        virtual std::shared_ptr<CType> dereference() const override {
             // return nullptr;
             return std::make_shared<CFunctionType>(retType, paramTypes, indirections-1);
         }
         
-        virtual std::shared_ptr<const CType> addStar() const override {
+        virtual std::shared_ptr<CType> addStar() const override {
             // return nullptr;
             return std::make_shared<CFunctionType>(retType, paramTypes, indirections+1);
         }
