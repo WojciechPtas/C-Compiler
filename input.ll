@@ -1,10 +1,10 @@
 ; ModuleID = 'input.txt'
 source_filename = "input.txt"
 
-%0 = type { i32 }
-%1 = type { i32 }
-%2 = type { i32 }
-%3 = type { i32 }
+%0 = type { i32, i8 }
+%1 = type { i32, i8 }
+%2 = type { i32, i8 }
+%3 = type { i32, i8 }
 
 @0 = private unnamed_addr constant [4 x i8] c"bla\00", align 1
 

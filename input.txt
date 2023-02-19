@@ -4,6 +4,7 @@ int (f(int x, int y))
 		struct S
 		{
 			int x;
+			char y;
 		} s;
 		((s.x) = x);
 		struct S (*p);
@@ -19,7 +20,6 @@ int (f(int x, int y))
 }
 
 void (*((*(*p))(int)));
-
 int (main(void))
 {
 	int a;

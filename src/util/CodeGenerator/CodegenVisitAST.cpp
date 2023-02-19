@@ -22,7 +22,7 @@ void CodeGen::visit(const c4::model::statement::CompoundStatement& s){
 }
 // CODEGEN EXPR
 void CodeGen::visit(const c4::model::statement::ExpressionStatement& s){
-    if(FirstPhase||SecondPhase) return;
+    if(FirstPhase||SecondPhase||isError()) return;
     if(s.expr==nullptr) return;
     s.expr->getRValue(*this);
 }
@@ -97,6 +97,7 @@ void CodeGen::visit(const c4::model::statement::JumpStatement& s){
         }
     }
     else if(s.k==kind::_return){ // return;
+        if(isError()) return;
         auto ret = builder.GetInsertBlock()->getParent();
         auto ret_type = ret->getReturnType();
         if(s.returnExpression!=nullptr){
@@ -311,7 +312,12 @@ Var buildFromDS(std::shared_ptr<DeclarationSpecifier> ds){
 }
 Var buildfromDeclaration(std::shared_ptr<Declaration> d){
     Var a = buildFromDS(d->ds);
+    if(d->declarator!=nullptr){
     a = buildVar(d->declarator,a);
+    }
+    else{
+        ;
+    }
     return a;
 }
 ParametersInfo buildStruct(std::shared_ptr<StructDeclarationList> s){
@@ -561,6 +567,11 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
         }
         else if(SecondPhase && !fu->fieldNames.empty()){
             if(f.structname=="") return; // anonymous struct
+            std::set<std::string>se(fu->fieldNames.begin(),fu->fieldNames.end());
+            if(se.size()!=fu->fieldNames.size()){
+                reportError(s.firstTerminal, "Two fields with the same name");
+                return;
+            }
             if(scope.structAlreadyDefined(f.structname)){
                 reportError(s.firstTerminal,"Redefinition of struct!");
                 return;

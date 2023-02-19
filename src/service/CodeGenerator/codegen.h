@@ -35,6 +35,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <stack>
+#include <set>
 //File printing
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
