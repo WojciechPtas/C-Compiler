@@ -245,7 +245,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
         setError(CodeGen::ErrorState::ERROR);
     }
     
-    std::shared_ptr<const c4::model::ctype::CType> getCtype(std::shared_ptr<c4::model::declaration::TypeName>&s);
+    std::shared_ptr<const c4::model::ctype::CType> getCtype(const std::shared_ptr<const c4::model::declaration::TypeName>&s);
     //Visitor declarations
     virtual c4::model::ctype::CTypedValue visitLValue(const c4::model::expression::BinaryExpression &expr) override;
     virtual c4::model::ctype::CTypedValue visitLValue(const c4::model::expression::CallExpression &expr) override;

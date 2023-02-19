@@ -826,9 +826,28 @@ CTypedValue CodeGen::visitRValue(const MemberExpression &expr) {
     return loadFromLValue(expr);
 }
 CTypedValue CodeGen::visitRValue(const SizeOfType &expr) {
-    //Need refactoring of the SizeOfType expression
-    return CTypedValue::invalid();
+    //Nothing can go wrong here if good error detection was done at AST construction
+    shared_ptr<const CType> ctype = getCtype(expr.type);
+    TypeSize size = M.getDataLayout().getTypeAllocSize(ctype->getLLVMType(ctx));
+
+    if(ctype->isFunc()) {
+        reportError(
+            expr.firstTerminal,
+            illegalOperatorUseErrorMsg(
+                "sizeof(type-name)",
+                "Function"
+            )
+        );
+        return CTypedValue::invalid();
+    }
     
+    return CTypedValue(
+        ConstantInt::get(
+            IntegerType::getInt32Ty(ctx),
+            size
+        ),
+        BaseCType::get(TypeSpecifier::INT)
+    );
 }
 CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
     switch(expr.type) {

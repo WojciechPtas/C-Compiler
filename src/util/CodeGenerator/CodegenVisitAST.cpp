@@ -734,7 +734,7 @@ void CodeGen::visit(const c4::model::declaration::TypeName &s){
 }
 
 
-std::shared_ptr<const c4::model::ctype::CType> CodeGen::getCtype(std::shared_ptr<c4::model::declaration::TypeName> &s)
+std::shared_ptr<const c4::model::ctype::CType> CodeGen::getCtype(const std::shared_ptr<const c4::model::declaration::TypeName> &s)
 {
     Var a;
     a = buildDeclarationFromDS(s->ds);

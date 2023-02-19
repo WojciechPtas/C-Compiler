@@ -178,6 +178,14 @@ int main(int argc, char* argv[]) {
             input= argv[i+1];
             return parseAndCodeGen(input, ParseCodeGenMode::DEBUG_CODEGEN);
         }
+        else if(in =="--optimize-compile-time") {
+            input= argv[i+1];
+            return parseAndCodeGen(input, ParseCodeGenMode::CODEGEN);
+        }
+        else if(in =="--optimize-run-time") {
+            input= argv[i+1];
+            return parseAndCodeGen(input, ParseCodeGenMode::CODEGEN);
+        }
     }
     cerr << "No command given\n";
     return 1;
