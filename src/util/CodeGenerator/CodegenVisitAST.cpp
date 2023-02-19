@@ -343,7 +343,7 @@ Var buildStruct(std::shared_ptr<StructUnionSpecifier> s){
     a.structname=s->name;
     if(s->declarations!=nullptr){    
         auto p = buildStruct(s->declarations);
-        a.type=CStructType::get(p.names,p.types);
+        a.type=CStructType::get(p.names,p.types, a.structname);
     }
     else{
         // std::vector<std::string> names;

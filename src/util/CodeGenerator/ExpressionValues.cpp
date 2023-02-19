@@ -353,8 +353,7 @@ CTypedValue CodeGen::visitLValue(const UnaryExpression &expr) {
         if(!ptr.isValid()) {
             return CTypedValue::invalid();
         }
-std::cout << "But first, a word from our sponsor: ";
-    ptr.type->print();
+        
         if(!(ptr.type->isPointer() || ptr.type->isFunc())) {
             reportError(expr.firstTerminal, "Dereferencing a non-pointer");
             return CTypedValue::invalid();

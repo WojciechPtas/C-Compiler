@@ -12,6 +12,7 @@ namespace c4::model::ctype {
         bool defined;
         std::vector<std::string> fieldNames;
         std::vector<std::shared_ptr<const CType>> fieldTypes;
+        std::string name;
 
     public:
         //For undeclared CStructTypes
@@ -21,17 +22,19 @@ namespace c4::model::ctype {
         CStructType(
             const std::vector<std::string> &fieldNames,
             const std::vector<std::shared_ptr<const CType>> &fieldTypes,
-            int indirections
+            int indirections,
+            const std::string& name
         ) 
         :  CStructType(indirections) {
-            define(fieldNames, fieldTypes);
+            define(fieldNames, fieldTypes, name);
         }
 
         CStructType(
             const std::vector<std::string> &fieldNames,
-            const std::vector<std::shared_ptr<const CType>> &fieldTypes
+            const std::vector<std::shared_ptr<const CType>> &fieldTypes,
+            const std::string& name
         ) 
-        : CStructType(fieldNames, fieldTypes, 0) {}
+        : CStructType(fieldNames, fieldTypes, 0, name) {}
 
         CStructType(const CStructType& other, int indirections) : CType(indirections, STRUCT), originalStruct(other.originalStruct) {}
         CStructType(const CStructType& other) : CType(other.indirections, STRUCT), originalStruct(other.originalStruct) {}
@@ -43,13 +46,17 @@ namespace c4::model::ctype {
         const std::vector<std::shared_ptr<const CType>>& getFieldTypes() const {
             return originalStruct->fieldTypes;
         }
-         ;
+        
+        const std::string& getName() const {
+            return originalStruct->name;
+        }
         
         static std::shared_ptr<CStructType> get(
             const std::vector<std::string> &fieldNames,
-            const std::vector<std::shared_ptr<const CType>> &fieldTypes
+            const std::vector<std::shared_ptr<const CType>> &fieldTypes,
+            const std::string& name
         ) {
-            return std::make_shared<CStructType>(fieldNames, fieldTypes);
+            return std::make_shared<CStructType>(fieldNames, fieldTypes, name);
         }
 
         virtual std::shared_ptr<CType> dereference() const override {
@@ -66,7 +73,8 @@ namespace c4::model::ctype {
 
         void define(
             const std::vector<std::string> &fieldNames,
-            const std::vector<std::shared_ptr<const CType>> &fieldTypes
+            const std::vector<std::shared_ptr<const CType>> &fieldTypes,
+            const std::string& name
         ) {
             if(!this->isOriginal()) {
                 throw std::logic_error("Defining non-original struct!");
@@ -77,6 +85,7 @@ namespace c4::model::ctype {
             this->defined = true;
             this->fieldNames = fieldNames;
             this->fieldTypes = fieldTypes;
+            this->name = name;
             for(uint i=0; i<fieldNames.size(); i++) {
                 this->memberIndexes[fieldNames[i]] = i;
             }
@@ -90,7 +99,7 @@ namespace c4::model::ctype {
                 throw std::logic_error("Defining from non-original struct!");
             }
 
-            define(from->fieldNames, from->fieldTypes);
+            define(from->fieldNames, from->fieldTypes, from->name);
         }
 
         bool isInteger() const override {

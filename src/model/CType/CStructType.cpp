@@ -28,7 +28,9 @@ StructType* CStructType::getLLVMStructType(llvm::LLVMContext &ctx) const {
     for(auto& type : fieldTypes) {
         fields.push_back(type->getLLVMType(ctx));
     }
-    return StructType::create(ctx, fields);
+    StructType* retval = StructType::create(ctx, fields);
+    retval->setName(this->getName());
+    return retval;
 }
 
 StructType* CStructType::getLLVMStructType(llvm::LLVMContext &ctx) {
