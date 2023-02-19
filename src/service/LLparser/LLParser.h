@@ -39,6 +39,7 @@
 namespace c4::service::parser{
     
     class LLParser{
+        enum class Declarators{ABSTRACT, NONABSTRACT, BOTH};
         private:
             std::shared_ptr<io::IBufferedInputStream<std::shared_ptr<model::token::Token>>> m_input;
             util::token::ParserVisitor visitor;
@@ -64,11 +65,11 @@ namespace c4::service::parser{
             std::shared_ptr<model::declaration::StructUnionSpecifier> parseStructorUnionSpecifier();
             std::shared_ptr<model::declaration::StructDeclarationList> parseStructDeclarationList();
             std::shared_ptr<model::declaration::Pointer> parsePointer();
-            std::shared_ptr<model::declaration::Declarator> parseDeclarator(bool abstract=false);
+            std::shared_ptr<model::declaration::Declarator> parseDeclarator(Declarators d = Declarators::NONABSTRACT);
             //std::shared_ptr<model::declaration::IDeclaration> parseAbstractDeclarator();
             //std::shared_ptr<model::declaration::IDeclaration> parseDirectAbstractDeclarator();
             //std::shared_ptr<model::declaration::IDeclaration> parseDirectAbstractDeclarator2();
-            std::shared_ptr<model::declaration::DirectDeclarator> parseDirectDeclarator(bool abstract=false);
+            std::shared_ptr<model::declaration::DirectDeclarator> parseDirectDeclarator(Declarators d = Declarators::NONABSTRACT);
             std::shared_ptr<model::declaration::DirectDeclarator2> parseDirectDeclarator2();
             std::shared_ptr<model::declaration::ParameterTypeList> parseParameterTypeList();
             std::shared_ptr<model::declaration::ParameterDeclaration> parseParameterDeclaration();

@@ -238,7 +238,7 @@ std::shared_ptr<Pointer> c4::service::parser::LLParser::parsePointer()
     return (std::make_shared<Pointer>(ptr,first_token));
 }
 // DONE!
-std::shared_ptr<Declarator> c4::service::parser::LLParser::parseDeclarator(bool abstract)
+std::shared_ptr<Declarator> c4::service::parser::LLParser::parseDeclarator(Declarators d)
 {
     std::shared_ptr<Pointer> ptr=nullptr;
     if(checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Asterisk))) 
@@ -247,19 +247,19 @@ std::shared_ptr<Declarator> c4::service::parser::LLParser::parseDeclarator(bool 
         if(ptr==nullptr) return nullptr;
     }
     //std::cout<< "Direct declarator\n";
-    std::shared_ptr<DirectDeclarator> decl=parseDirectDeclarator(abstract);
+    std::shared_ptr<DirectDeclarator> decl=parseDirectDeclarator(d);
     if(decl==nullptr) return nullptr;
     return (std::make_shared<Declarator>(ptr,decl));
 }
 
-std::shared_ptr<DirectDeclarator> c4::service::parser::LLParser::parseDirectDeclarator(bool abstract)
+std::shared_ptr<DirectDeclarator> c4::service::parser::LLParser::parseDirectDeclarator(Declarators d)
 {
     std::string val="";
     std::shared_ptr<Declarator> declarator=nullptr;
     std::shared_ptr<DirectDeclarator2> declarator2=nullptr;
     std::shared_ptr<Token> first_token=nullptr;
     m_input->pushMark();
-    if(checkLookAhead(TokenKind::identifier)){
+    if(checkLookAhead(TokenKind::identifier) && d!=Declarators::ABSTRACT){
         if(consume(TokenKind::identifier)) return nullptr;
         val=visitor.getVal();
         first_token=token;
@@ -273,9 +273,9 @@ std::shared_ptr<DirectDeclarator> c4::service::parser::LLParser::parseDirectDecl
             ||checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Char))
             ||checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Struct))
             ||checkLookAhead(TokenKind::keyword,SpecifiedToken(Keyword::Union)))
-           )&&(abstract))){
+           )&&(d==Declarators::BOTH || d==Declarators::ABSTRACT))){
             m_input->popMark();
-            declarator=parseDeclarator(abstract);
+            declarator=parseDeclarator(d);
             if(declarator==nullptr) return nullptr;
             if(consume(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))) return nullptr;
         }
@@ -288,7 +288,7 @@ std::shared_ptr<DirectDeclarator> c4::service::parser::LLParser::parseDirectDecl
         }
         
     }
-    else if(abstract && (checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))
+    else if((d==Declarators::BOTH || d==Declarators::ABSTRACT) && (checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))
                      ||  checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::Comma))    )
     ){
         m_input->popMark();
@@ -371,7 +371,7 @@ std::shared_ptr<ParameterDeclaration> c4::service::parser::LLParser::parseParame
     //}
     //if(checkLookAhead(TokenKind::identifier)){
         //std::cout<<"before dec\n";
-        aa=parseDeclarator(true);
+        aa=parseDeclarator(Declarators::BOTH);
         if(aa==nullptr) return nullptr;
     //}
     //else{
@@ -617,7 +617,7 @@ std::shared_ptr<TypeName> c4::service::parser::LLParser::parseTypeName()
     if(a==nullptr) return nullptr;
     std::shared_ptr<Declarator> dec=nullptr;
     if(!checkLookAhead(TokenKind::punctuator,SpecifiedToken(Punctuator::RightParenthesis))){
-        dec = parseDeclarator(true);
+        dec = parseDeclarator(Declarators::ABSTRACT);
         if(dec==nullptr) return nullptr;
     }
     return std::make_shared<TypeName>(a,dec);
