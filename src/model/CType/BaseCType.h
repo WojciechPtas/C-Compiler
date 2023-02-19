@@ -51,6 +51,11 @@ namespace c4::model::ctype {
             return (t == TypeSpecifier::VOID) && (indirections == 0);
         }
 
+        bool isComplete() const override {
+            return true;
+        }
+
+
         virtual bool compatible(const CType* another) const override;
         virtual bool equivalent(const CType* another) const override;
 

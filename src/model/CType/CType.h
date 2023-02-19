@@ -63,6 +63,8 @@ class CType {
         virtual std::shared_ptr<CType> dereference() const = 0;
         virtual std::shared_ptr<CType> addStar() const = 0;
 
+        virtual bool isComplete() const = 0;
+
         virtual void print() const {
             for (int i = 0; i < indirections; i++) {
                 std::cout << "*";

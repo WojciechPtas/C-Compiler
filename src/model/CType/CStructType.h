@@ -114,6 +114,10 @@ namespace c4::model::ctype {
             return false;
         }
 
+        bool isComplete() const override {
+            return isPointer() || isDefined();
+        }
+
         bool isDefined() const {
             return originalStruct->defined;
         }

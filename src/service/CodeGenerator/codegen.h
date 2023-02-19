@@ -73,30 +73,34 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
         std::unordered_map<std::string, c4::model::ctype::CTypedValue> variableDeclars;
         std::unordered_map<std::string, std::shared_ptr<c4::model::ctype::CStructType>> structDeclars;
     };
-    class ScopeStack : std::vector<Scope> {
+    class ScopeStack  {
+        std::vector<Scope> stack;
+        llvm::LLVMContext* ctx;
     public:
-        ScopeStack() {
+        ScopeStack(llvm::LLVMContext* ctx) : ctx(ctx) {
             pushScope();
         }
+        // ScopeStack() : ScopeStack(nullptr) {}
+
 
         void pushScope() {
             Scope s;
-            push_back(s);
+            stack.push_back(s);
         }
 
         void popScope() {
-            if(size() <= 1) {
+            if(stack.size() <= 1) {
                 throw std::logic_error("Trying to pop the global scope!");
             }
-            pop_back();
+            stack.pop_back();
         }
 
         bool isGlobal() { //Returns true if the current scope is global
-            return this->size() == 1;
+            return stack.size() == 1;
         }
 
         c4::model::ctype::CTypedValue operator[](const std::string& name) const {
-            for(auto it=rbegin(); it<rend(); it++) {
+            for(auto it=stack.rbegin(); it<stack.rend(); it++) {
                 auto& currentVarDeclars = it->variableDeclars;
                 if(currentVarDeclars.count(name)) {
                     return (*currentVarDeclars.find(name)).second;
@@ -108,7 +112,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
         }
 
         std::shared_ptr<const c4::model::ctype::CStructType> getStruct(const std::string& name) const {
-            for(auto it=rbegin(); it<rend(); it++) {
+            for(auto it=stack.rbegin(); it<stack.rend(); it++) {
                 auto& currentStructDeclars = it->structDeclars;
                 if(currentStructDeclars.count(name)) {
                     auto &retvalue = (*currentStructDeclars.find(name)).second;
@@ -125,7 +129,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
 
         //Checks in all scopes
         bool isVarDeclared(const std::string& name) const {
-            for(auto it=rbegin(); it<rend(); it++) {
+            for(auto it=stack.rbegin(); it<stack.rend(); it++) {
                 auto& current = it->variableDeclars;
                 if(current.count(name)) {
                     return true;
@@ -136,7 +140,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
 
         //Checks in all scopes
         bool isStructDeclared(const std::string& name) const {
-            for(auto it=rbegin(); it<rend(); it++) {
+            for(auto it=stack.rbegin(); it<stack.rend(); it++) {
                 auto& current = it->structDeclars;
                 if(current.count(name)) {
                     return true;
@@ -147,7 +151,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
 
         //Checks in all scopes
         bool isStructDefined(const std::string& name) const {
-            for(auto it=rbegin(); it<rend(); it++) {
+            for(auto it=stack.rbegin(); it<stack.rend(); it++) {
                 auto& current = it->structDeclars;
                 if(current.count(name)) {
                     return current.find(name)->second->isDefined();
@@ -158,19 +162,19 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
 
         //Only checks in current scope
         bool varAlreadyDeclared(const std::string& name) const {
-            auto& topVarDeclars = back().variableDeclars;
+            auto& topVarDeclars = stack.back().variableDeclars;
             return topVarDeclars.count(name);
         }
 
         //Only checks in current scope
         bool structAlreadyDeclared(const std::string& name) const {
-            auto& topStructDeclars = back().structDeclars;
+            auto& topStructDeclars = stack.back().structDeclars;
             return topStructDeclars.count(name);
         }
 
         //Only checks in current scope
         bool structAlreadyDefined(const std::string& name) const {
-            auto& topStructDeclars = back().structDeclars;
+            auto& topStructDeclars = stack.back().structDeclars;
             return topStructDeclars.count(name) && 
                 topStructDeclars.find(name)->second->isDefined();
         }
@@ -180,14 +184,14 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
                 throw std::logic_error("Already declared in the same scope! Check this beforehand using varAlreadyDeclared()");
             }
 
-            auto& topVarDeclars = back().variableDeclars;
+            auto& topVarDeclars = stack.back().variableDeclars;
             topVarDeclars[name] = val;
         }
 
         //Does nothing if struct was already declared/defined in this current scope
         void declareStruct(const std::string& name) {
             if(!structAlreadyDeclared(name)) {
-                auto& topStructDeclars = back().structDeclars;
+                auto& topStructDeclars = stack.back().structDeclars;
                 topStructDeclars[name] = c4::model::ctype::CStructType::undefined();
             }
         }
@@ -197,19 +201,21 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
             if(structAlreadyDefined(name)) {
                 throw std::logic_error("Struct already defined in the same scope! Check this beforehand using structAlreadyDefined()");
             }
-            auto& topStructDeclars = back().structDeclars;
+            auto& topStructDeclars = stack.back().structDeclars;
             if(structAlreadyDeclared(name)) {
                 topStructDeclars[name]->define(val);
             }
             else {
                 topStructDeclars[name] = val;
             }
+            topStructDeclars[name]->getLLVMStructType(*ctx); //This ensures the llvmtype gets cached because called on a non-const instance
         } 
     };
 
     std::string filename;
-    ScopeStack scope; //Every time a new block is introduced, a new scope layer should be created, 
     llvm::LLVMContext ctx;
+    ScopeStack scope; //Every time a new block is introduced, a new scope layer should be created, 
+
     llvm::Module M; //1:1 with translation units i.e. source file 
     llvm::IRBuilder<> builder, allocaBuilder;
     ErrorState state;
@@ -313,7 +319,7 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
 
 public:
     CodeGen(const std::string& filename) 
-    : filename(filename), ctx(), M(filename, ctx), builder(ctx), allocaBuilder(ctx), state(ErrorState::OK), FirstPhase(false), SecondPhase(false)
+    : filename(filename), ctx(), scope(&ctx), M(filename, ctx), builder(ctx), allocaBuilder(ctx), state(ErrorState::OK), FirstPhase(false), SecondPhase(false)
     {
         size_t extensionDotPos = this->filename.rfind('.');
         if(extensionDotPos == std::string::npos) { //Not found 
