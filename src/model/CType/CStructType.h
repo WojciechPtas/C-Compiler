@@ -99,7 +99,7 @@ namespace c4::model::ctype {
                 throw std::logic_error("Defining from non-original struct!");
             }
 
-            define(from->fieldNames, from->fieldTypes, from->name);
+            define(from->fieldNames, from->fieldTypes, from->getName());
         }
 
         bool isInteger() const override {

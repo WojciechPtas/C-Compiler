@@ -45,11 +45,7 @@ bool CFunctionType::equivalent(const CType* another) const {
 // }
 
 Type* CFunctionType::getLLVMType(llvm::LLVMContext &ctx) const {
-    // if(indirections <= 0) {
-    //     throw std::logic_error("Function designators cannot have 0 indirections");
-    // }
-    // Function and pointer to function are gonna be the same thing
-    if (indirections > 1) { //pointer to pointer...
+    if (isPointer()) { 
         return PointerType::getUnqual(ctx);
     }
     //else
@@ -57,9 +53,6 @@ Type* CFunctionType::getLLVMType(llvm::LLVMContext &ctx) const {
 }
 
 FunctionType* CFunctionType::getLLVMFuncType(llvm::LLVMContext &ctx) const {
-    if (indirections > 0) {
-        std::logic_error("Called getLLVMFuncType on a function pointer. Use getLLVMType instead");
-    }
     Type* llvmRetType = retType->getLLVMType(ctx);
     std::vector<Type*> llvmParamTypes;
     for(auto& ctype : paramTypes) {
