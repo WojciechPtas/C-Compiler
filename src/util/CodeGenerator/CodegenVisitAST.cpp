@@ -330,6 +330,7 @@ ParametersInfo buildStruct(std::shared_ptr<StructDeclarationList> s){
 }
 Var buildStruct(std::shared_ptr<StructUnionSpecifier> s){
     Var a;
+    a.name="";
     a.structname=s->name;
     if(s->declarations!=nullptr){    
         auto p = buildStruct(s->declarations);
@@ -547,14 +548,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
 void CodeGen::visit(const c4::model::declaration::Declaration& s){
     if(FirstPhase) return;
     Var f =  buildDeclarationFromDS(s.ds);
-    if (s.declarator!=nullptr)
-    f = buildVar(s.declarator,f);
-    else{
-        if(!(f.type->isStruct()))
-        reportError(s.firstTerminal,"Declaration with declarator is not allowed.");
-    }
-
-    if(f.type==nullptr) std::cout<< "dupa1\n";
+    if(f.type==nullptr) std::cout<<"not working\n";
     if(f.type->isStruct()){
         auto fu = std::dynamic_pointer_cast<const CStructType>(f.type);
         if(fu==nullptr) {
@@ -563,7 +557,6 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
         }
         if(fu->fieldNames.empty() && SecondPhase){
             scope.declareStruct(f.structname);
-            std::cout<<"Struct declared!\n";
             return;
         }
         else if(SecondPhase && !fu->fieldNames.empty()){
@@ -573,13 +566,24 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                 return;
             }
             scope.defineStruct(f.structname, fu);
-            std::cout<<"Struct defined!\n";
             return;
         }
-        else{ //(fu->fieldNames.empty() && !SecondPhase){
+        else{
+                if (s.declarator!=nullptr){
+                    f = buildVar(s.declarator,f);
+                }
+                else{
+                        //if(!(f.type->isStruct()))
+                        //reportError(s.firstTerminal,"Declaration with declarator is not allowed.");
+                        return;
+                    }
+             //(fu->fieldNames.empty() && !SecondPhase){
             if(f.structname!=""){ // anonymous struct
                 if(scope.isStructDefined(f.structname)){
-                    auto a = scope.getStruct(f.structname);
+                    std::shared_ptr<const CType> a = scope.getStruct(f.structname);
+                    for(int i =0; i< f.type->indirections; i++){
+                        a=a->addStar();
+                    }
                     if(scope.isGlobal()){
                         scope.declareVar(f.name, CTypedValue(GlobalAlloca(a,f.name),a));
                     }
@@ -608,8 +612,19 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                     else{
                         scope.declareVar(f.name, CTypedValue(Alloca(fu,f.name),fu));
                     }
-            }
-         }        
+            }\
+            return;
+         } 
+    }
+    if (s.declarator!=nullptr)
+    f = buildVar(s.declarator,f);
+    else{
+        if(!(f.type->isStruct()))
+        reportError(s.firstTerminal,"Declaration with declarator is not allowed.");
+    }
+    if(f.type==nullptr) std::cout<< "dupa1\n";
+    if(f.type->isStruct()){
+        return;
         // else{
         //     if(f.structname!=""){
         //         if(scope.isStructDefined(f.structname)){
