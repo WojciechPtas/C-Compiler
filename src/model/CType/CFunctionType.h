@@ -8,14 +8,18 @@ namespace c4::model::ctype {
     class CFunctionType : public CType {
 
     public:
-        const std::shared_ptr<const CType> retType;
-        const std::vector<std::shared_ptr<const CType>> paramTypes;
+        std::shared_ptr<const CType> retType;
+        std::vector<std::shared_ptr<const CType>> paramTypes;
         
         CFunctionType(
             std::shared_ptr<const CType> retType,
             const std::vector<std::shared_ptr<const CType>> &paramTypes,
             int indirections
-        ) : CType(indirections, FUNCTION), retType(retType), paramTypes(paramTypes) {}
+        ) : CType(indirections, FUNCTION), retType(retType), paramTypes(paramTypes) {
+            if(paramTypes.size() == 1 && paramTypes[0]->isVoid()) {
+                this->paramTypes.pop_back();
+            }
+        }
 
         CFunctionType(
             std::shared_ptr<const CType> retType,
@@ -48,6 +52,9 @@ namespace c4::model::ctype {
         }
 
         bool isVoid() const override {
+            return false;
+        }
+        bool isVoidStar() const override {
             return false;
         }
 

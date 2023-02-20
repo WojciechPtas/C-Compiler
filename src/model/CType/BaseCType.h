@@ -50,6 +50,9 @@ namespace c4::model::ctype {
         bool isVoid() const override {
             return (t == TypeSpecifier::VOID) && (indirections == 0);
         }
+        bool isVoidStar() const override {
+            return (t == TypeSpecifier::VOID) && (indirections == 1);
+        }
 
         bool isComplete() const override {
             return true;

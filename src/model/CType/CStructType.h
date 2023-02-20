@@ -113,6 +113,9 @@ namespace c4::model::ctype {
         bool isVoid() const override {
             return false;
         }
+        bool isVoidStar() const override {
+            return false;
+        }
 
         bool isComplete() const override {
             return isPointer() || isDefined();
