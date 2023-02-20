@@ -71,3 +71,5 @@ llvm/
 *.out
 *.app
 
+#LLVM IR
+*.ll
