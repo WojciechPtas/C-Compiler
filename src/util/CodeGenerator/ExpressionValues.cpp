@@ -735,6 +735,7 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
         currentFunction
     );
 
+    builder.CreateCondBr(cond.value, leftEvalBlock, rightEvalBlock);
     builder.SetInsertPoint(leftEvalBlock);
     CTypedValue leftExpr = expr.thenCase->getRValue(*this);
     builder.CreateBr(endBlock);
