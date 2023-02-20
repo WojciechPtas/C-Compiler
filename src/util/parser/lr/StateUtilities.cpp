@@ -414,7 +414,8 @@ static shared_ptr<const State> _initialize() {
             Punctuator::Equal |
             Punctuator::RightBracket |
             Punctuator::RightParenthesis |
-            Punctuator::Comma
+            Punctuator::Comma |
+            Punctuator::Colon
         ),
         5, 3,
         _reduceConditional

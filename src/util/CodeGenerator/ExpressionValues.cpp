@@ -907,13 +907,15 @@ CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
             //Since computing types is tied with generating code, I need to do this trick
             builder.SetInsertPoint(deadBlock);
             CTypedValue operand = expr.expression->getRValue(*this);
-            TypeSize size = M.getDataLayout().getTypeAllocSize(operand.value->getType());
-            deadBlock->eraseFromParent();
+            builder.CreateUnreachable();
             builder.SetInsertPoint(currentBlock);
 
             if(!operand.isValid()) {
                 return CTypedValue::invalid();
             }
+
+            TypeSize size = M.getDataLayout().getTypeAllocSize(operand.value->getType());
+            // deadBlock->eraseFromParent(); cannot do it because of other possible users!
 
             if(operand.type->isFunc()) {
                 reportError(

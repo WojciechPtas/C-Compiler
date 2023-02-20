@@ -8,6 +8,14 @@ bool BaseCType::compatible(const CType* another) const {
     if(this == another) { //Same address!
          return true;
     }
+    //special case of void*
+    else if(
+        this->t == TypeSpecifier::VOID && 
+        this->indirections == 1 && 
+        (another->isPointer() || another->isFunc())
+    ) {
+        return true;
+    }
     else if(this->kind != another->kind) {
         return false;
     }

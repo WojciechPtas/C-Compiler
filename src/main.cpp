@@ -152,7 +152,7 @@ bool LRparse(const std::string& input) {
 
 int main(int argc, char* argv[]) {
     string input="input.txt";
-    for(int i=0; i<argc;i++){
+    for(int i=1; i<argc;i++){
         string in=argv[i];
         if(in == "--tokenize" && i<argc-1){
             input = argv[i+1];
@@ -184,6 +184,10 @@ int main(int argc, char* argv[]) {
         }
         else if(in =="--optimize-run-time") {
             input= argv[i+1];
+            return parseAndCodeGen(input, ParseCodeGenMode::CODEGEN);
+        }
+        else {
+            input = argv[i];
             return parseAndCodeGen(input, ParseCodeGenMode::CODEGEN);
         }
     }
