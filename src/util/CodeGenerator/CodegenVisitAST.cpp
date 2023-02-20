@@ -435,7 +435,7 @@ CodeGen::Var CodeGen::buildDeclarationFromDS(std::shared_ptr<DeclarationSpecifie
 
 
 CodeGen::Var CodeGen::buildParam(std::shared_ptr<ParameterDeclaration> param){
-    auto base = buildFromDS(param->type);
+    auto base = buildDeclarationFromDS(param->type);
     return param->dec == nullptr ? base :   buildVar(param->dec,base);
     // std::cout << "param built\n";
 }
@@ -501,7 +501,7 @@ CodeGen::Var CodeGen::buildVar(std::shared_ptr<Declarator> d, Var returnVal){
 }
 void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
     if(SecondPhase) return;
-    Var a =  buildFromDS(s.ds);
+    Var a =  buildDeclarationFromDS(s.ds);
     auto f = buildVar(s.declarator,a);
     if(f.type==nullptr){
         reportError(s.firstTerminal, "Not a valid type");
@@ -542,9 +542,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
         else{
             if(fun.type->isFuncNonDesignator()){
             Value* a = fun.value;
-            std::cout<<"before\n";
             Function* val_func = static_cast<llvm::Function*>(a);
-            std::cout<<"after\n";
             if(val_func!=nullptr){
                 if(val_func->isDeclaration()){
                     func = val_func;
@@ -728,7 +726,7 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                 &M
                 );
             const std::vector<std::shared_ptr<const CType>> val =f.params->types;
-            currentFunc = fu;
+            //currentFunc = fu;
             scope.declareVar(
                 f.name,
                 CTypedValue(func, fu)
