@@ -24,43 +24,46 @@ namespace c4 {
                     || (c == 't' ) || (c == 'v' );
             }
 
-            inline char parseSingleChar(const std::string& str) {
-                if(!str.empty()) {
-                    if(str[0] == '\\' && str.length() > 1) {
-                        switch(str[1]) {
+            inline void parseEscapeSequences(std::string& str) {
+                for(auto it=str.begin(); it<str.end(); it++) {
+                    if(it+1 < str.end() && *it == '\\') {
+                        switch(it[1]) {
                             case '\'':
-                                return '\'';
+                                str.replace(it, it+2, "\'");
+                                break;
                             case '\"':
-                                return '\"';
+                                str.replace(it, it+2, "\"");
+                                break;
                             case '\?':
-                                return '\?';
+                                str.replace(it, it+2, "\?");
+                                break;
                             case '\\':
-                                return '\\';
+                                str.replace(it, it+2, "\\");
+                                break;
                             case 'a':
-                                return '\a';
+                                str.replace(it, it+2, "\a");
+                                break;
                             case 'b':
-                                return '\b';
+                                str.replace(it, it+2, "\b");
+                                break;
                             case 'f':
-                                return '\f';
+                                str.replace(it, it+2, "\f");
+                                break;
                             case 'n':
-                                return '\n';
+                                str.replace(it, it+2, "\n");
+                                break;
                             case 'r':
-                                return '\r';
+                                str.replace(it, it+2, "\r");
+                                break;
                             case 't':
-                                return '\t';
+                                str.replace(it, it+2, "\t");
+                                break;
                             case 'v':
-                                return '\v';
-                            default:
-                                throw std::logic_error("Malformed escape sequence");
+                                str.replace(it, it+2, "\v");
+                                break;
                         }
                     }
-                    else {
-                        return str[0];
-                    }
                 }
-                //We end here if we don't return anywhere else
-                throw std::logic_error("Malformed character");
-                return 0;
             }
 
             inline bool isStartOfIdentifier(char c) {

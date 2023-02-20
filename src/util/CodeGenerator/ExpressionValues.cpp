@@ -401,13 +401,13 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
 
             BasicBlock* lazyEvalBlock = BasicBlock::Create(
                 ctx,
-                "LogicalAndLazyEval",
+                c4::util::expression::stringifyExplicit(expr.type)+"LazyEval",
                 currentFunction
             );
 
             BasicBlock* endBlock = BasicBlock::Create(
                 ctx,
-                "LogicalAndEnd",
+                c4::util::expression::stringifyExplicit(expr.type)+"End",
                 currentFunction
             );
 
@@ -421,7 +421,9 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             //Now we insert code that evaluates rhs only if lhs was true
             builder.SetInsertPoint(lazyEvalBlock);
             
-            CTypedValue rhs = expr.right->getRValue(*this);
+            CTypedValue rhs = expr.right->getRValue(*this); //May generate control flow! Update lazyEvalBlock
+            lazyEvalBlock = builder.GetInsertBlock();
+            
             if(!rhs.isValid()) {
                 return CTypedValue::invalid();
             }
@@ -737,10 +739,12 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
 
     builder.CreateCondBr(cond.value, leftEvalBlock, rightEvalBlock);
     builder.SetInsertPoint(leftEvalBlock);
-    CTypedValue leftExpr = expr.thenCase->getRValue(*this);
+    CTypedValue leftExpr = expr.thenCase->getRValue(*this); //May generate control flow! Need to update leftEvalBlock
+    leftEvalBlock = builder.GetInsertBlock();
     builder.CreateBr(endBlock);
     builder.SetInsertPoint(rightEvalBlock);
-    CTypedValue rightExpr = expr.thenCase->getRValue(*this);
+    CTypedValue rightExpr = expr.thenCase->getRValue(*this); //May generate control flow! Need to update rightEvalBlock
+    rightEvalBlock = builder.GetInsertBlock();
     builder.CreateBr(endBlock);
 
     if(!(leftExpr.isValid() && rightExpr.isValid())) {
@@ -794,8 +798,10 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
 CTypedValue CodeGen::visitRValue(const ConstantExpression &expr) {
     switch(expr.type) {
         case ConstantType::Character: {
+            std::string constValue = expr.value;
+            c4::util::lexer::parseEscapeSequences(constValue);
             return CTypedValue(
-                builder.getInt8(c4::util::lexer::parseSingleChar(expr.value)),
+                builder.getInt8(constValue[0]),
                 BaseCType::get(TypeSpecifier::CHAR)
             );
         }
@@ -806,8 +812,10 @@ CTypedValue CodeGen::visitRValue(const ConstantExpression &expr) {
             );
         }
         case ConstantType::String: {
+            std::string constValue = expr.value;
+            c4::util::lexer::parseEscapeSequences(constValue);
             return CTypedValue(
-                builder.CreateGlobalStringPtr(expr.value),
+                builder.CreateGlobalStringPtr(constValue),
                 BaseCType::get(TypeSpecifier::CHAR, 1)
             );
         }
