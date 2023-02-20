@@ -116,9 +116,6 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
                 auto& currentStructDeclars = it->structDeclars;
                 if(currentStructDeclars.count(name)) {
                     auto &retvalue = (*currentStructDeclars.find(name)).second;
-                    if(retvalue == nullptr) {
-                        std::cerr << "Warning, got a declared but not defined struct type";
-                    }
                     return retvalue;
                 }
             }
