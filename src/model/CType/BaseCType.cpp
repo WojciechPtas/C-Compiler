@@ -4,15 +4,18 @@
 using namespace c4::model::ctype;
 using namespace llvm;
 
+bool isVoidStar(const CType* ctype) {
+    return ctype->isVoid() && ctype->indirections == 1;
+}
+
 bool BaseCType::compatible(const CType* another) const {
     if(this == another) { //Same address!
          return true;
     }
     //special case of void*
     else if(
-        this->t == TypeSpecifier::VOID && 
-        this->indirections == 1 && 
-        (another->isPointer() || another->isFunc())
+        (isVoidStar(this) && (another->isPointer() || another->isFunc())) || 
+        (isVoidStar(another) && (this->isPointer() || this->isFunc()))
     ) {
         return true;
     }
