@@ -9,6 +9,9 @@ using namespace llvm;
 void CodeGen::visit(const c4::model::statement::CompoundStatement& s){
     if(SecondPhase) return;
     SecondPhase = true;
+    bool var = ScopeDeclared;
+    ScopeDeclared=false;
+    if(!var)
     scope.pushScope();
     for(auto& a : s.block_of_statements){
         a->accept(*this);
@@ -17,6 +20,7 @@ void CodeGen::visit(const c4::model::statement::CompoundStatement& s){
      for(auto& a : s.block_of_statements){
         a->accept(*this);
     }
+    if(!var)
     scope.popScope();
     return;
 }
@@ -233,7 +237,7 @@ void CodeGen::visit(const c4::model::statement::SelectionStatement& s){
         );
         builder.CreateBr(ifHeader);
         builder.SetInsertPoint(ifHeader);
-       
+    
         CTypedValue cond = s.ifExpr->getRValue(*this);
         if(!cond.isValid()){
             return;
@@ -524,12 +528,6 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
             }
         }
     }
-    // Function* func = Function::Create(
-    //     fu->getLLVMFuncType(ctx), 
-    //     GlobalValue::ExternalLinkage,
-    //     f.name,
-    //     &M
-    // );
     const std::vector<std::shared_ptr<const CType>> val =f.params->types;
     currentFunc = fu;
     Function* func=nullptr;
@@ -597,6 +595,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
         }
         scope.declareVar(f.params->names[i], typedLvalue); //Every time we use this we look at the map
     }
+    ScopeDeclared=true;
     s.statement->accept(*this);
     if (builder.GetInsertBlock()->getTerminator() == nullptr) {
         Type *CurFuncReturnType = builder.getCurrentFunctionReturnType();
@@ -605,9 +604,10 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
         } else {
             builder.CreateRet(Constant::getNullValue(CurFuncReturnType));
     }
-  }
+    }
     gotoLabels.clear();
     verifyFunction(*func);
+    scope.popScope();
 
 }
 void CodeGen::visit(const c4::model::declaration::Declaration& s){
