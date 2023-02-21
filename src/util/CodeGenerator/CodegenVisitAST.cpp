@@ -601,7 +601,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
         arg->setName(f.params->names[i]);
         AllocaInst *lvalue = Alloca(arg->getType(), f.params->names[i]);
         builder.CreateStore(arg, lvalue);
-        CTypedValue typedLvalue(lvalue, f.params->types[i]);
+        CTypedValue typedLvalue(lvalue, fu->paramTypes[i]);
         if(scope.varAlreadyDeclared(f.params->names[i])){
             reportError(s.firstTerminal, "Redeclaration of parameter");
             continue;
