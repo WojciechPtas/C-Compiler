@@ -8,13 +8,6 @@ bool BaseCType::compatible(const CType* another) const {
     if(this == another) { //Same address!
          return true;
     }
-    //special case of void*
-    else if(
-        (this->isVoidStar() && (another->isPointer() || another->isFunc())) || 
-        (another->isVoidStar() && (this->isPointer() || this->isFunc()))
-    ) {
-        return true;
-    }
     else if(this->kind != another->kind) {
         return false;
     }
@@ -24,6 +17,12 @@ bool BaseCType::compatible(const CType* another) const {
         (this->t == casted->t || 
             (indirections == 0 && this->isInteger() && casted->isInteger())
         );
+}
+
+bool BaseCType::assignmentCompatible(const CType* another) const {
+    return this->compatible(another) || 
+    (this->isVoidStar() && another->isPointer() && !another->isFunc()) || 
+        (another->isVoidStar() && this->isPointer() && !this->isFunc());
 }
 
 bool BaseCType::equivalent(const CType* another) const { //As compatible, but requires the integer size to be the same

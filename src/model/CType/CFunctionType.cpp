@@ -29,6 +29,11 @@ bool CFunctionType::compatible(const CType* another) const {
     return condition;
 }
 
+bool CFunctionType::assignmentCompatible(const CType* another) const {
+    return this->compatible(another);
+}
+
+
 bool CFunctionType::equivalent(const CType* another) const {
     return this->indirections == another->indirections && 
         this->compatible(another);

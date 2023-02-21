@@ -19,7 +19,8 @@ class CType {
         enum CTypeKind {
             BASE,
             STRUCT,
-            FUNCTION
+            FUNCTION,
+            CONSTANTZERO
         };
     public:
         const int indirections;
@@ -45,24 +46,30 @@ class CType {
         bool isFuncNonDesignator() const {
             return kind == CTypeKind::FUNCTION && indirections == 0;
         }
+        bool isConstantZero() const {
+            return kind == CONSTANTZERO;
+        }
 
         virtual bool isInteger() const = 0; 
         virtual bool isBool() const = 0; 
         virtual bool isVoid() const = 0;
         virtual bool isVoidStar() const = 0;
+        
 
         //This does not classify functions as pointer, but does so on function pointers (designators) 
-        bool isPointer() const {
+        virtual bool isPointer() const {
             return indirections;
         }
         
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const = 0;
         virtual bool compatible(const CType* another) const = 0;
+        virtual bool assignmentCompatible(const CType* another) const = 0;
         virtual bool equivalent(const CType* another) const { //As compatible, but requires the integer size to be the same
             return this->compatible(another);
         }
         virtual std::shared_ptr<CType> dereference() const = 0;
         virtual std::shared_ptr<CType> addStar() const = 0;
+
 
         virtual bool isComplete() const = 0;
 

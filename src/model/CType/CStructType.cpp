@@ -16,6 +16,11 @@ bool CStructType::compatible(const CType* another) const {
     return (this->originalStruct == casted->originalStruct);
 }
 
+bool CStructType::assignmentCompatible(const CType* another) const {
+    return this->compatible(another) ||
+        (this->isPointer() && another->isVoidStar());
+}
+
 StructType* CStructType::getLLVMStructType(llvm::LLVMContext &ctx) const {
     if(originalStruct->cachedType) {
         return originalStruct->cachedType;

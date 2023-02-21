@@ -133,9 +133,10 @@ shared_ptr<const IExpression> ExpressionParser::parse(
                         expressions.push_back(sizeOfExpr);
                     }
                 }
-                else { //Continue normally
+                else {
                     input.resetToMark(); //resets to after reading sizeOf
                 }
+                //Continue normally
                 input.popMark();
             }
         }
