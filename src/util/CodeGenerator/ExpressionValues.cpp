@@ -215,7 +215,7 @@ CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
             return CTypedValue::invalid();
         }
 
-        if(!lhs.type->compatible(rhs.type.get())) {
+        if(!lhs.type->assignmentCompatible(rhs.type.get())) {
             reportError(
                 expr.firstTerminal, 
                 incompatibleOperandsErrorMsg(
@@ -745,7 +745,7 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
     builder.CreateBr(endBlock);
 
     builder.SetInsertPoint(rightEvalBlock);
-    CTypedValue rightExpr = expr.thenCase->getRValue(*this); //May generate control flow! Need to update rightEvalBlock
+    CTypedValue rightExpr = expr.elseCase->getRValue(*this); //May generate control flow! Need to update rightEvalBlock
     rightEvalBlock = builder.GetInsertBlock();
     builder.CreateBr(endBlock);
 

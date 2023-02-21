@@ -58,6 +58,9 @@ class CType {
         
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const = 0;
         virtual bool compatible(const CType* another) const = 0;
+        virtual bool assignmentCompatible(const CType* another) const {
+            return this->compatible(another);
+        }
         virtual bool equivalent(const CType* another) const { //As compatible, but requires the integer size to be the same
             return this->compatible(another);
         }

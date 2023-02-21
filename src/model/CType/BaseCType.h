@@ -60,7 +60,9 @@ namespace c4::model::ctype {
 
 
         virtual bool compatible(const CType* another) const override;
+        virtual bool assignmentCompatible(const CType* another) const override;
         virtual bool equivalent(const CType* another) const override;
+        
 
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;
 
