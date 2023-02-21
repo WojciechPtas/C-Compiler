@@ -738,10 +738,12 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
     );
 
     builder.CreateCondBr(cond.value, leftEvalBlock, rightEvalBlock);
+
     builder.SetInsertPoint(leftEvalBlock);
     CTypedValue leftExpr = expr.thenCase->getRValue(*this); //May generate control flow! Need to update leftEvalBlock
     leftEvalBlock = builder.GetInsertBlock();
     builder.CreateBr(endBlock);
+
     builder.SetInsertPoint(rightEvalBlock);
     CTypedValue rightExpr = expr.thenCase->getRValue(*this); //May generate control flow! Need to update rightEvalBlock
     rightEvalBlock = builder.GetInsertBlock();
@@ -772,10 +774,20 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
         );
     }
 
+    Type* phiType;
+    if(leftExpr.type->isFuncNonDesignator() || rightExpr.type->isFuncNonDesignator()) {
+        leftExpr.value = funcToPtr(leftExpr.value);
+        rightExpr.value = funcToPtr(rightExpr.value);
+        phiType = PointerType::getUnqual(ctx);
+    }
+    else {
+        phiType = leftExpr.getLLVMType(ctx);
+    }
+
     //Now they're of the same llvm type
     builder.SetInsertPoint(endBlock);
     PHINode* phi = builder.CreatePHI(
-        leftExpr.getLLVMType(ctx),
+        phiType,
         2,
         "ConditionalExprChoose"
     );
