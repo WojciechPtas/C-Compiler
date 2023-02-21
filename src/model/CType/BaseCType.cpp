@@ -21,8 +21,8 @@ bool BaseCType::compatible(const CType* another) const {
 
 bool BaseCType::assignmentCompatible(const CType* another) const {
     return this->compatible(another) || 
-    (this->isVoidStar() && (another->isPointer() || another->isFunc())) || 
-        (another->isVoidStar() && (this->isPointer() || this->isFunc()));
+    (this->isVoidStar() && another->isPointer() && !another->isFunc()) || 
+        (another->isVoidStar() && this->isPointer() && !this->isFunc());
 }
 
 bool BaseCType::equivalent(const CType* another) const { //As compatible, but requires the integer size to be the same

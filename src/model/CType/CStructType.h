@@ -138,6 +138,7 @@ namespace c4::model::ctype {
         }
 
         virtual bool compatible(const CType* another) const override;
+        virtual bool assignmentCompatible(const CType* another) const override;
         llvm::StructType* getLLVMStructType(llvm::LLVMContext &ctx) const; //THIS WILL NOT DISCRIMINATE BETWEEN IF POINTER OR NOT, DO NECESSARY CHECKS BEFORE USING THIS
         llvm::StructType* getLLVMStructType(llvm::LLVMContext &ctx); //THIS WILL NOT DISCRIMINATE BETWEEN IF POINTER OR NOT, DO NECESSARY CHECKS BEFORE USING THIS
         virtual llvm::Type* getLLVMType(llvm::LLVMContext &ctx) const override;
