@@ -818,10 +818,16 @@ CTypedValue CodeGen::visitRValue(const ConstantExpression &expr) {
             );
         }
         case ConstantType::Decimal: {
-            return CTypedValue(
-                builder.getInt32(std::stoi(expr.value)),
-                BaseCType::get(TypeSpecifier::INT)
-            );
+            try {
+                return CTypedValue(
+                    builder.getInt32(std::stoi(expr.value)),
+                    BaseCType::get(TypeSpecifier::INT)
+                );
+            } catch(std::out_of_range&) {
+                reportError(expr.firstTerminal, "Constant outside range of representable values");
+                return CTypedValue::invalid();
+            }
+            
         }
         case ConstantType::String: {
             std::string constValue = expr.value;
