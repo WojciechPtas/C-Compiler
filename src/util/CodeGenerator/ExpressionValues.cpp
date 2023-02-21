@@ -223,6 +223,9 @@ void CodeGen::evaluateCondition(CTypedValue& ctv, bool negated=false) {
                 ctv.value = intToBool(ctv.value, negated);
                 ctv.type = BaseCType::get(TypeSpecifier::BOOL);
             }
+            else if(negated) {
+                ctv.value = builder.CreateNot(ctv.value, "LogicalNot");
+            }
         }
         else {
             //Condition is not scalar! Report an error message on exit
@@ -552,21 +555,24 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
                 case BinaryExpressionType::Equal: {
                     result.value = builder.CreateICmpEQ(
                         lhs.value,
-                        rhs.value
+                        rhs.value,
+                        "ICmpEQ"
                     );
                     break;
                 }
                 case BinaryExpressionType::Unequal: {
                     result.value = builder.CreateICmpNE(
                         lhs.value,
-                        rhs.value
+                        rhs.value,
+                        "ICmpNE"
                     );
                     break;
                 }
                 case BinaryExpressionType::LessThan: {
                     result.value = builder.CreateICmpSLT(
                         lhs.value,
-                        rhs.value
+                        rhs.value,
+                        "ICmpSLT"
                     );
                     break;
                 }
@@ -817,7 +823,7 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
         return CTypedValue::invalid();
     }
 
-    if(!leftExpr.type->equivalent(leftExpr.type.get()) && leftExpr.type->isInteger()) { //Integers of different sizes
+    if(!leftExpr.type->equivalent(rightExpr.type.get()) && leftExpr.type->isInteger()) { //Integers of different sizes
         builder.SetInsertPoint(leftEvalBlock);
         leftExpr.value = builder.CreateSExtOrTrunc(
             leftExpr.value, 
