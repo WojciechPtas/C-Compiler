@@ -65,6 +65,7 @@ void CodeGen::visit(const c4::model::statement::IterationStatement& s){
         if(!cond.isValid()){
             return;
         }
+        constantZeroToInt(cond);
         evaluateCondition(cond,false);
         if(!cond.isValid()) {
             reportError(s.firstTerminal,"Not scalar condition.");
@@ -111,7 +112,8 @@ void CodeGen::visit(const c4::model::statement::JumpStatement& s){
                 if(!val.isValid()) {
                     return;
                 }
-                if(currentFunc->retType->compatible(val.type.get())){
+                matchConstantZeroLeft(val, currentFunc->retType.get());
+                if(currentFunc->retType->assignmentCompatible(val.type.get())){
                     builder.CreateRet(val.value);
                     BasicBlock* deadBlock = BasicBlock::Create(
                         ctx,
@@ -242,6 +244,7 @@ void CodeGen::visit(const c4::model::statement::SelectionStatement& s){
         if(!cond.isValid()){
             return;
         }
+        constantZeroToInt(cond);
         evaluateCondition(cond,false);
         if(!cond.isValid()) {
             reportError(s.firstTerminal,"Not scalar condition.");

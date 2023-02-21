@@ -831,7 +831,7 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
     }
 
     Type* phiType;
-    if(leftExpr.type->isFuncNonDesignator() || rightExpr.type->isFuncNonDesignator()) {
+    if(leftExpr.type->isFunc() || rightExpr.type->isFunc()) {
         leftExpr.value = funcToPtr(leftExpr.value);
         rightExpr.value = funcToPtr(rightExpr.value);
         phiType = PointerType::getUnqual(ctx);
