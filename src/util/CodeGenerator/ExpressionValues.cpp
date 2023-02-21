@@ -2,6 +2,7 @@
 
 #include <memory>
 #include "../../model/CType/CStructType.h"
+#include "../../model/CType/ConstantZero.h"
 #include "../../model/CType/CTypedValue.h"
 
 #include "../../model/expression/BinaryExpression.h"
@@ -84,21 +85,23 @@ std::string incompatibleOperandsErrorMsg(const std::string& expression) {
     return str;
 }
 
-void constantZeroToInt(CTypedValue& v1) {
+void CodeGen::constantZeroToInt(CTypedValue& v1) {
     if(v1.type->isConstantZero()) {
         v1.type = BaseCType::get(TypeSpecifier::INT);
+        v1.value = builder.getInt32(0);
     }
 }
 
-void constantZeroToVoidPtr(CTypedValue& v1) {
+void CodeGen::constantZeroToVoidPtr(CTypedValue& v1) {
     if(v1.type->isConstantZero()) {
         v1.type = BaseCType::get(TypeSpecifier::VOID, 1);
+        v1.value = ConstantPointerNull::get(PointerType::getUnqual(ctx));
     }
 }
 
-void matchConstantZeroLeft(CTypedValue& zero, CTypedValue& v2) {
+void CodeGen::matchConstantZeroLeft(CTypedValue& zero, const CType* ctype) {
     if(zero.type->isConstantZero()) {
-        if(v2.type->isInteger() || !v2.type->isPointer()) {
+        if(ctype->isInteger() || !ctype->isPointer()) {
             constantZeroToInt(zero);
         }
         else {//It is a pointer
@@ -107,9 +110,9 @@ void matchConstantZeroLeft(CTypedValue& zero, CTypedValue& v2) {
     }
 }
 
-void matchConstantZero(CTypedValue& v1, CTypedValue& v2) {
-    matchConstantZeroLeft(v1, v2);
-    matchConstantZeroLeft(v2, v1);
+void CodeGen::matchConstantZero(CTypedValue& v1, CTypedValue& v2) {
+    matchConstantZeroLeft(v1, v2.type.get());
+    matchConstantZeroLeft(v2, v1.type.get());
 }
 
 void CodeGen::convertToINT(CTypedValue& ctv) { //No checks performed. Argument must be integer type.
@@ -237,6 +240,8 @@ CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
         if(!lhs.isValid() || !rhs.isValid()) {
             return CTypedValue::invalid();
         }
+        //lhs is lvalue, can't come from constant
+        matchConstantZeroLeft(rhs, lhs.type.get());
 
         if(lhs.isConst()) {
             reportError(expr.firstTerminal, "Assignment of constant lvalue");
@@ -305,9 +310,11 @@ CTypedValue CodeGen::visitLValue(const IndexExpression &expr) {
         //You can always obtain the rvalue of an expression. The only way you get invalid is if there was an error beforehand
         return CTypedValue::invalid(); 
     }
+    constantZeroToVoidPtr(base);
+    constantZeroToInt(idx);
     
-    if(base.type->isFunc()) {
-        reportError(expr.firstTerminal, "Function pointer arithmetic not allowed (IndexExpression)");
+    if(base.type->isFunc() || base.type->isVoidStar()) {
+        reportError(expr.firstTerminal, "Pointer arithmetic on object with no size (IndexExpression)");
         return CTypedValue::invalid();
     }
 
@@ -339,15 +346,20 @@ CTypedValue CodeGen::visitLValue(const MemberExpression &expr) {
         if(!base.isValid()) {
             return CTypedValue::invalid();
         }
+        constantZeroToVoidPtr(base);
 
         if(!base.type->isPointer()) {
             reportError(expr.firstTerminal, "Dereferencing a non-pointer in '->' member access");
             return CTypedValue::invalid();
         }
 
+        if(base.type->isVoidStar()) {
+            reportError(expr.firstTerminal, "Dereferencing void pointer");
+        }
+
         base.dereference();
     }
-    
+
     if(!base.type->isStruct()) {
         reportError(expr.firstTerminal, "Member access of non-struct type");
         return CTypedValue::invalid();
@@ -381,11 +393,17 @@ CTypedValue CodeGen::visitLValue(const UnaryExpression &expr) {
         if(!ptr.isValid()) {
             return CTypedValue::invalid();
         }
+        constantZeroToVoidPtr(ptr);
         
         if(!(ptr.type->isPointer() || ptr.type->isFunc())) {
             reportError(expr.firstTerminal, "Dereferencing a non-pointer");
             return CTypedValue::invalid();
         }
+
+        if(ptr.type->isVoidStar()) {
+            reportError(expr.firstTerminal, "Dereferencing void pointer");
+        }
+
         if(!ptr.type->isFuncNonDesignator()) {
             ptr.dereference();
         }
@@ -411,7 +429,7 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             if(!lhs.isValid()) {
                 return CTypedValue::invalid();
             }
-
+            constantZeroToInt(lhs);
             evaluateCondition(lhs);
             if(!lhs.isValid()) { 
                 reportError(expr.firstTerminal, 
@@ -455,6 +473,7 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             if(!rhs.isValid()) {
                 return CTypedValue::invalid();
             }
+            constantZeroToInt(rhs);
 
             evaluateCondition(rhs);
             if(!rhs.isValid()) {
@@ -496,6 +515,7 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
             if(!(lhs.isValid() && rhs.isValid())) {
                 return CTypedValue::invalid();
             }
+            matchConstantZero(lhs, rhs);
 
             if(!lhs.compatible(rhs)) {
                 reportError(
@@ -566,8 +586,12 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
                 return CTypedValue::invalid();
             }
 
-            if(lhs.type->isFunc() || rhs.type->isFunc()) {
-                reportError(expr.firstTerminal, "Arithmetic over incomplete objects (e.g. functions) is not allowed");
+            //Because it's not possible to have voidStar operands, i can safely convert any 0 constant to int
+            constantZeroToInt(lhs);
+            constantZeroToInt(rhs);
+
+            if(lhs.type->isFunc() || rhs.type->isFunc() || lhs.type->isVoidStar() || rhs.type->isVoidStar()) {
+                reportError(expr.firstTerminal, "Arithmetic over pointers to objects without size (e.g. functions) is not allowed");
                 return CTypedValue::invalid();
             }
 
@@ -702,6 +726,7 @@ CTypedValue CodeGen::visitRValue(const CallExpression &expr) {
         if(!argRvalue.isValid()) {
             return CTypedValue::invalid();
         }
+        matchConstantZeroLeft(argRvalue, funcType->paramTypes[i].get());
         //I check if they have compatible types
         if(!funcType->paramTypes[i]->assignmentCompatible(argRvalue.type.get())) {
             reportError(expr.firstTerminal, 
@@ -738,6 +763,7 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
     if(!cond.isValid()) {
         return CTypedValue::invalid();
     }
+    constantZeroToInt(cond);
     
     evaluateCondition(cond);
     if(!cond.isValid()) {
@@ -780,6 +806,8 @@ CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
     if(!(leftExpr.isValid() && rightExpr.isValid())) {
         return CTypedValue::invalid();
     }
+
+    matchConstantZero(leftExpr, rightExpr);
 
     if(!leftExpr.compatible(rightExpr)) {
         reportError(
@@ -847,10 +875,18 @@ CTypedValue CodeGen::visitRValue(const ConstantExpression &expr) {
         }
         case ConstantType::Decimal: {
             try {
-                return CTypedValue(
-                    builder.getInt32(std::stoi(expr.value)),
-                    BaseCType::get(TypeSpecifier::INT)
-                );
+                int val = std::stoi(expr.value);
+                CTypedValue result;
+                result.value = builder.getInt32(val);
+
+                if(val == 0) {
+                    result.type = ConstantZero::get();
+                }
+                else {
+                    result.type = BaseCType::get(TypeSpecifier::INT);
+                }
+                return result;
+
             } catch(std::out_of_range&) {
                 reportError(expr.firstTerminal, "Constant outside range of representable values");
                 return CTypedValue::invalid();
@@ -914,6 +950,8 @@ CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
             if(!positive.isValid()) {
                 return CTypedValue::invalid();
             }
+            constantZeroToInt(positive);
+            
             if(!positive.type->isInteger()) {
                 reportError(
                     expr.firstTerminal,
@@ -943,6 +981,8 @@ CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
             if(!operand.isValid()) {
                 return CTypedValue::invalid();
             }
+            constantZeroToInt(operand);
+
             evaluateCondition(operand, true);
             if(!operand.isValid()) {
                 reportError(expr.firstTerminal, 
@@ -968,6 +1008,7 @@ CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
             if(!operand.isValid()) {
                 return CTypedValue::invalid();
             }
+            constantZeroToInt(operand);
 
             TypeSize size = M.getDataLayout().getTypeAllocSize(operand.value->getType());
             // deadBlock->eraseFromParent(); cannot do it because of other possible users!

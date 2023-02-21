@@ -6,6 +6,7 @@
 #include "../../model/CType/BaseCType.h"
 #include "../../model/CType/CFunctionType.h"
 #include "../../model/CType/CStructType.h"
+#include "../../model/CType/ConstantZero.h"
 #include "../../model/CType/ParameterInfo.h"
 #include "../../model/CType/CTypedValue.h"
 
@@ -252,6 +253,11 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     llvm::Value* funcToPtr(llvm::Value* func);
     c4::model::ctype::CTypedValue loadFromLValue(const c4::model::expression::IExpression& expr);
     void convertToINT(c4::model::ctype::CTypedValue& integer); //Argument must be integer type
+    void constantZeroToInt(c4::model::ctype::CTypedValue& v1);
+    void constantZeroToVoidPtr(c4::model::ctype::CTypedValue& v1);
+    void matchConstantZeroLeft(c4::model::ctype::CTypedValue& zero, const c4::model::ctype::CType* v2);
+    void matchConstantZero(c4::model::ctype::CTypedValue& v1, c4::model::ctype::CTypedValue& v2);
+
 
     void reportError(std::shared_ptr<const c4::model::token::Token> token, std::string errorMessage){
         c4::util::token::PrintVisitor v(std::cerr);

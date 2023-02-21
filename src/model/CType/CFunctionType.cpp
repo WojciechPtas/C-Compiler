@@ -61,7 +61,14 @@ FunctionType* CFunctionType::getLLVMFuncType(llvm::LLVMContext &ctx) const {
     Type* llvmRetType = retType->getLLVMType(ctx);
     std::vector<Type*> llvmParamTypes;
     for(auto& ctype : paramTypes) {
-        llvmParamTypes.push_back(ctype->getLLVMType(ctx));
+        Type* llvmType;
+        if(ctype->isFunc()) {
+            llvmType = PointerType::getUnqual(ctx);
+        }
+        else {
+            llvmType = ctype->getLLVMType(ctx);
+        }
+        llvmParamTypes.push_back(llvmType);
     }
     return FunctionType::get(llvmRetType, llvmParamTypes, false);
 }
