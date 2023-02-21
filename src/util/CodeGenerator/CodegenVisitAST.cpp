@@ -320,12 +320,12 @@ ParametersInfo CodeGen::buildStruct(std::shared_ptr<StructDeclarationList> s){
         field = buildDeclarationFromDS(a->ds);
         if(field.type->isStruct()){
             auto stru = std::dynamic_pointer_cast<CStructType>(field.type);
-            if(stru==nullptr) continue;;
+            if(stru==nullptr) continue;
             if(stru->getFieldNames().empty()){
                 scope.declareStruct(field.structname);
             }
             else if(!stru->getFieldNames().empty()){
-                if(field.structname=="") continue;; // anonymous struct
+                if(field.structname=="") continue; // anonymous struct
                 std::unordered_set<std::string>se(stru->getFieldNames().begin(),stru->getFieldNames().end());
                 if(se.size()!=stru->getFieldNames().size()){
                     reportError(a->firstTerminal, "Two fields with the same name");
@@ -336,6 +336,7 @@ ParametersInfo CodeGen::buildStruct(std::shared_ptr<StructDeclarationList> s){
                     continue;
                 }
                 scope.defineStruct(field.structname, stru);
+                std::cout<<field.structname<<std::endl;
             }
         }
     }
@@ -374,7 +375,7 @@ ParametersInfo CodeGen::buildStruct(std::shared_ptr<StructDeclarationList> s){
                     fields.push_back(field.type);
                     continue;
                 }
-            }
+            }                
         }
         else{
             if(a->declarator!=nullptr){
@@ -660,6 +661,7 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                 }
                 else{
                     if(fu->indirections==0){
+                    std::cout<<f.structname;
                     reportError(s.firstTerminal, "Missing definition for struct.");
                     return;
                     }
@@ -691,9 +693,6 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
         reportError(s.firstTerminal,"Declaration with declarator is not allowed.");
     }
     if(f.type==nullptr) std::cout<< "dupa1\n";
-    if(f.type->isStruct()){
-        return;
-    }
     else if(f.type->isFuncNonDesignator()){
         if(SecondPhase) return;
         auto fu = std::dynamic_pointer_cast<const CFunctionType>(f.type);

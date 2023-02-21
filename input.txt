@@ -1,10 +1,101 @@
-struct C{int x; int a;} c;
-struct C a;
-struct S{
-	int x;
-	char a;
-	struct S* p;
-} s;
-int main(){
+int i1;
 
+int i1;
+
+void labeledLabeled(void) {
+
+    int v;
+    goto stupid;
+
+    v = 2;
+
+    crazy:
+    stupid:
+    alarming:
+    v = v == 0;
+
+    goto happens;
+
+    {
+        happens:
+        v = 7;
+
+        goto yesweare;
+    }
+
+    if (v == 0) {
+        // Never going here aren't we
+
+        yesweare:
+        v = 0;
+    } else {
+        // You thought we were going here gotcha
+        v = 6;
+    }
+
+    while(v + 1) {
+        while(1) {
+            goto plsend;
+        }
+    }
+
+    plsend: ;
+}
+
+int reallyBlockyInsideInit(int k) {
+    {
+        int k;
+        {
+            int z;
+            {
+                int k;
+                k = z;
+            }
+        }
+    } {
+        {
+            {
+                {
+                    {
+                        {
+                            // Just blocking some space
+                            ;
+                            ;
+                            ;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+void takingAWhile(char* s) {
+    while (*s != 'h')
+        *s = *s + 1;
+
+    while(*s != 'h');
+
+    while(*s = 1) {
+        if (*s = 0) {
+            // Report to error center, something went horribly wrong
+            continue;
+        } else {
+            // Amazing
+            break;
+        }
+
+        return;
+    }
+}
+
+void functionPointerDeclarationOperation(void) {
+    int getMe(void);
+
+    int getMe(void);
+
+    int* getYou(int* ch);
+
+    int* getYou(int*);
 }
