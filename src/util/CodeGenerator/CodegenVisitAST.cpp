@@ -736,6 +736,7 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
     else{
         if(SecondPhase) return;
         if(scope.varAlreadyDeclared(f.name)){
+                if(scope.isGlobal()) return ;
                 std::string msg="Variable with name: " + f.name + " was already declared in this scope";
                 reportError(s.firstTerminal,msg);
             }
