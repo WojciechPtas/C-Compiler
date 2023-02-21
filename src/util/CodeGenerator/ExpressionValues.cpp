@@ -84,6 +84,34 @@ std::string incompatibleOperandsErrorMsg(const std::string& expression) {
     return str;
 }
 
+void constantZeroToInt(CTypedValue& v1) {
+    if(v1.type->isConstantZero()) {
+        v1.type = BaseCType::get(TypeSpecifier::INT);
+    }
+}
+
+void constantZeroToVoidPtr(CTypedValue& v1) {
+    if(v1.type->isConstantZero()) {
+        v1.type = BaseCType::get(TypeSpecifier::VOID, 1);
+    }
+}
+
+void matchConstantZeroLeft(CTypedValue& zero, CTypedValue& v2) {
+    if(zero.type->isConstantZero()) {
+        if(v2.type->isInteger() || !v2.type->isPointer()) {
+            constantZeroToInt(zero);
+        }
+        else {//It is a pointer
+            constantZeroToVoidPtr(zero);
+        }
+    }
+}
+
+void matchConstantZero(CTypedValue& v1, CTypedValue& v2) {
+    matchConstantZeroLeft(v1, v2);
+    matchConstantZeroLeft(v2, v1);
+}
+
 void CodeGen::convertToINT(CTypedValue& ctv) { //No checks performed. Argument must be integer type.
     ctv.type = BaseCType::get(TypeSpecifier::INT);
     ctv.value = builder.CreateSExtOrTrunc(
@@ -675,7 +703,7 @@ CTypedValue CodeGen::visitRValue(const CallExpression &expr) {
             return CTypedValue::invalid();
         }
         //I check if they have compatible types
-        if(!funcType->paramTypes[i]->compatible(argRvalue.type.get())) {
+        if(!funcType->paramTypes[i]->assignmentCompatible(argRvalue.type.get())) {
             reportError(expr.firstTerminal, 
                 std::string("Incompatible parameters at position ")
                     .append(std::to_string(i))
