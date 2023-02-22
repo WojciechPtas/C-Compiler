@@ -79,6 +79,10 @@ std::string noLValueErrorMsg(const std::string& expression) {
     return str;
 }
 
+std::string noLValueErrorMsg() {
+    return "Expression has no lvalue";
+}
+
 std::string incompatibleOperandsErrorMsg(const std::string& expression) {
     std::string str = "Incompatible operands in ";
     str.append(expression);
@@ -240,7 +244,15 @@ CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
         //Error if expression doesn't have lvalue AND there was no error before
         CTypedValue lhs = expr.left->getLValue(*this);
         CTypedValue rhs = expr.right->getRValue(*this);
-        if(!lhs.isValid() || !rhs.isValid()) {
+        if(!lhs.isValid()) {
+            reportError(
+                expr.firstTerminal,
+                noLValueErrorMsg("LHS of assignment"),
+                true
+            );
+            return CTypedValue::invalid();
+        }
+        if(!rhs.isValid()) {
             return CTypedValue::invalid();
         }
         //lhs is lvalue, can't come from constant
@@ -276,14 +288,15 @@ CTypedValue CodeGen::visitLValue(const BinaryExpression &expr) {
         return lhs;
     }
     else { //Expression has no lvalue
-        reportError(expr.firstTerminal, noLValueErrorMsg(c4::util::expression::stringifyExplicit(expr.type)));
+        // reportError(expr.firstTerminal, noLValueErrorMsg(c4::util::expression::stringifyExplicit(expr.type)));
         return CTypedValue::invalid();
     }
     
 }
 CTypedValue CodeGen::visitLValue(const CallExpression &expr) {
     //has no lvalue
-    reportError(expr.firstTerminal, noLValueErrorMsg("CallExpression"));
+    // reportError(expr.firstTerminal, noLValueErrorMsg("CallExpression"));
+    (void) expr;
     return CTypedValue::invalid();
 }
 
@@ -333,6 +346,13 @@ CTypedValue CodeGen::visitConditionalExpression(const ConditionalExpression &exp
     builder.CreateBr(endBlock);
 
     if(!(leftExpr.isValid() && rightExpr.isValid())) {
+        if(lvalue) {
+            reportError(
+                expr.firstTerminal,
+                noLValueErrorMsg("An operand in Conditional Expression"),
+                true
+            );
+        }
         return CTypedValue::invalid();
     }
 
@@ -405,7 +425,8 @@ CTypedValue CodeGen::visitLValue(const ConditionalExpression &expr) {
 }
 CTypedValue CodeGen::visitLValue(const ConstantExpression &expr) {
     //has no lvalue
-    reportError(expr.firstTerminal, noLValueErrorMsg("ConstantExpression"));
+    // reportError(expr.firstTerminal, noLValueErrorMsg("ConstantExpression"));
+    (void) expr;
     return CTypedValue::invalid();
 }
 CTypedValue CodeGen::visitLValue(const IdentifierExpression &expr) {
@@ -453,6 +474,11 @@ CTypedValue CodeGen::visitLValue(const MemberExpression &expr) {
     if(expr.type == MemberExpressionType::Direct) {
         base = expr.container->getLValue(*this);
         if(!base.isValid()) {
+            reportError(
+                expr.firstTerminal,
+                noLValueErrorMsg("Container in Member Expression"),
+                true
+            );
             return CTypedValue::invalid();
         }
     }
@@ -497,7 +523,8 @@ CTypedValue CodeGen::visitLValue(const MemberExpression &expr) {
 }
 CTypedValue CodeGen::visitLValue(const SizeOfType &expr) {
     //has no lvalue
-    reportError(expr.firstTerminal, noLValueErrorMsg("SizeOfType"));
+    // reportError(expr.firstTerminal, noLValueErrorMsg("SizeOfType"));
+    (void) expr;
     return CTypedValue::invalid();
 }
 CTypedValue CodeGen::visitLValue(const UnaryExpression &expr) {
@@ -525,7 +552,7 @@ CTypedValue CodeGen::visitLValue(const UnaryExpression &expr) {
         return ptr; //Not a ptr anymore
     }
     //else this kind of expression has no lvalue
-    reportError(expr.firstTerminal, noLValueErrorMsg(c4::util::expression::stringifyExplicit(expr.type)));
+    // reportError(expr.firstTerminal, noLValueErrorMsg(c4::util::expression::stringifyExplicit(expr.type)));
     return CTypedValue::invalid();
 }
 
@@ -990,6 +1017,11 @@ CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
         case UnaryExpressionType::AddressOf: {
             CTypedValue address = expr.expression->getLValue(*this);
             if(!address.isValid()) {
+                reportError(
+                    expr.firstTerminal,
+                    noLValueErrorMsg("Operand of Address Of"),
+                    true
+                );
                 return CTypedValue::invalid();
             }
             if(!address.type->isFuncNonDesignator()) {

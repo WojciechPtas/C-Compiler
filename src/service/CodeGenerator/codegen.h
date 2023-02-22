@@ -259,11 +259,13 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     void matchConstantZero(c4::model::ctype::CTypedValue& v1, c4::model::ctype::CTypedValue& v2);
 
 
-    void reportError(std::shared_ptr<const c4::model::token::Token> token, std::string errorMessage){
-        c4::util::token::PrintVisitor v(std::cerr);
-        v.printPosition(*token);
-        std::cerr<<"error: " <<errorMessage<<"\n";
-        setError(CodeGen::ErrorState::ERROR);
+    void reportError(std::shared_ptr<const c4::model::token::Token> token, std::string errorMessage, bool ifNotAlready=false){
+        if(!ifNotAlready || !isError()) {
+            c4::util::token::PrintVisitor v(std::cerr);
+            v.printPosition(*token);
+            std::cerr<<"error: " <<errorMessage<<"\n";
+            setError(CodeGen::ErrorState::ERROR);
+        }
     }
     
     std::shared_ptr<const c4::model::ctype::CType> getCtype(const std::shared_ptr<const c4::model::declaration::TypeName>&s);
