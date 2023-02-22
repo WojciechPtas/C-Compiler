@@ -967,18 +967,26 @@ CTypedValue CodeGen::visitRValue(const MemberExpression &expr) {
 CTypedValue CodeGen::visitRValue(const SizeOfType &expr) {
     //Nothing can go wrong here if good error detection was done at AST construction
     shared_ptr<const CType> ctype = getCtype(expr.type);
-    TypeSize size = M.getDataLayout().getTypeAllocSize(ctype->getLLVMType(ctx));
-
-    if(ctype->isFunc() || !ctype->isComplete()) {
+    
+    if(!ctype->isComplete()) {
         reportError(
             expr.firstTerminal,
             illegalOperatorUseErrorMsg(
                 "sizeof(type-name)",
-                "Function or incomplete object"
+                "Incomplete object"
             )
         );
         return CTypedValue::invalid();
     }
+
+    Type* type;
+    if(ctype->isFunc()) {
+        type = PointerType::getUnqual(ctx);
+    }
+    else {
+        type = ctype->getLLVMType(ctx);
+    }
+    TypeSize size = M.getDataLayout().getTypeAllocSize(type);
     
     return CTypedValue(
         ConstantInt::get(
@@ -1063,19 +1071,26 @@ CTypedValue CodeGen::visitRValue(const UnaryExpression &expr) {
             }
             constantZeroToInt(operand);
 
-            TypeSize size = M.getDataLayout().getTypeAllocSize(operand.value->getType());
-            // deadBlock->eraseFromParent(); cannot do it because of other possible users!
-
-            if(operand.type->isFunc()) {
+            if(!operand.type->isComplete()) {
                 reportError(
                     expr.firstTerminal,
                     illegalOperatorUseErrorMsg(
-                        c4::util::expression::stringifyExplicit(expr.type),
-                        "Function"
+                        "sizeof(expr)",
+                        "Incomplete object"
                     )
                 );
                 return CTypedValue::invalid();
             }
+            
+            Type* type;
+            if(operand.type->isFunc()) {
+                type = PointerType::getUnqual(ctx);
+            }
+            else {
+                type = operand.type->getLLVMType(ctx);
+            }
+            TypeSize size = M.getDataLayout().getTypeAllocSize(type);
+            // deadBlock->eraseFromParent(); cannot do it because of other possible users!
 
             return CTypedValue(
                 ConstantInt::get(
