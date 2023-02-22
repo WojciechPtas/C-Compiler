@@ -543,6 +543,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
                     reportError(s.firstTerminal,"Redefinition of struct!");
                     return;
                 }
+                std::cout<<"definition\n";
                 scope.defineStruct(a.structname, fu);
                 return;
             }
