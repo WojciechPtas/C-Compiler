@@ -55,7 +55,7 @@ namespace c4::model::ctype {
         }
 
         bool isComplete() const override {
-            return true;
+            return !isVoid();
         }
 
 
