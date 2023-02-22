@@ -446,8 +446,12 @@ CTypedValue CodeGen::visitLValue(const IndexExpression &expr) {
         //You can always obtain the rvalue of an expression. The only way you get invalid is if there was an error beforehand
         return CTypedValue::invalid(); 
     }
-    constantZeroToVoidPtr(base);
+    constantZeroToInt(base);
     constantZeroToInt(idx);
+
+    if(!base.type->isPointer() && !base.type->isFunc()) {
+        std::swap(base, idx);
+    }
     
     if(base.type->isFunc() || base.type->isVoidStar()) {
         reportError(expr.firstTerminal, "Pointer arithmetic on object with no size (IndexExpression)");
