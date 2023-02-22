@@ -1,11 +1,15 @@
 ; ModuleID = 'input.txt'
 source_filename = "input.txt"
 
-%A.0 = type { i32 }
-%A = type { i32 }
+%S = type { i32 }
 
-define %A.0 @main() {
+@x = common global %S zeroinitializer
+
+define i32 @main() {
 main_entry:
-  %g = alloca %A, align 8
-  ret %A.0 zeroinitializer
+  %a = alloca %S, align 8
+  %0 = getelementptr inbounds %S, ptr %a, i32 0, i32 0
+  store i32 2, ptr %0, align 4
+  %1 = load i32, ptr %0, align 4
+  ret i32 0
 }

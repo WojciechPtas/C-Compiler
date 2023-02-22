@@ -1,4 +1,8 @@
-struct A{int y;} main(){
-struct A g;
-//return g;
+ struct S{
+ 	int x;
+ }x;
+int main(){
+struct S a;
+ a.x = 2;// sizeof (struct S);
+
 }
