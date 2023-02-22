@@ -348,7 +348,7 @@ ParametersInfo CodeGen::buildStruct(std::shared_ptr<StructDeclarationList> s){
                     reportError(a->firstTerminal,"Redefinition of struct!");
                     continue;
                 }
-            std::cout <<"we should not be there\n";
+            //std::cout <<"we should not be there\n";
 
                 scope.defineStruct(field.structname, stru);
                 //std::cout<<field.structname<<std::endl;
@@ -544,7 +544,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
                     reportError(s.firstTerminal,"Redefinition of struct!");
                     return;
                 }
-                std::cout<<"definition\n";
+                //std::cout<<"definition\n";
                 scope.defineStruct(a.structname, fu);
                 return;
             }
@@ -710,7 +710,7 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                 reportError(s.firstTerminal,"Redefinition of struct!");
                 return;
             }
-            std::cout <<"we should not be there\n";
+            // <<"we should not be there\n";
             scope.defineStruct(f.structname, fu);
             return;
             }
@@ -738,7 +738,7 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                 }
                 else{
                     if(fu->indirections==0){
-                        std::cout<<f.structname;
+                        //std::cout<<f.structname;
                         reportError(s.firstTerminal, "Missing definition for struct.");
                         return;
                     }
