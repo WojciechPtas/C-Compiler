@@ -3,9 +3,6 @@
 #include "../../debug.h"
 #include "ExpressionParser.h"
 #include "../LLparser/LLParser.h"
-#include "../../util/token/ParserVisitor.h"
-#include "../../model/declaration/TypeName.h"
-#include "../../model/expression/SizeOfType.h"
 
 using namespace c4::model::expression;
 using namespace c4::model::parser::lr;
@@ -17,55 +14,6 @@ using namespace std;
 ExpressionParser::ExpressionParser(weak_ptr<const State> initialState, LLParser* llparser)
 : initialState(initialState), llparser(llparser) {
     this->states.push_back(initialState);
-}
-
-bool isSizeOf(std::shared_ptr<const Token> token) {
-    c4::util::token::ParserVisitor pv;
-    token->accept(pv);
-    return (
-        pv.getKind() == c4::util::token::TokenKind::keyword &&
-        pv.getSepcificValue().k == Keyword::Sizeof
-    );
-}
-
-bool isTypeSpecifier(std::shared_ptr<const Token> token) {
-    c4::util::token::ParserVisitor pv;
-    token->accept(pv);
-    return (
-        pv.getKind() == c4::util::token::TokenKind::keyword && (
-            pv.getSepcificValue().k == Keyword::Char ||
-            pv.getSepcificValue().k == Keyword::Double ||
-            pv.getSepcificValue().k == Keyword::Float ||
-            pv.getSepcificValue().k == Keyword::Int ||
-            pv.getSepcificValue().k == Keyword::Long ||
-            pv.getSepcificValue().k == Keyword::Short ||
-            pv.getSepcificValue().k == Keyword::Signed ||
-            pv.getSepcificValue().k == Keyword::Struct ||
-            pv.getSepcificValue().k == Keyword::Unsigned ||
-            pv.getSepcificValue().k == Keyword::Void ||
-            pv.getSepcificValue().k == Keyword::__Bool
-        )
-    );
-}
-
-bool isLeftParenthesis(std::shared_ptr<const Token> token) {
-    c4::util::token::ParserVisitor pv;
-    token->accept(pv);
-    return (
-        pv.getKind() == c4::util::token::TokenKind::punctuator && (
-            pv.getSepcificValue().p == Punctuator::LeftParenthesis
-        )
-    );
-}
-
-bool isRightParenthesis(std::shared_ptr<const Token> token) {
-    c4::util::token::ParserVisitor pv;
-    token->accept(pv);
-    return (
-        pv.getKind() == c4::util::token::TokenKind::punctuator && (
-            pv.getSepcificValue().p == Punctuator::RightParenthesis
-        )
-    );
 }
 
 void ExpressionParser::reset() {
@@ -82,7 +30,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
     IBufferedInputStream<shared_ptr<Token>> &input
 ) {
     shared_ptr<Token> convertedToken; //Will store token->convertDigraph() here
-    bool accepting, eofReached, readNext = true;
+    bool accepting, eofReached, readNext = true, isError;
     size_t stateCount = 0, newStateCount = this->states.size();
     
     do {
@@ -92,53 +40,7 @@ shared_ptr<const IExpression> ExpressionParser::parse(
             eofReached = !input.read(&_lastTokenRead);
             tokens.push_back(_lastTokenRead);
             convertedToken = _lastTokenRead->convertDigraph();
-
-            if(isSizeOf(convertedToken)) {
-                //Don't add any more tokens to the tokens stack. First token of sizeof(type) is sizeof, which has just been pushed
-                input.pushMark();
-                bool sizeOfTypeCondition;
-                std::shared_ptr<Token> temp;
-
-                sizeOfTypeCondition = 
-                    input.read(&temp) &&
-                    isLeftParenthesis(temp);
-                
-                if(sizeOfTypeCondition) {
-                    input.pushMark();
-                    sizeOfTypeCondition = 
-                        input.read(&temp) &&
-                        isTypeSpecifier(temp);
-                    input.resetAndPopMark();
-                }
-                if(sizeOfTypeCondition) {
-                    //read parenthesized type and push into expression stack
-                    std::shared_ptr<model::declaration::TypeName> type_name = llparser->parseTypeName();
-                    if(type_name == nullptr) {
-                        //LLparser error
-                        _lastTokenRead = llparser->lastTokenRead();
-                        reset();
-                        break; //Goes to end of while: a nullptr will be returned
-                    }
-                    else if(!(input.read(&_lastTokenRead) && isRightParenthesis(_lastTokenRead))) {
-                        //LR parser error
-                        reset();
-                        break; //Goes to end of while: a nullptr will be returned
-                    }
-                    else { //All good, generate the expression, put it onto the stack
-                        isGoto = true;
-                        std::shared_ptr<const Token> sizeOfToken = tokens.back();
-                        tokens.pop_back();
-
-                        std::shared_ptr<const SizeOfType> sizeOfExpr = std::make_shared<const SizeOfType>(type_name, sizeOfToken);
-                        expressions.push_back(sizeOfExpr);
-                    }
-                }
-                else {
-                    input.resetToMark(); //resets to after reading sizeOf
-                }
-                //Continue normally
-                input.popMark();
-            }
+            readNext = false;
         }
 
         if (this->states.empty()) {
@@ -171,19 +73,26 @@ shared_ptr<const IExpression> ExpressionParser::parse(
                 handler = currentState->getHandler(*convertedToken);
             }
 
-            if (handler == nullptr) {
-                reset();
-                break;
-            }
+            isError = (handler == nullptr);
 
-            ExpressionParserExecutor executor(*this, convertedToken);
-            handler->accept(executor);
-            readNext = executor.hasShifted();
-            accepting = executor.isAccepting();
+            if(!isError) {
+                ExpressionParserExecutor executor(*this, convertedToken, input);
+                handler->accept(executor);
+                readNext = executor.hasShifted();
+                accepting = executor.isAccepting();
+                isError = executor.isError();
+                if(executor.hasLLShifted()) {
+                    stateCount = INT32_MAX;
+                }
+            }
         }
 
         newStateCount = this->states.size();
-    } while (!eofReached || !accepting); //terminates when eofReached && accepting
+    } while ((!eofReached || !accepting) && !isError); //terminates when eofReached && accepting
+
+    if(isError) {
+        reset();
+    }
 
     if (this->expressions.empty()) {
         throw logic_error("No expression available!");

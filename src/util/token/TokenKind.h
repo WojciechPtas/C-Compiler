@@ -1,4 +1,8 @@
 #pragma once
+
+#include "../../model/token/Punctuator.h"
+#include "../../model/token/Keyword.h"
+
 namespace c4::util::token{
 
 class SpecifiedToken
