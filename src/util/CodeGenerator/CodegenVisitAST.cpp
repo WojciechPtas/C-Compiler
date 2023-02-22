@@ -551,6 +551,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
                 }
                 else{
                     reportError(s.firstTerminal,"Redefinition of a function!");
+                    return;
                 }
             }
             else{
