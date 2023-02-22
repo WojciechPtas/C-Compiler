@@ -82,7 +82,7 @@ void CodeGen::visit(const c4::model::statement::IterationStatement& s){
     }
 }
 void CodeGen::visit(const c4::model::statement::JumpStatement& s){
-    if(FirstPhase||SecondPhase) return;
+    if(FirstPhase||SecondPhase||isError()) return;
     if(s.k==kind::_goto){
         if(gotoLabels.find(s.gotoIdentifier)!=gotoLabels.end()){
             builder.CreateBr(gotoLabels[s.gotoIdentifier]);
@@ -97,6 +97,7 @@ void CodeGen::visit(const c4::model::statement::JumpStatement& s){
         else{
             std::string msg = "Label with this name: " + s.gotoIdentifier + " was not declared.";
             reportError(s.firstTerminal,msg);
+            return;
         }
     }
     else if(s.k==kind::_return){ // return;
@@ -189,12 +190,12 @@ void CodeGen::visit(const c4::model::statement::JumpStatement& s){
     }
 }
 void CodeGen::visit(const c4::model::statement::LabeledStatement& s){
-    if(SecondPhase) {
+    if(SecondPhase||isError()) {
         s.statement->accept(*this);
         return;
     }
 
-    if(FirstPhase){
+    if(FirstPhase||isError()){
         BasicBlock* jumpBlock = BasicBlock::Create(
             ctx,
             s.identifier,
@@ -347,7 +348,7 @@ ParametersInfo CodeGen::buildStruct(std::shared_ptr<StructDeclarationList> s){
                     reportError(a->firstTerminal,"Redefinition of struct!");
                     continue;
                 }
-            std::cout <<"we should not be there\n";
+            //std::cout <<"we should not be there\n";
 
                 scope.defineStruct(field.structname, stru);
                 //std::cout<<field.structname<<std::endl;
@@ -543,7 +544,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
                     reportError(s.firstTerminal,"Redefinition of struct!");
                     return;
                 }
-                std::cout<<"definition\n";
+                //std::cout<<"definition\n";
                 scope.defineStruct(a.structname, fu);
                 return;
             }
@@ -709,7 +710,7 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                 reportError(s.firstTerminal,"Redefinition of struct!");
                 return;
             }
-            std::cout <<"we should not be there\n";
+            // <<"we should not be there\n";
             scope.defineStruct(f.structname, fu);
             return;
             }
@@ -737,7 +738,7 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                 }
                 else{
                     if(fu->indirections==0){
-                        std::cout<<f.structname;
+                        //std::cout<<f.structname;
                         reportError(s.firstTerminal, "Missing definition for struct.");
                         return;
                     }
@@ -869,6 +870,23 @@ std::shared_ptr<const c4::model::ctype::CType> CodeGen::getCtype(const std::shar
 {
     Var a;
     a = buildDeclarationFromDS(s->ds);
+    if(a.type->isStruct()){
+        auto fu = std::dynamic_pointer_cast<CStructType>(a.type);
+        if(fu==nullptr) {
+            std::cout << "dupa\n"; 
+        }
+        if(!fu->getFieldNames().empty()){
+            //nothing to do
+        }
+        else{
+            if(scope.isStructDefined(fu->getName())){
+                a.type=CStructType::get(scope.getStruct(fu->getName())->getFieldNames(), scope.getStruct(fu->getName())->getFieldTypes(),scope.getStruct(fu->getName())->getName());
+            }
+            else{
+                reportError(s->firstTerminal,"Invalid argument");
+            }
+        }
+    }
     if(s->declarator!=nullptr){
         a = buildVar(s->declarator,a);
     }

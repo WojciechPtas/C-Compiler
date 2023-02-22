@@ -14,8 +14,8 @@ namespace c4::model::declaration{
             DirectDeclarator(std::string identifier, //REDO
                 std::shared_ptr<Declarator> declarator,
                 std::shared_ptr<DirectDeclarator2> direct_declarator,
-                std::shared_ptr<token::Token> token=nullptr
-             ) :  IDeclaration(token),identifier(identifier), 
+                std::shared_ptr<token::Token> token
+             ) :  IDeclaration(direct_declarator->firstTerminal == nullptr ? token : direct_declarator->firstTerminal),identifier(identifier), 
                 declarator(declarator), direct_declarator(direct_declarator){};
             void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
