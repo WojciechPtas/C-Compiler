@@ -114,6 +114,15 @@ void CodeGen::visit(const c4::model::statement::JumpStatement& s){
                 }
                 matchConstantZeroLeft(val, currentFunc->retType.get());
                 if(currentFunc->retType->assignmentCompatible(val.type.get())){
+                    if(currentFunc->retType->isInteger()) {
+                        //Need to unify their sizes
+                        //It would be nice to issue a warning in this case
+                        //The following instruction does nothing if they have the same size already
+                        val.value = builder.CreateSExtOrTrunc(
+                            val.value,
+                            currentFunc->retType->getLLVMType(ctx)
+                        );
+                    }
                     builder.CreateRet(val.value);
                     BasicBlock* deadBlock = BasicBlock::Create(
                         ctx,
@@ -593,7 +602,7 @@ void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
         arg->setName(f.params->names[i]);
         AllocaInst *lvalue = Alloca(arg->getType(), f.params->names[i]);
         builder.CreateStore(arg, lvalue);
-        CTypedValue typedLvalue(lvalue, f.params->types[i]);
+        CTypedValue typedLvalue(lvalue, fu->paramTypes[i]);
         if(scope.varAlreadyDeclared(f.params->names[i])){
             reportError(s.firstTerminal, "Redeclaration of parameter");
             continue;

@@ -108,17 +108,18 @@ enum class ParseCodeGenMode {
 bool parseAndCodeGen(const std::string& input, ParseCodeGenMode mode) {
     auto AST = genAST(input);
     bool failed = AST == nullptr;
+    CodeGen g(input);
+    
+    if(!failed) {
+        AST->accept(g);
+        failed = g.isError();
+    }
     if(!failed) {
         if(mode == ParseCodeGenMode::PRINT) {
             c4::util::pretty::PrettyPrintinVisitor ppv(std::cout);
             AST->accept(ppv);
         }
         if(mode == ParseCodeGenMode::CODEGEN || mode == ParseCodeGenMode::DEBUG_CODEGEN) {
-            CodeGen g(input);
-            AST->accept(g);
-            if(g.isError()) {
-                failed = true;
-            }
             g.printIR(mode == ParseCodeGenMode::DEBUG_CODEGEN);
         }
     }

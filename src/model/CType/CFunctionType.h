@@ -16,9 +16,16 @@ namespace c4::model::ctype {
             const std::vector<std::shared_ptr<const CType>> &paramTypes,
             int indirections
         ) : CType(indirections, FUNCTION), retType(retType), paramTypes(paramTypes) {
+            //Fix for f(void)
             if(paramTypes.size() == 1 && paramTypes[0]->isVoid()) {
                 this->paramTypes.pop_back();
             }
+            //Fix for func designators as parameters
+            for(size_t i=0; i<this->paramTypes.size(); i++) {
+                if(this->paramTypes[i]->isFuncNonDesignator()) {
+                    this->paramTypes[i] = this->paramTypes[i]->addStar();
+                }
+            } 
         }
 
         CFunctionType(

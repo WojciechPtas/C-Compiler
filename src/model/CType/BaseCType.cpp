@@ -46,6 +46,8 @@ Type* BaseCType::getLLVMType(LLVMContext &ctx) const {
             return IntegerType::getInt8Ty(ctx);
         case TypeSpecifier::VOID: 
             return Type::getVoidTy(ctx);
+        case TypeSpecifier::BOOL:
+            return IntegerType::getInt1Ty(ctx);
         default:
             throw std::logic_error("Unrecognized type to LLVM-convert to");
     }

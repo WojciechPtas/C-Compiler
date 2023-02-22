@@ -223,6 +223,9 @@ void CodeGen::evaluateCondition(CTypedValue& ctv, bool negated=false) {
                 ctv.value = intToBool(ctv.value, negated);
                 ctv.type = BaseCType::get(TypeSpecifier::BOOL);
             }
+            else if(negated) {
+                ctv.value = builder.CreateNot(ctv.value, "LogicalNot");
+            }
         }
         else {
             //Condition is not scalar! Report an error message on exit
@@ -283,10 +286,122 @@ CTypedValue CodeGen::visitLValue(const CallExpression &expr) {
     reportError(expr.firstTerminal, noLValueErrorMsg("CallExpression"));
     return CTypedValue::invalid();
 }
+
+CTypedValue CodeGen::visitConditionalExpression(const ConditionalExpression &expr, bool lvalue) {
+    CTypedValue cond = expr.condition->getRValue(*this);
+    if(!cond.isValid()) {
+        return CTypedValue::invalid();
+    }
+    constantZeroToInt(cond);
+    
+    evaluateCondition(cond);
+    if(!cond.isValid()) {
+        reportError(expr.firstTerminal, 
+            scalarConditionErrorMsg("Condition", "Conditional")
+        );
+        return CTypedValue::invalid();
+    }
+
+    Function* currentFunction = builder.GetInsertBlock()->getParent();
+
+    BasicBlock* leftEvalBlock = BasicBlock::Create(
+        ctx,
+        "ConditionalExprLeftEval",
+        currentFunction
+    );
+    BasicBlock* rightEvalBlock = BasicBlock::Create(
+        ctx,
+        "ConditionalExprRightEval",
+        currentFunction
+    );
+    BasicBlock* endBlock = BasicBlock::Create(
+        ctx,
+        "ConditionalExprEnd",
+        currentFunction
+    );
+
+    builder.CreateCondBr(cond.value, leftEvalBlock, rightEvalBlock);
+
+    builder.SetInsertPoint(leftEvalBlock);
+    CTypedValue leftExpr = lvalue ? expr.thenCase->getLValue(*this) : expr.thenCase->getRValue(*this); //May generate control flow! Need to update leftEvalBlock
+    leftEvalBlock = builder.GetInsertBlock();
+    builder.CreateBr(endBlock);
+
+    builder.SetInsertPoint(rightEvalBlock);
+    CTypedValue rightExpr = lvalue ? expr.elseCase->getLValue(*this) : expr.elseCase->getRValue(*this); //May generate control flow! Need to update rightEvalBlock
+    rightEvalBlock = builder.GetInsertBlock();
+    builder.CreateBr(endBlock);
+
+    if(!(leftExpr.isValid() && rightExpr.isValid())) {
+        return CTypedValue::invalid();
+    }
+
+    matchConstantZero(leftExpr, rightExpr);
+
+    if(lvalue) {
+        if(!leftExpr.type->equivalent(rightExpr.type.get())) {
+            reportError(expr.firstTerminal, incompatibleOperandsErrorMsg("Conditional Expression"));
+            return CTypedValue::invalid();
+        }
+    }
+    else if(!leftExpr.compatible(rightExpr)) {
+        reportError(
+            expr.firstTerminal, 
+            incompatibleOperandsErrorMsg("Conditional Expression")
+        );
+        return CTypedValue::invalid();
+    }
+    else if (!leftExpr.type->equivalent(rightExpr.type.get()) && leftExpr.type->isInteger()) {//Rvalues, integers of different sizes
+        builder.SetInsertPoint(leftEvalBlock);
+        leftExpr.value = builder.CreateSExtOrTrunc(
+            leftExpr.value, 
+            IntegerType::getInt32Ty(ctx)
+        );
+        builder.SetInsertPoint(rightEvalBlock);
+        rightExpr.value = builder.CreateSExtOrTrunc(
+            rightExpr.value, 
+            IntegerType::getInt32Ty(ctx)
+        );
+    }
+
+
+    Type* phiType;
+    if(leftExpr.type->isFunc() || rightExpr.type->isFunc()) {
+        leftExpr.value = funcToPtr(leftExpr.value);
+        rightExpr.value = funcToPtr(rightExpr.value);
+        phiType = PointerType::getUnqual(ctx);
+    }
+    else if (lvalue) {
+        phiType = PointerType::getUnqual(ctx);
+    }
+    else {
+        phiType = leftExpr.getLLVMType(ctx);
+    }
+
+    //Now they're of the same llvm type
+    builder.SetInsertPoint(endBlock);
+    PHINode* phi = builder.CreatePHI(
+        phiType,
+        2,
+        "ConditionalExprChoose"
+    );
+    phi->addIncoming(
+        leftExpr.value,
+        leftEvalBlock
+    );
+    phi->addIncoming(
+        rightExpr.value,
+        rightEvalBlock
+    );
+
+    return CTypedValue(
+        phi,
+        leftExpr.type //Should both have same type at this point
+    );
+}
+
 CTypedValue CodeGen::visitLValue(const ConditionalExpression &expr) {
-    //has no lvalue
-    reportError(expr.firstTerminal, noLValueErrorMsg("ConditionalExpression"));
-    return CTypedValue::invalid();
+    return visitConditionalExpression(expr, true);
 }
 CTypedValue CodeGen::visitLValue(const ConstantExpression &expr) {
     //has no lvalue
@@ -552,21 +667,24 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
                 case BinaryExpressionType::Equal: {
                     result.value = builder.CreateICmpEQ(
                         lhs.value,
-                        rhs.value
+                        rhs.value,
+                        "ICmpEQ"
                     );
                     break;
                 }
                 case BinaryExpressionType::Unequal: {
                     result.value = builder.CreateICmpNE(
                         lhs.value,
-                        rhs.value
+                        rhs.value,
+                        "ICmpNE"
                     );
                     break;
                 }
                 case BinaryExpressionType::LessThan: {
                     result.value = builder.CreateICmpSLT(
                         lhs.value,
-                        rhs.value
+                        rhs.value,
+                        "ICmpSLT"
                     );
                     break;
                 }
@@ -701,6 +819,7 @@ CTypedValue CodeGen::visitRValue(const BinaryExpression &expr) {
     }
     
 }
+
 CTypedValue CodeGen::visitRValue(const CallExpression &expr) {
     //In this context we need to invoke the function. But first we need the function pointer
     CTypedValue called = expr.called->getRValue(*this); //GetRValue() on a function object returns the pointer itself
@@ -758,111 +877,13 @@ CTypedValue CodeGen::visitRValue(const CallExpression &expr) {
     return returnedRValue;
 
 }
+
+
+
 CTypedValue CodeGen::visitRValue(const ConditionalExpression &expr) {
-    CTypedValue cond = expr.condition->getRValue(*this);
-    if(!cond.isValid()) {
-        return CTypedValue::invalid();
-    }
-    constantZeroToInt(cond);
-    
-    evaluateCondition(cond);
-    if(!cond.isValid()) {
-        reportError(expr.firstTerminal, 
-            scalarConditionErrorMsg("Condition", "Conditional")
-        );
-        return CTypedValue::invalid();
-    }
-
-    Function* currentFunction = builder.GetInsertBlock()->getParent();
-
-    BasicBlock* leftEvalBlock = BasicBlock::Create(
-        ctx,
-        "ConditionalExprLeftEval",
-        currentFunction
-    );
-    BasicBlock* rightEvalBlock = BasicBlock::Create(
-        ctx,
-        "ConditionalExprRightEval",
-        currentFunction
-    );
-    BasicBlock* endBlock = BasicBlock::Create(
-        ctx,
-        "ConditionalExprEnd",
-        currentFunction
-    );
-
-    builder.CreateCondBr(cond.value, leftEvalBlock, rightEvalBlock);
-
-    builder.SetInsertPoint(leftEvalBlock);
-    CTypedValue leftExpr = expr.thenCase->getRValue(*this); //May generate control flow! Need to update leftEvalBlock
-    leftEvalBlock = builder.GetInsertBlock();
-    builder.CreateBr(endBlock);
-
-    builder.SetInsertPoint(rightEvalBlock);
-    CTypedValue rightExpr = expr.elseCase->getRValue(*this); //May generate control flow! Need to update rightEvalBlock
-    rightEvalBlock = builder.GetInsertBlock();
-    builder.CreateBr(endBlock);
-
-    if(!(leftExpr.isValid() && rightExpr.isValid())) {
-        return CTypedValue::invalid();
-    }
-
-    matchConstantZero(leftExpr, rightExpr);
-
-    if(!leftExpr.compatible(rightExpr)) {
-        reportError(
-            expr.firstTerminal, 
-            incompatibleOperandsErrorMsg("Conditional Expression")
-        );
-        return CTypedValue::invalid();
-    }
-
-    if(!leftExpr.type->equivalent(leftExpr.type.get()) && leftExpr.type->isInteger()) { //Integers of different sizes
-        builder.SetInsertPoint(leftEvalBlock);
-        leftExpr.value = builder.CreateSExtOrTrunc(
-            leftExpr.value, 
-            IntegerType::getInt32Ty(ctx)
-        );
-        builder.SetInsertPoint(rightEvalBlock);
-        rightExpr.value = builder.CreateSExtOrTrunc(
-            rightExpr.value, 
-            IntegerType::getInt32Ty(ctx)
-        );
-    }
-
-    Type* phiType;
-    if(leftExpr.type->isFunc() || rightExpr.type->isFunc()) {
-        leftExpr.value = funcToPtr(leftExpr.value);
-        rightExpr.value = funcToPtr(rightExpr.value);
-        phiType = PointerType::getUnqual(ctx);
-    }
-    else {
-        phiType = leftExpr.getLLVMType(ctx);
-    }
-
-    //Now they're of the same llvm type
-    builder.SetInsertPoint(endBlock);
-    PHINode* phi = builder.CreatePHI(
-        phiType,
-        2,
-        "ConditionalExprChoose"
-    );
-    phi->addIncoming(
-        leftExpr.value,
-        leftEvalBlock
-    );
-    phi->addIncoming(
-        rightExpr.value,
-        rightEvalBlock
-    );
-
-    return CTypedValue(
-        phi,
-        leftExpr.type //Should both have same type at this point
-    );
-    
-    
+    return visitConditionalExpression(expr, false);
 }
+
 CTypedValue CodeGen::visitRValue(const ConstantExpression &expr) {
     switch(expr.type) {
         case ConstantType::Character: {
@@ -921,12 +942,12 @@ CTypedValue CodeGen::visitRValue(const SizeOfType &expr) {
     shared_ptr<const CType> ctype = getCtype(expr.type);
     TypeSize size = M.getDataLayout().getTypeAllocSize(ctype->getLLVMType(ctx));
 
-    if(ctype->isFunc()) {
+    if(ctype->isFunc() || !ctype->isComplete()) {
         reportError(
             expr.firstTerminal,
             illegalOperatorUseErrorMsg(
                 "sizeof(type-name)",
-                "Function"
+                "Function or incomplete object"
             )
         );
         return CTypedValue::invalid();

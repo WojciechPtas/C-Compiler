@@ -287,6 +287,8 @@ class CodeGen : c4::model::expression::IExpressionCodeGenVisitor, public c4::uti
     virtual c4::model::ctype::CTypedValue visitRValue(const c4::model::expression::MemberExpression &expr) override;
     virtual c4::model::ctype::CTypedValue visitRValue(const c4::model::expression::SizeOfType &expr) override;
     virtual c4::model::ctype::CTypedValue visitRValue(const c4::model::expression::UnaryExpression &expr) override;
+
+    c4::model::ctype::CTypedValue visitConditionalExpression(const c4::model::expression::ConditionalExpression &expr, bool lvalue);
     
     void visit(const c4::model::statement::CompoundStatement& s)override;
     void visit(const c4::model::statement::ExpressionStatement& s)override;

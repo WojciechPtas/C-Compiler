@@ -89,6 +89,12 @@ namespace c4::model::ctype {
             for(uint i=0; i<fieldNames.size(); i++) {
                 this->memberIndexes[fieldNames[i]] = i;
             }
+            //Fix for func designators as fields
+            for(size_t i=0; i<this->fieldTypes.size(); i++) {
+                if(this->fieldTypes[i]->isFuncNonDesignator()) {
+                    this->fieldTypes[i] = this->fieldTypes[i]->addStar();
+                }
+            } 
         }
 
         void define(std::shared_ptr<const CStructType> from) {
