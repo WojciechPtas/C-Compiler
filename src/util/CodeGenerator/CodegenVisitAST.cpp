@@ -334,9 +334,9 @@ ParametersInfo CodeGen::buildStruct(std::shared_ptr<StructDeclarationList> s){
             auto stru = std::dynamic_pointer_cast<CStructType>(field.type);
             if(stru==nullptr) continue;
             if(stru->getFieldNames().empty()){
-                scope.declareStruct(field.structname);
+                continue;
             }
-            else if(!stru->getFieldNames().empty()){
+            //else if(!stru->getFieldNames().empty()){
                 if(field.structname=="") continue; // anonymous struct
                 std::unordered_set<std::string>se(stru->getFieldNames().begin(),stru->getFieldNames().end());
                 if(se.size()!=stru->getFieldNames().size()){
@@ -347,9 +347,11 @@ ParametersInfo CodeGen::buildStruct(std::shared_ptr<StructDeclarationList> s){
                     reportError(a->firstTerminal,"Redefinition of struct!");
                     continue;
                 }
+            std::cout <<"we should not be there\n";
+
                 scope.defineStruct(field.structname, stru);
-                std::cout<<field.structname<<std::endl;
-            }
+                //std::cout<<field.structname<<std::endl;
+            //}
         }
     }
     // SECOND RUN
@@ -378,10 +380,10 @@ ParametersInfo CodeGen::buildStruct(std::shared_ptr<StructDeclarationList> s){
                         reportError(a->firstTerminal, "Missing definition for struct.");
                         continue;
                     }
-                    std::shared_ptr<const CType> b = scope.getStruct(field.structname);
-                    for(int i =0; i< field.type->indirections; i++){
-                        b=b->addStar();
-                    }
+                    // std::shared_ptr<const CType> b = scope.getStruct(field.structname);
+                    // for(int i =0; i< field.type->indirections; i++){
+                    //     b=b->addStar();
+                    // }
                     scope.declareStruct(field.structname);
                     names.push_back(field.name);
                     fields.push_back(field.type);
@@ -409,8 +411,9 @@ CodeGen::Var CodeGen::buildStruct(std::shared_ptr<StructUnionSpecifier> s){
     Var a;
     a.name="";
     a.structname=s->name;
-    scope.declareStruct(a.structname);
     scope.pushScope();
+    if(a.structname!="")
+    scope.declareStruct(a.structname);
     if(s->declarations!=nullptr){    
         auto p = buildStruct(s->declarations);
         a.type=CStructType::get(p.names,p.types, a.structname);
@@ -517,8 +520,46 @@ CodeGen::Var CodeGen::buildVar(std::shared_ptr<Declarator> d, Var returnVal){
     return buildVar(d->dec,a); // a is a return type
 }
 void CodeGen::visit(const c4::model::declaration::FunctionDefinition& s){
-    if(SecondPhase) return;
+    
     Var a =  buildDeclarationFromDS(s.ds);
+    if(a.type->isStruct()){
+        auto fu = std::dynamic_pointer_cast<CStructType>(a.type);
+        if(fu==nullptr) {
+            std::cout << "dupa\n"; 
+            return;
+        }
+        if(SecondPhase){
+            if(fu->getFieldNames().empty()){
+                return;
+            }
+            else{
+                if(a.structname=="") return; // anonymous struct
+                std::unordered_set<std::string>se(fu->getFieldNames().begin(),fu->getFieldNames().end());
+                if(se.size()!=fu->getFieldNames().size()){
+                    reportError(s.firstTerminal, "Two fields with the same name");
+                    return;
+                }
+                if(scope.structAlreadyDefined(a.structname)){
+                    reportError(s.firstTerminal,"Redefinition of struct!");
+                    return;
+                }
+                scope.defineStruct(a.structname, fu);
+                return;
+            }
+        }
+        else{
+            if(a.structname!=""){ // anonymous struct
+                if(scope.isStructDefined(a.structname)){
+                    a.type = CStructType::get(scope.getStruct(a.structname)->getFieldNames(),scope.getStruct(a.structname)->getFieldTypes(),a.structname);
+                }
+                else{
+                    reportError(s.firstTerminal,"Struct without definition cannot be return value of a function");
+                    return;
+                }
+            }
+         }
+    }
+    if(SecondPhase) return;
     auto f = buildVar(s.declarator,a);
     if(f.type==nullptr){
         reportError(s.firstTerminal, "Not a valid type");
@@ -634,12 +675,30 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
             std::cout << "dupa\n"; 
             return;
         }
-        if(fu->getFieldNames().empty() && SecondPhase){
-            scope.declareStruct(f.structname);
-            return;
-        }
-        else if(SecondPhase && !fu->getFieldNames().empty()){
-            if(f.structname=="") return; // anonymous struct
+        // if(fu->getFieldNames().empty() && SecondPhase){
+        //     scope.declareStruct(f.structname);
+        //     return;
+        // }
+        // else if(SecondPhase && !fu->getFieldNames().empty()){
+        //     if(f.structname=="") return; // anonymous struct
+        //     std::unordered_set<std::string>se(fu->getFieldNames().begin(),fu->getFieldNames().end());
+        //     if(se.size()!=fu->getFieldNames().size()){
+        //         reportError(s.firstTerminal, "Two fields with the same name");
+        //         return;
+        //     }
+        //     if(scope.structAlreadyDefined(f.structname)){
+        //         reportError(s.firstTerminal,"Redefinition of struct!");
+        //         return;
+        //     }
+        //     scope.defineStruct(f.structname, fu);
+        //     return;
+        // }
+        if(SecondPhase){
+            if(fu->getFieldNames().empty()){
+                return;
+            }
+            else{
+                if(f.structname=="") return; // anonymous struct
             std::unordered_set<std::string>se(fu->getFieldNames().begin(),fu->getFieldNames().end());
             if(se.size()!=fu->getFieldNames().size()){
                 reportError(s.firstTerminal, "Two fields with the same name");
@@ -649,19 +708,22 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                 reportError(s.firstTerminal,"Redefinition of struct!");
                 return;
             }
+            std::cout <<"we should not be there\n";
             scope.defineStruct(f.structname, fu);
             return;
+            }
         }
         else{
-                if (s.declarator!=nullptr){
-                    f = buildVar(s.declarator,f);
-                }
-                else{
-                        return;
-                    }
+            if (s.declarator!=nullptr){
+                f = buildVar(s.declarator,f);
+            }
+            else{
+                    return;
+            }
             if(f.structname!=""){ // anonymous struct
                 if(scope.isStructDefined(f.structname)){
                     std::shared_ptr<const CType> a = scope.getStruct(f.structname);
+                    //std::cout <<"we got struct with name" << f.structname;
                     for(int i =0; i< f.type->indirections; i++){
                         a=a->addStar();
                     }
@@ -674,9 +736,9 @@ void CodeGen::visit(const c4::model::declaration::Declaration& s){
                 }
                 else{
                     if(fu->indirections==0){
-                    std::cout<<f.structname;
-                    reportError(s.firstTerminal, "Missing definition for struct.");
-                    return;
+                        std::cout<<f.structname;
+                        reportError(s.firstTerminal, "Missing definition for struct.");
+                        return;
                     }
                     scope.declareStruct(f.name);
                     if(scope.isGlobal()){
