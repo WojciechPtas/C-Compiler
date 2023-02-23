@@ -382,6 +382,8 @@ CTypedValue CodeGen::visitConditionalExpression(const ConditionalExpression &exp
             rightExpr.value, 
             IntegerType::getInt32Ty(ctx)
         );
+        leftExpr.type = BaseCType::get(TypeSpecifier::INT);
+        rightExpr.type = leftExpr.type;
     }
 
 
