@@ -50,11 +50,7 @@ bool CFunctionType::equivalent(const CType* another) const {
 // }
 
 Type* CFunctionType::getLLVMType(llvm::LLVMContext &ctx) const {
-    if (isPointer()) { 
-        return PointerType::getUnqual(ctx);
-    }
-    //else
-    return getLLVMFuncType(ctx);
+    return PointerType::getUnqual(ctx);
 }
 
 FunctionType* CFunctionType::getLLVMFuncType(llvm::LLVMContext &ctx) const {
