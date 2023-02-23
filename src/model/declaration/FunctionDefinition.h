@@ -18,7 +18,7 @@ namespace c4 {
                     std::shared_ptr<DeclarationSpecifier> ds,
                     std::shared_ptr<Declarator> dec,
                     std::shared_ptr<statement::CompoundStatement> statement
-                    ): IDeclaration(dec->firstTerminal),ds(ds), declarator(dec), statement(statement) {};
+                    ): IDeclaration(ds->firstTerminal),ds(ds), declarator(dec), statement(statement) {};
                 void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }
