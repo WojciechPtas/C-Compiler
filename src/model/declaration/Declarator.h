@@ -11,7 +11,7 @@ namespace c4 {
                 std::shared_ptr<DirectDeclarator> dec;
             
                 Declarator( std::shared_ptr<Pointer> ptr, std::shared_ptr<DirectDeclarator> dec)
-                :  IDeclaration(dec->firstTerminal), ptr(ptr), dec(dec){}
+                :  IDeclaration(nullptr), ptr(ptr), dec(dec){}
                 void accept(util::IASTVisitor &visitor) const override {
                         visitor.visit(*this);
                     }
